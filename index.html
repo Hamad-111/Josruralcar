@@ -1698,23 +1698,23 @@
           </div>
 
           <nav class="dash-nav-menu">
-            <button class="dash-nav-item active" data-tab="overview">
+            <button class="dash-nav-item active" data-tab="overview" onclick="App.showDashboardTab('overview', this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
               <span>Dashboard</span>
             </button>
-            <button class="dash-nav-item" data-tab="profile" onclick="App.showDashboardTab('profile')">
+            <button class="dash-nav-item" data-tab="profile" onclick="App.showDashboardTab('profile', this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
               <span>Profile</span>
             </button>
-            <button class="dash-nav-item" data-tab="payments" onclick="App.showDashboardTab('payments')">
+            <button class="dash-nav-item" data-tab="payments" onclick="App.showDashboardTab('payments', this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
               <span>Payments</span>
             </button>
-            <button class="dash-nav-item" data-tab="history" onclick="App.showDashboardTab('history')">
+            <button class="dash-nav-item" data-tab="history" onclick="App.showDashboardTab('history', this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
               <span>History</span>
             </button>
-            <button class="dash-nav-item" data-tab="help" onclick="App.navigateTo('contact')">
+            <button class="dash-nav-item" data-tab="help" onclick="App.showDashboardTab('help', this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
               <span>Help Center</span>
             </button>
@@ -1733,6 +1733,15 @@
 
         <!-- Main Dashboard Content Area -->
         <div class="dashboard-content-area">
+          <!-- Mobile Dashboard Tabs Strip -->
+          <div class="dash-mobile-tabs" id="dashMobileTabs">
+            <button type="button" class="dash-m-tab active" data-tab="overview" onclick="App.showDashboardTab('overview', this)">Overview</button>
+            <button type="button" class="dash-m-tab" data-tab="profile" onclick="App.showDashboardTab('profile', this)">Profile</button>
+            <button type="button" class="dash-m-tab" data-tab="payments" onclick="App.showDashboardTab('payments', this)">Payments</button>
+            <button type="button" class="dash-m-tab" data-tab="history" onclick="App.showDashboardTab('history', this)">History</button>
+            <button type="button" class="dash-m-tab" data-tab="help" onclick="App.showDashboardTab('help', this)">Help Center</button>
+          </div>
+
           <div class="dash-top-bar">
             <div>
               <h1 class="dash-welcome-title">Welcome back, James</h1>
@@ -1862,10 +1871,15 @@
           </div>
 
           <!-- Booking History Section -->
-          <div class="dash-card">
+          <div class="dash-card" id="dashHistoryCard">
             <div class="dash-card-header">
               <h3 class="dash-card-title">Your Booking History</h3>
               <div class="dash-table-filters">
+                <div class="booking-status-tabs" id="bookingStatusTabs">
+                  <button type="button" class="bstatus-tab active" data-status="all" onclick="App.filterBookingStatus('all', this)">All</button>
+                  <button type="button" class="bstatus-tab" data-status="confirmed" onclick="App.filterBookingStatus('confirmed', this)">Confirmed</button>
+                  <button type="button" class="bstatus-tab" data-status="completed" onclick="App.filterBookingStatus('completed', this)">Completed</button>
+                </div>
                 <input type="text" id="dashHistorySearch" class="form-control form-control-sm" placeholder="🔍 Search bookings..." oninput="App.filterBookingHistory(this.value)" />
               </div>
             </div>
@@ -1880,44 +1894,62 @@
                     <th>Drop-off</th>
                     <th>Date & Time</th>
                     <th>Status</th>
-                    <th>Action</th>
+                    <th class="text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="dashTableBody">
                   <!-- Row 1 -->
-                  <tr>
+                  <tr data-status="confirmed">
                     <td><strong>#JR-8821</strong></td>
                     <td>Executive Saloon</td>
                     <td>Reading <span class="text-muted">(RG1 2QE)</span></td>
                     <td>Heathrow T5 <span class="text-muted">(TW6 2GA)</span></td>
                     <td>Oct 24, 2026, 04:30 AM</td>
                     <td><span class="badge-status badge-confirmed">Confirmed</span></td>
-                    <td>
-                      <button class="btn btn-navy btn-xs" onclick="App.rebookTrip('Reading', 'Heathrow T5', 65)">Rebook</button>
+                    <td class="text-right">
+                      <div class="table-action-btns">
+                        <button type="button" class="btn btn-outline btn-xs" title="View & Print Official Receipt" onclick="App.viewReceipt('#JR-8821', 'Reading (RG1 2QE)', 'Heathrow T5 (TW6 2GA)', 65, 'Oct 24, 2026', '04:30 AM', 'Executive Saloon (Mercedes E-Class)')">
+                          <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                          <span>Receipt</span>
+                        </button>
+                        <button type="button" class="btn btn-navy btn-xs" onclick="App.rebookTrip('Reading (RG1 2QE)', 'Heathrow T5 (TW6 2GA)', 65)">Rebook</button>
+                      </div>
                     </td>
                   </tr>
                   <!-- Row 2 -->
-                  <tr>
+                  <tr data-status="completed">
                     <td><strong>#JR-8790</strong></td>
                     <td>MPV (6-Seater)</td>
                     <td>Wokingham <span class="text-muted">(RG40 1AS)</span></td>
                     <td>Gatwick South <span class="text-muted">(RH6 0NP)</span></td>
                     <td>Oct 20, 2026, 10:15 AM</td>
                     <td><span class="badge-status badge-completed">Completed</span></td>
-                    <td>
-                      <button class="btn btn-navy btn-xs" onclick="App.rebookTrip('Wokingham', 'Gatwick South', 85)">Rebook</button>
+                    <td class="text-right">
+                      <div class="table-action-btns">
+                        <button type="button" class="btn btn-outline btn-xs" title="View & Print Official Receipt" onclick="App.viewReceipt('#JR-8790', 'Wokingham (RG40 1AS)', 'Gatwick South (RH6 0NP)', 85, 'Oct 20, 2026', '10:15 AM', 'MPV 6-Seater (Mercedes V-Class)')">
+                          <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                          <span>Receipt</span>
+                        </button>
+                        <button type="button" class="btn btn-navy btn-xs" onclick="App.rebookTrip('Wokingham (RG40 1AS)', 'Gatwick South (RH6 0NP)', 85)">Rebook</button>
+                      </div>
                     </td>
                   </tr>
                   <!-- Row 3 -->
-                  <tr>
+                  <tr data-status="completed">
                     <td><strong>#JR-8640</strong></td>
                     <td>Business Class</td>
                     <td>Stroud <span class="text-muted">(GL5 1AB)</span></td>
                     <td>Birmingham BHX <span class="text-muted">(B26 3QJ)</span></td>
                     <td>Sep 12, 2026, 06:00 AM</td>
                     <td><span class="badge-status badge-completed">Completed</span></td>
-                    <td>
-                      <button class="btn btn-navy btn-xs" onclick="App.rebookTrip('Stroud', 'Birmingham BHX', 85)">Rebook</button>
+                    <td class="text-right">
+                      <div class="table-action-btns">
+                        <button type="button" class="btn btn-outline btn-xs" title="View & Print Official Receipt" onclick="App.viewReceipt('#JR-8640', 'Stroud (GL5 1AB)', 'Birmingham BHX (B26 3QJ)', 85, 'Sep 12, 2026', '06:00 AM', 'Business Class (Mercedes S-Class)')">
+                          <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                          <span>Receipt</span>
+                        </button>
+                        <button type="button" class="btn btn-navy btn-xs" onclick="App.rebookTrip('Stroud (GL5 1AB)', 'Birmingham BHX (B26 3QJ)', 85)">Rebook</button>
+                      </div>
                     </td>
                   </tr>
                 </tbody>
@@ -1940,7 +1972,7 @@
             </div>
 
             <!-- Favorite Routes Card -->
-            <div class="dash-card">
+            <div class="dash-card" id="favoriteRoutesCard">
               <div class="dash-card-header">
                 <h3 class="dash-card-title">Favorite Routes</h3>
               </div>
@@ -2215,6 +2247,287 @@
       <div class="modal-footer">
         <button class="btn btn-navy btn-block" onclick="App.goToDashboardAfterBooking()">Go to Customer Dashboard</button>
         <button class="btn btn-outline btn-block mt-2" onclick="App.closeSuccessModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: VIEW OFFICIAL RECEIPT / TAX INVOICE -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalReceipt">
+    <div class="modal-card">
+      <div class="modal-header-standard">
+        <div>
+          <h3 class="modal-title">Official Journey Receipt</h3>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Jo's Rural Cars &bull; Licensed Private Hire Operator</p>
+        </div>
+        <button type="button" class="modal-close-icon" onclick="App.closeReceiptModal()" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div>
+            <span class="label-tiny">BOOKING REFERENCE</span>
+            <h4 id="recModalRef" style="color: var(--color-navy); font-weight: 800; font-size: 1.15rem; margin-top: 2px;">#JR-8821</h4>
+          </div>
+          <span class="badge-status badge-confirmed" style="background: #ecfdf5; color: #065f46; font-size: 0.8rem; padding: 6px 12px;">✓ Paid via Stripe</span>
+        </div>
+
+        <div class="receipt-box">
+          <div class="receipt-row">
+            <span>Date &amp; Time:</span>
+            <strong id="recModalDate">Oct 24, 2026, 04:30 AM</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Vehicle Class:</span>
+            <strong id="recModalVehicle">Executive Sedan (Mercedes-Benz)</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Pickup:</span>
+            <strong id="recModalPickup">Reading (RG1 2QE)</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Drop-off Terminal:</span>
+            <strong id="recModalDropoff">London Heathrow Terminal 5</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Terminal Drop-off Fee:</span>
+            <span class="badge-included">£0.00 (Included)</span>
+          </div>
+          <div class="receipt-row">
+            <span>Flight Tracking &amp; Meet:</span>
+            <span class="badge-included">£0.00 (Included)</span>
+          </div>
+          <div class="receipt-row">
+            <span>VAT / Taxes:</span>
+            <span id="recModalVat" style="font-weight: 600; color: #475569;">£0.00 (0% Zero Rated)</span>
+          </div>
+          <div class="receipt-row total-highlight">
+            <span>Total Fare Paid:</span>
+            <strong id="recModalTotal">£65.00</strong>
+          </div>
+        </div>
+
+        <p class="receipt-notice">
+          This receipt serves as an official proof of payment. For corporate expensing questions, email <a href="mailto:accounts@josruralcars.co.uk" style="color: var(--color-primary); font-weight: 600;">accounts@josruralcars.co.uk</a>.
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-actions-row">
+          <button type="button" class="btn btn-navy" onclick="window.print()">
+            <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            Print Receipt
+          </button>
+          <button type="button" class="btn btn-outline" onclick="App.closeReceiptModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: MANAGE LIVE TRIP -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalManageTrip">
+    <div class="modal-card">
+      <div class="modal-header-standard">
+        <div>
+          <h3 class="modal-title">Live Journey Details</h3>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Assigned Chauffeur &amp; Real-time Trip Management</p>
+        </div>
+        <button type="button" class="modal-close-icon" onclick="App.closeManageTripModal()" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="receipt-box" style="margin-bottom: 20px;">
+          <div class="receipt-row">
+            <span>Route:</span>
+            <strong id="mTripRoute">Reading &rarr; Heathrow T5</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Schedule:</span>
+            <strong id="mTripTime">Mon, 14 Dec 2026 at 08:30 AM</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Chauffeur:</span>
+            <strong>Dave M. (Rating: 4.98 &starf;)</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Vehicle:</span>
+            <strong>Mercedes-Benz E-Class &bull; Reg: LG74 WXN</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Flight Tracking:</span>
+            <span class="badge-status badge-confirmed">BA-184 &bull; On Time</span>
+          </div>
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 14px; margin-bottom: 20px;">
+          <h5 style="font-size: 0.82rem; font-weight: 800; color: var(--color-navy); margin-bottom: 8px; text-transform: uppercase;">Direct Driver Contact</h5>
+          <p style="font-size: 0.82rem; color: #475569; margin-bottom: 12px;">Your chauffeur will meet you inside terminal 5 arrivals opposite Costa Coffee.</p>
+          <div style="display: flex; gap: 10px;">
+            <a href="tel:+447700900123" class="btn btn-navy btn-sm" style="flex: 1; text-align: center;">📞 Call Driver</a>
+            <a href="sms:+447700900123" class="btn btn-outline btn-sm" style="flex: 1; text-align: center;">💬 SMS Driver</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-actions-row">
+          <button type="button" class="btn btn-outline" onclick="App.openLiveSupport()">Modify Journey</button>
+          <button type="button" class="btn btn-navy" onclick="App.closeManageTripModal()">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: LIVE SUPPORT & DISPATCH -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalLiveSupport">
+    <div class="modal-card">
+      <div class="modal-header-standard">
+        <div>
+          <h3 class="modal-title">24/7 Rural Dispatch Support</h3>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Direct line to our UK Operations Room</p>
+        </div>
+        <button type="button" class="modal-close-icon" onclick="App.closeLiveSupportModal()" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div style="text-align: center; padding: 12px 0 20px;">
+          <span style="font-size: 2.2rem; display: block; margin-bottom: 10px;">🎧</span>
+          <h4 style="font-size: 1.25rem; font-weight: 800; color: var(--color-navy); margin-bottom: 6px;">How can we assist your journey?</h4>
+          <p style="font-size: 0.88rem; color: #475569; max-width: 420px; margin: 0 auto;">Our round-the-clock dispatch team can amend pickup times, re-route transfers, or organize immediate emergency pickups.</p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+          <a href="tel:+441453888999" class="btn btn-navy btn-block" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px;">
+            <span>📞 Call Operations Hotline (24/7)</span>
+            <strong style="font-family: var(--font-heading);">01453 888 999</strong>
+          </a>
+          <a href="https://wa.me/441453888999" target="_blank" class="btn btn-outline btn-block" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px;">
+            <span>💬 Live WhatsApp Dispatch Desk</span>
+            <span>Connect &rarr;</span>
+          </a>
+          <a href="mailto:dispatch@josruralcars.co.uk" class="btn btn-outline btn-block" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px;">
+            <span>✉️ Email Dispatch Team</span>
+            <span>dispatch@josruralcars.co.uk</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-block" onclick="App.closeLiveSupportModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: PROFILE & PREFERENCES -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalProfile">
+    <div class="modal-card">
+      <div class="modal-header-standard">
+        <div>
+          <h3 class="modal-title">Passenger Profile</h3>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Your personal and transfer preferences</p>
+        </div>
+        <button type="button" class="modal-close-icon" onclick="App.closeProfileModal()" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+          <div class="avatar-circle" style="width: 54px; height: 54px; font-size: 1.3rem;">JD</div>
+          <div>
+            <h4 style="font-size: 1.15rem; font-weight: 800; color: var(--color-navy); margin-bottom: 2px;">James Doe</h4>
+            <span class="badge-status badge-confirmed" style="background: #fef3c7; color: #b45309; font-size: 0.72rem;">👑 Gold VIP Chauffeur Tier</span>
+          </div>
+        </div>
+
+        <div class="receipt-box">
+          <div class="receipt-row">
+            <span>Primary Email:</span>
+            <strong>james@example.com</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Mobile Phone:</span>
+            <strong>+44 7700 900000</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Home Base:</span>
+            <strong>Reading, Berkshire, UK</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Preferred Fleet:</span>
+            <strong>Executive Sedan (Mercedes E-Class)</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Transfer Preferences:</span>
+            <strong>Quiet Ride &bull; Bottled Still Water</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-actions-row">
+          <button type="button" class="btn btn-navy" onclick="App.showToast('Profile preferences updated.'); App.closeProfileModal();">Save Changes</button>
+          <button type="button" class="btn btn-outline" onclick="App.closeProfileModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: PAYMENTS & INVOICES -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalPayments">
+    <div class="modal-card">
+      <div class="modal-header-standard">
+        <div>
+          <h3 class="modal-title">Payment Methods &amp; Invoices</h3>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Manage Stripe encrypted cards and tax receipts</p>
+        </div>
+        <button type="button" class="modal-close-icon" onclick="App.closePaymentsModal()" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <h5 style="font-size: 0.8rem; font-weight: 800; color: var(--color-navy); margin-bottom: 10px; text-transform: uppercase;">Saved Payment Cards</h5>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.4rem;">💳</span>
+              <div>
+                <strong style="color: var(--color-navy); font-size: 0.88rem; display: block;">Visa ending in 4242</strong>
+                <span style="font-size: 0.72rem; color: #64748b;">Expires 12/28 &bull; Default</span>
+              </div>
+            </div>
+            <span class="badge-status badge-confirmed">Active</span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.4rem;">💳</span>
+              <div>
+                <strong style="color: var(--color-navy); font-size: 0.88rem; display: block;">Mastercard ending in 8821</strong>
+                <span style="font-size: 0.72rem; color: #64748b;">Expires 09/27 &bull; Corporate</span>
+              </div>
+            </div>
+            <span class="badge-status badge-completed">Secondary</span>
+          </div>
+        </div>
+
+        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: var(--radius-md); padding: 12px; font-size: 0.82rem; color: #065f46;">
+          🔒 All transactions are secured by 256-bit Stripe encryption. No raw card numbers are stored on Jo's Rural Cars servers.
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-actions-row">
+          <button type="button" class="btn btn-navy" onclick="App.showToast('Redirecting to secure Stripe billing portal...'); App.closePaymentsModal();">Add New Card</button>
+          <button type="button" class="btn btn-outline" onclick="App.closePaymentsModal()">Close</button>
+        </div>
       </div>
     </div>
   </div>

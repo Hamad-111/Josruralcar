@@ -319,18 +319,27 @@ const App = (() => {
         const statusClass = (b.status || 'confirmed').toLowerCase();
         const pickupEscaped = (b.pickup || '').replace(/'/g, "\\'");
         const dropoffEscaped = (b.dropoff || '').replace(/'/g, "\\'");
+        const vehicleEscaped = vName.replace(/'/g, "\\'");
+        const dateDisplay = formatDateDisplay(b.date);
+        const timeDisplay = (b.time || '').replace(/'/g, "\\'");
         const fare = b.amount || 75;
 
         return `
-          <tr>
+          <tr data-status="${statusClass}">
             <td><strong>${ref}</strong></td>
             <td>${vName}</td>
             <td>${b.pickup || ''}</td>
             <td>${b.dropoff || ''}</td>
-            <td>${formatDateDisplay(b.date)}, ${b.time || ''}</td>
+            <td>${dateDisplay}, ${timeDisplay}</td>
             <td><span class="badge-status badge-${statusClass}">${b.status || 'Confirmed'}</span></td>
-            <td>
-              <button class="btn btn-navy btn-xs" onclick="App.rebookTrip('${pickupEscaped}', '${dropoffEscaped}', ${fare})">Rebook</button>
+            <td class="text-right">
+              <div class="table-action-btns">
+                <button type="button" class="btn btn-outline btn-xs" title="View & Print Official Receipt" onclick="App.viewReceipt('${ref}', '${pickupEscaped}', '${dropoffEscaped}', ${fare}, '${dateDisplay}', '${timeDisplay}', '${vehicleEscaped}')">
+                  <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                  <span>Receipt</span>
+                </button>
+                <button type="button" class="btn btn-navy btn-xs" onclick="App.rebookTrip('${pickupEscaped}', '${dropoffEscaped}', ${fare})">Rebook</button>
+              </div>
             </td>
           </tr>
         `;
@@ -483,32 +492,156 @@ const App = (() => {
     rebookTrip('Reading (RG1 2QE)', 'Heathrow T5 (TW6 2GA)', 75);
   }
 
-  function showDashboardTab(tabName) {
-    showToast(`Switched to ${capitalize(tabName)} tab`);
+  function showDashboardTab(tabName, btn) {
+    document.querySelectorAll('.dash-nav-item').forEach(b => {
+      if (b.getAttribute('data-tab') === tabName) {
+        b.classList.add('active');
+      } else {
+        b.classList.remove('active');
+      }
+    });
+    document.querySelectorAll('.dash-m-tab').forEach(b => {
+      if (b.getAttribute('data-tab') === tabName) {
+        b.classList.add('active');
+      } else {
+        b.classList.remove('active');
+      }
+    });
+
+    if (tabName === 'overview') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (tabName === 'history') {
+      const hist = document.getElementById('dashHistoryCard');
+      if (hist) hist.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (tabName === 'profile') {
+      const modal = document.getElementById('modalProfile');
+      if (modal) modal.classList.add('show');
+    } else if (tabName === 'payments') {
+      const modal = document.getElementById('modalPayments');
+      if (modal) modal.classList.add('show');
+    } else if (tabName === 'help') {
+      openLiveSupport();
+    }
+  }
+
+  function closeProfileModal() {
+    const modal = document.getElementById('modalProfile');
+    if (modal) modal.classList.remove('show');
+  }
+
+  function closePaymentsModal() {
+    const modal = document.getElementById('modalPayments');
+    if (modal) modal.classList.remove('show');
+  }
+
+  function viewReceipt(ref, pickup, dropoff, fare, date, time, vehicle) {
+    const modal = document.getElementById('modalReceipt');
+    if (!modal) return;
+
+    const elRef = document.getElementById('recModalRef');
+    const elDate = document.getElementById('recModalDate');
+    const elPickup = document.getElementById('recModalPickup');
+    const elDropoff = document.getElementById('recModalDropoff');
+    const elVehicle = document.getElementById('recModalVehicle');
+    const elTotal = document.getElementById('recModalTotal');
+
+    if (elRef) elRef.textContent = ref;
+    if (elDate) elDate.textContent = `${date || 'Scheduled'}, ${time || '04:30 AM'}`;
+    if (elPickup) elPickup.textContent = pickup;
+    if (elDropoff) elDropoff.textContent = dropoff;
+    if (elVehicle) elVehicle.textContent = vehicle || 'Executive Sedan (Mercedes-Benz)';
+    const numFare = Number(fare) || 75;
+    if (elTotal) elTotal.textContent = `£${numFare.toFixed(2)}`;
+
+    modal.classList.add('show');
+  }
+
+  function closeReceiptModal() {
+    const modal = document.getElementById('modalReceipt');
+    if (modal) modal.classList.remove('show');
   }
 
   function showManageTripModal() {
-    showToast('Your driver Dave M. is confirmed. Contact: +44 7700 900123');
+    const modal = document.getElementById('modalManageTrip');
+    if (modal) {
+      modal.classList.add('show');
+    } else {
+      showToast('Assigned Driver: Dave M. (Mercedes E-Class, LG74 WXN) • +44 7700 900123');
+    }
+  }
+
+  function closeManageTripModal() {
+    const modal = document.getElementById('modalManageTrip');
+    if (modal) modal.classList.remove('show');
   }
 
   function openLiveSupport() {
-    showToast('Connecting you with 24/7 UK Dispatch Support...');
+    const modal = document.getElementById('modalLiveSupport');
+    if (modal) {
+      modal.classList.add('show');
+    } else {
+      showToast('Connecting you with 24/7 UK Dispatch Support on 01453 888 999...');
+    }
+  }
+
+  function closeLiveSupportModal() {
+    const modal = document.getElementById('modalLiveSupport');
+    if (modal) modal.classList.remove('show');
   }
 
   function showSavedRoutes() {
-    showToast('Showing your 3 saved executive routes.');
+    const favCard = document.getElementById('favoriteRoutesCard');
+    if (favCard) {
+      favCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      favCard.style.boxShadow = '0 0 0 3px rgba(30, 58, 138, 0.4)';
+      setTimeout(() => {
+        favCard.style.boxShadow = '';
+      }, 1800);
+      showToast('Showing your saved favorite routes.');
+    } else {
+      showToast('Showing your 3 saved executive routes.');
+    }
+  }
+
+  function filterBookingStatus(status, btn) {
+    document.querySelectorAll('.bstatus-tab').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    const rows = document.querySelectorAll('#dashTableBody tr');
+    const term = (document.getElementById('dashHistorySearch')?.value || '').toLowerCase().trim();
+
+    rows.forEach(r => {
+      const rowStatus = (r.getAttribute('data-status') || '').toLowerCase();
+      const rowText = r.textContent.toLowerCase();
+      const statusMatch = (status === 'all' || rowStatus === status || rowText.includes(status));
+      const searchMatch = !term || rowText.includes(term);
+      r.style.display = (statusMatch && searchMatch) ? '' : 'none';
+    });
   }
 
   function filterBookingHistory(term) {
+    const activeTab = document.querySelector('.bstatus-tab.active');
+    const status = activeTab ? activeTab.getAttribute('data-status') : 'all';
     const rows = document.querySelectorAll('#dashTableBody tr');
     const q = term.toLowerCase().trim();
+
     rows.forEach(r => {
-      const text = r.textContent.toLowerCase();
-      r.style.display = text.includes(q) ? '' : 'none';
+      const rowStatus = (r.getAttribute('data-status') || '').toLowerCase();
+      const rowText = r.textContent.toLowerCase();
+      const statusMatch = (status === 'all' || rowStatus === status || rowText.includes(status));
+      const searchMatch = !q || rowText.includes(q);
+      r.style.display = (statusMatch && searchMatch) ? '' : 'none';
     });
   }
 
   function showAllBookings() {
+    document.querySelectorAll('.bstatus-tab').forEach(b => {
+      if (b.getAttribute('data-status') === 'all') {
+        b.classList.add('active');
+      } else {
+        b.classList.remove('active');
+      }
+    });
     const rows = document.querySelectorAll('#dashTableBody tr');
     rows.forEach(r => r.style.display = '');
     const search = document.getElementById('dashHistorySearch');
@@ -723,9 +856,16 @@ const App = (() => {
     rebookTrip,
     rebookLastTrip,
     showDashboardTab,
+    closeProfileModal,
+    closePaymentsModal,
+    viewReceipt,
+    closeReceiptModal,
     showManageTripModal,
+    closeManageTripModal,
     openLiveSupport,
+    closeLiveSupportModal,
     showSavedRoutes,
+    filterBookingStatus,
     filterBookingHistory,
     showAllBookings,
     toggleAccordion,
