@@ -1,0 +1,2312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jo's Rural Cars | Premium UK Airport Transfers & Chauffeur Service</title>
+  <meta name="description" content="Reliable, fixed-price premium airport transfers across Berkshire, Oxfordshire, the Cotswolds and all major UK airports. Flight monitoring, executive Mercedes fleet, and professional drivers." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" type="image/png" href="./assets/images/logo.png" />
+</head>
+<body>
+  <!-- Top Navigation Header -->
+  <header class="site-header" id="siteHeader">
+    <div class="header-container">
+      <a href="#home" class="brand-logo" id="headerLogo">
+        <img src="./assets/images/logo.png" alt="Jo's Rural Cars Logo" class="brand-img" />
+        <div class="brand-text">
+          <span class="brand-title">JO'S RURAL CARS</span>
+          <span class="brand-sub">AIRPORT TRANSFERS</span>
+        </div>
+      </a>
+
+      <nav class="main-nav" aria-label="Main Navigation">
+        <a href="#home" class="nav-link active" data-page="home" id="navHome">Home</a>
+        <a href="#airports" class="nav-link" data-page="airports" id="navAirports">Airports</a>
+        <a href="#select-vehicle" class="nav-link" data-page="select-vehicle" id="navFleet">Fleet</a>
+        <a href="#dashboard" class="nav-link" data-page="dashboard" id="navDashboard">My Bookings</a>
+        <a href="#contact" class="nav-link" data-page="contact" id="navContact">Contact</a>
+      </nav>
+
+      <div class="header-actions">
+        <span class="supabase-status-pill" id="supabaseStatus" title="Supabase Database Status">
+          <span class="db-dot"></span>
+          <span class="db-text">Connecting to DB...</span>
+        </span>
+        <a href="tel:+441453888999" class="phone-link" title="Call Us 24/7">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+          <span>01453 888 999</span>
+        </a>
+        <button class="btn btn-navy" id="btnBookNowHeader" onclick="App.navigateTo('select-vehicle')">Book Now</button>
+      </div>
+
+      <!-- Mobile Hamburger Button -->
+      <button class="mobile-menu-btn" id="mobileMenuToggle" aria-label="Toggle navigation menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div class="mobile-drawer" id="mobileDrawer">
+      <a href="#home" class="mobile-link" data-page="home">Home</a>
+      <a href="#airports" class="mobile-link" data-page="airports">Airports</a>
+      <a href="#select-vehicle" class="mobile-link" data-page="select-vehicle">Fleet & Vehicles</a>
+      <a href="#dashboard" class="mobile-link" data-page="dashboard">My Bookings</a>
+      <a href="#contact" class="mobile-link" data-page="contact">Contact Us</a>
+      <button class="btn btn-navy full-width" onclick="App.navigateTo('select-vehicle')">Book Your Ride</button>
+    </div>
+  </header>
+
+  <!-- Notification Toast Bar -->
+  <div id="toastNotification" class="toast-notification" role="status" aria-live="polite"></div>
+
+  <!-- MAIN APP CONTAINER -->
+  <main id="appRoot">
+
+    <!-- ============================================== -->
+    <!-- VIEW 1: HOME PAGE -->
+    <!-- ============================================== -->
+    <section id="viewHome" class="app-view active">
+      <!-- Hero Section -->
+      <section class="hero-section" style="background-image: linear-gradient(to right, rgba(10, 17, 34, 0.92) 0%, rgba(15, 23, 42, 0.78) 50%, rgba(15, 23, 42, 0.45) 100%), url('./assets/images/hero_car.jpg');">
+        <div class="hero-overlay"></div>
+        <div class="container hero-container">
+          <div class="hero-content">
+            <span class="hero-badge-pill">
+              <span class="status-dot-pulse"></span>
+              24/7 Professional Chauffeur Transfers
+            </span>
+            <h1 class="hero-title">Reliable Airport Transfers Across the UK</h1>
+            <p class="hero-subtitle">
+              Professional airport transfer services with fixed pricing, comfortable vehicles, flight monitoring, and experienced vetted drivers.
+            </p>
+
+            <div class="hero-feature-tags">
+              <span class="hero-tag">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Licensed Drivers
+              </span>
+              <span class="hero-tag">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Fixed Pricing
+              </span>
+              <span class="hero-tag">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Flight Monitoring
+              </span>
+              <span class="hero-tag">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                24/7 Support
+              </span>
+            </div>
+
+            <div class="hero-actions">
+              <button class="btn btn-primary btn-lg" id="btnHeroBookTransfer" onclick="App.focusBookingWidget()">Book Your Transfer</button>
+              <button class="btn btn-glass btn-lg" id="btnHeroExploreFleet" onclick="App.navigateTo('select-vehicle')">Explore Our Fleet</button>
+            </div>
+          </div>
+
+          <!-- Hero Booking Widget Card -->
+          <div class="hero-widget-card" id="heroBookingCard">
+            <div class="widget-header">
+              <h3 class="widget-title">Book Your Premium Ride</h3>
+              <p class="widget-sub">Fixed prices, instant confirmation</p>
+            </div>
+
+            <form id="heroBookingForm" class="booking-widget-form" onsubmit="App.handleHeroSearch(event)">
+              <div class="form-group">
+                <label for="widgetPickup" class="form-label">
+                  <svg class="input-icon-label" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  Pickup Location
+                </label>
+                <div class="input-wrapper">
+                  <svg class="field-icon text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <input type="text" id="widgetPickup" class="form-control" placeholder="Postcode or Airport Name (e.g. Stroud, GL5)" value="Stroud, Cotswolds, GL5" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="widgetDropoff" class="form-label">
+                  <svg class="input-icon-label" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"></circle></svg>
+                  Drop-off Location
+                </label>
+                <div class="input-wrapper">
+                  <svg class="field-icon text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 19 21 12 17 5 21 12 2"></polygon></svg>
+                  <input type="text" id="widgetDropoff" class="form-control" placeholder="Destination Postcode (e.g. Heathrow T5)" value="London Heathrow Terminal 5" required />
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="widgetDate" class="form-label">Date</label>
+                  <input type="date" id="widgetDate" class="form-control" required />
+                </div>
+                <div class="form-group">
+                  <label for="widgetTime" class="form-label">Time</label>
+                  <input type="time" id="widgetTime" class="form-control" value="04:30" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="widgetPassengers" class="form-label">Passengers</label>
+                <select id="widgetPassengers" class="form-control custom-select">
+                  <option value="1 Passenger">1 Passenger</option>
+                  <option value="2 Passengers" selected>2 Passengers</option>
+                  <option value="3 Passengers">3 Passengers</option>
+                  <option value="4 Passengers">4 Passengers</option>
+                  <option value="5-8 Passengers">5-8 Passengers (MPV)</option>
+                </select>
+              </div>
+
+              <div class="widget-trust-notes">
+                <span>✓ Fixed Pricing</span>
+                <span>✓ No Hidden Fees</span>
+                <span>✓ Instant Confirmation</span>
+              </div>
+
+              <button type="submit" class="btn btn-navy btn-block btn-xl font-bold" id="btnWidgetSearch">
+                Search Vehicles
+                <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- Trust Metrics Bar -->
+      <section class="metrics-bar">
+        <div class="container metrics-grid">
+          <div class="metric-item">
+            <span class="metric-num">5000+</span>
+            <span class="metric-label">Transfers Completed</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-num">99%</span>
+            <span class="metric-label">Satisfaction Rate</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-num">24/7</span>
+            <span class="metric-label">Daily Availability</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-num">100%</span>
+            <span class="metric-label">Licensed & Insured</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Major Airport Coverage Section -->
+      <section class="section airports-section" id="airportsSection">
+        <div class="container">
+          <div class="section-header-row">
+            <div>
+              <h2 class="section-title">Major Airport Coverage</h2>
+              <p class="section-sub">We provide premium transfers to and from all major UK airports with reliable meet-and-greet services.</p>
+            </div>
+            <button class="btn btn-navy" onclick="App.navigateTo('airports')" id="btnViewAllAirportsHome">
+              Explore All UK Airports &rarr;
+            </button>
+          </div>
+
+          <div class="airports-grid">
+            <!-- Heathrow -->
+            <div class="airport-card" onclick="App.quickSelectAirport('Heathrow (LHR)', 45)">
+              <div class="airport-img-wrap">
+                <img src="./assets/images/airport_heathrow.jpg" alt="London Heathrow Airport" />
+                <span class="airport-code-badge">LHR</span>
+              </div>
+              <div class="airport-content">
+                <h3 class="airport-name">Heathrow</h3>
+                <p class="airport-dest">To: London, Reading, Oxford, Cotswolds</p>
+                <div class="airport-footer">
+                  <span class="price-from">From <strong>£45</strong></span>
+                  <span class="arrow-circle">→</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gatwick -->
+            <div class="airport-card" onclick="App.quickSelectAirport('Gatwick (LGW)', 65)">
+              <div class="airport-img-wrap">
+                <img src="./assets/images/airport_gatwick.jpg" alt="London Gatwick Airport" />
+                <span class="airport-code-badge">LGW</span>
+              </div>
+              <div class="airport-content">
+                <h3 class="airport-name">Gatwick</h3>
+                <p class="airport-dest">To: Brighton, London, Kent, Surrey</p>
+                <div class="airport-footer">
+                  <span class="price-from">From <strong>£65</strong></span>
+                  <span class="arrow-circle">→</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stansted -->
+            <div class="airport-card" onclick="App.quickSelectAirport('Stansted (STN)', 75)">
+              <div class="airport-img-wrap">
+                <img src="./assets/images/airport_stansted.jpg" alt="London Stansted Airport" />
+                <span class="airport-code-badge">STN</span>
+              </div>
+              <div class="airport-content">
+                <h3 class="airport-name">Stansted</h3>
+                <p class="airport-dest">To: Cambridge, Essex, London North</p>
+                <div class="airport-footer">
+                  <span class="price-from">From <strong>£75</strong></span>
+                  <span class="arrow-circle">→</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Luton -->
+            <div class="airport-card" onclick="App.quickSelectAirport('Luton (LTN)', 55)">
+              <div class="airport-img-wrap">
+                <img src="./assets/images/airport_luton.jpg" alt="London Luton Airport" />
+                <span class="airport-code-badge">LTN</span>
+              </div>
+              <div class="airport-content">
+                <h3 class="airport-name">Luton</h3>
+                <p class="airport-dest">To: Milton Keynes, Bedford, London</p>
+                <div class="airport-footer">
+                  <span class="price-from">From <strong>£55</strong></span>
+                  <span class="arrow-circle">→</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Birmingham -->
+            <div class="airport-card" onclick="App.quickSelectAirport('Birmingham (BHX)', 85)">
+              <div class="airport-img-wrap">
+                <img src="./assets/images/airport_birmingham.jpg" alt="Birmingham International Airport" />
+                <span class="airport-code-badge">BHX</span>
+              </div>
+              <div class="airport-content">
+                <h3 class="airport-name">Birmingham</h3>
+                <p class="airport-dest">To: Midlands, Oxford, Bristol, Cotswolds</p>
+                <div class="airport-footer">
+                  <span class="price-from">From <strong>£85</strong></span>
+                  <span class="arrow-circle">→</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="airports-home-cta-box text-center mt-3">
+            <p class="text-muted">Traveling to another UK terminal or private aviation FBO? We cover all UK airports 24/7.</p>
+            <div class="mt-2">
+              <button class="btn btn-outline btn-sm" onclick="App.navigateTo('airports')">View Full Airport &amp; Terminal Directory &rarr;</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Fleet Overview Section -->
+      <section class="section fleet-section bg-light" id="fleetSection">
+        <div class="container">
+          <div class="section-header-row">
+            <div>
+              <h2 class="section-title">Our Premium Fleet</h2>
+              <p class="section-sub">Carefully selected vehicles to match every travel need.</p>
+            </div>
+            <button class="btn btn-navy" onclick="App.navigateTo('select-vehicle')">View All Fleet</button>
+          </div>
+
+          <div class="fleet-cards-grid">
+            <!-- Sedan -->
+            <div class="fleet-card">
+              <div class="fleet-img-wrap">
+                <img src="./assets/images/car_sedan.jpg" alt="Executive Sedan" />
+              </div>
+              <div class="fleet-card-body">
+                <h3 class="fleet-name">Executive Sedan</h3>
+                <p class="fleet-desc">Elegant comfort for individuals and couples.</p>
+                <div class="fleet-specs-pills">
+                  <span>👤 3 Max</span>
+                  <span>🧳 2 Large</span>
+                  <span>❄️ AC</span>
+                  <span>⏱️ 15m Free Wait</span>
+                </div>
+                <div class="fleet-card-footer">
+                  <div>
+                    <span class="price-sub">Starting from</span>
+                    <span class="price-val">£45.00</span>
+                  </div>
+                  <button class="btn btn-navy" onclick="App.selectVehicleAndProceed('sedan')">Select</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Executive (Most Popular) -->
+            <div class="fleet-card featured-fleet">
+              <div class="popular-ribbon">MOST POPULAR</div>
+              <div class="fleet-img-wrap">
+                <img src="./assets/images/car_executive.jpg" alt="Executive Mercedes" />
+              </div>
+              <div class="fleet-card-body">
+                <h3 class="fleet-name">Business Class</h3>
+                <p class="fleet-desc">First-class travel experience with extra legroom.</p>
+                <div class="fleet-specs-pills">
+                  <span>👤 3 Max</span>
+                  <span>🧳 2 Large</span>
+                  <span>✈️ Flight Track</span>
+                  <span>👋 Meet & Greet</span>
+                  <span>📶 Free WiFi</span>
+                </div>
+                <div class="fleet-card-footer">
+                  <div>
+                    <span class="price-sub">Starting from</span>
+                    <span class="price-val">£85.00</span>
+                  </div>
+                  <button class="btn btn-primary" onclick="App.selectVehicleAndProceed('executive')">Select</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estate -->
+            <div class="fleet-card">
+              <div class="fleet-img-wrap">
+                <img src="./assets/images/car_estate.jpg" alt="Executive Estate" />
+              </div>
+              <div class="fleet-card-body">
+                <h3 class="fleet-name">Executive Estate</h3>
+                <p class="fleet-desc">Perfect for families with extra luggage requirements.</p>
+                <div class="fleet-specs-pills">
+                  <span>👤 4 Max</span>
+                  <span>🧳 4 Large</span>
+                  <span>👶 Child Seat Avail</span>
+                  <span>❄️ Dual Climate</span>
+                </div>
+                <div class="fleet-card-footer">
+                  <div>
+                    <span class="price-sub">Starting from</span>
+                    <span class="price-val">£55.00</span>
+                  </div>
+                  <button class="btn btn-navy" onclick="App.selectVehicleAndProceed('estate')">Select</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Luxury MPV -->
+            <div class="fleet-card">
+              <div class="fleet-img-wrap">
+                <img src="./assets/images/car_mpv.jpg" alt="Luxury MPV" />
+              </div>
+              <div class="fleet-card-body">
+                <h3 class="fleet-name">Luxury MPV</h3>
+                <p class="fleet-desc">Spacious group travel without compromising on style.</p>
+                <div class="fleet-specs-pills">
+                  <span>👤 8 Max</span>
+                  <span>🧳 8 Large</span>
+                  <span>🛋️ Captain Chairs</span>
+                  <span>⚡ Device Chargers</span>
+                </div>
+                <div class="fleet-card-footer">
+                  <div>
+                    <span class="price-sub">Starting from</span>
+                    <span class="price-val">£95.00</span>
+                  </div>
+                  <button class="btn btn-navy" onclick="App.selectVehicleAndProceed('mpv')">Select</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4-Step Process Section -->
+      <section class="section steps-section">
+        <div class="container">
+          <div class="section-header text-center">
+            <h2 class="section-title">Simple 4-Step Booking</h2>
+            <p class="section-sub">Experience seamless door-to-terminal travel in four easy steps.</p>
+          </div>
+
+          <div class="steps-grid">
+            <div class="step-card">
+              <div class="step-badge">1</div>
+              <h3 class="step-title">Enter Details</h3>
+              <p class="step-desc">Enter your pickup, drop-off and timing info into our booking engine.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-badge">2</div>
+              <h3 class="step-title">Select Vehicle</h3>
+              <p class="step-desc">Choose from our fleet of executive sedans, estates, and luxury MPVs.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-badge">3</div>
+              <h3 class="step-title">Secure Payment</h3>
+              <p class="step-desc">Pay securely via credit card, Apple Pay, or corporate account.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-badge">4</div>
+              <h3 class="step-title">Enjoy Journey</h3>
+              <p class="step-desc">Relax while our professional driver handles luggage and navigation.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- The Jo's Rural Cars Standard -->
+      <section class="section standard-section bg-light">
+        <div class="container">
+          <div class="section-header text-center">
+            <h2 class="section-title">The Jo's Rural Cars Standard</h2>
+            <p class="section-sub">We redefine airport transfers through local expertise and premium service levels.</p>
+          </div>
+
+          <div class="standards-grid">
+            <div class="standard-card">
+              <div class="standard-icon-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+              </div>
+              <h4 class="standard-title">Professional Drivers</h4>
+              <p class="standard-text">Punctual, vetted, and knowledgeable drivers who prioritize your safety, privacy and comfort.</p>
+            </div>
+
+            <div class="standard-card">
+              <div class="standard-icon-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"></path></svg>
+              </div>
+              <h4 class="standard-title">Flight Tracking</h4>
+              <p class="standard-text">Real-time monitoring ensures we're there exactly when you land, no matter the flight delay.</p>
+            </div>
+
+            <div class="standard-card">
+              <div class="standard-icon-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              </div>
+              <h4 class="standard-title">Meet & Greet</h4>
+              <p class="standard-text">Your driver greets you at arrivals with a personalized name board and full luggage assistance.</p>
+            </div>
+
+            <div class="standard-card">
+              <div class="standard-icon-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><line x1="12" y1="6" x2="12" y2="8"></line><line x1="12" y1="16" x2="12" y2="18"></line></svg>
+              </div>
+              <h4 class="standard-title">Transparent Pricing</h4>
+              <p class="standard-text">The price you see is what you pay. No hidden extras, parking fee surprises, or surge charges.</p>
+            </div>
+
+            <div class="standard-card">
+              <div class="standard-icon-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              </div>
+              <h4 class="standard-title">Secure Payments</h4>
+              <p class="standard-text">Enterprise-grade 256-bit encryption for all card and corporate wallet transactions for total peace of mind.</p>
+            </div>
+
+            <div class="standard-card">
+              <div class="standard-icon-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+              </div>
+              <h4 class="standard-title">Local Knowledge</h4>
+              <p class="standard-text">Drivers with deep knowledge of UK rural roads, M4/M25 bypasses to navigate traffic and guarantee on-time arrival.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Testimonials -->
+      <section class="section testimonials-section">
+        <div class="container">
+          <div class="section-header text-center">
+            <h2 class="section-title">Trusted by Thousands</h2>
+            <p class="section-sub">Read genuine feedback from regular business executives and holidaymakers.</p>
+          </div>
+
+          <div class="testimonials-grid">
+            <div class="testimonial-card">
+              <div class="star-rating">★★★★★</div>
+              <p class="testimonial-quote">"Absolutely flawless service. The driver was waiting exactly where they said they'd be, even with my flight landing 40 minutes early. The Mercedes was spotless."</p>
+              <div class="testimonial-author">
+                <div class="author-avatar">SJ</div>
+                <div class="author-info">
+                  <span class="author-name">Sarah Jenkins</span>
+                  <span class="author-role">Cotswolds to Heathrow</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="testimonial-card">
+              <div class="star-rating">★★★★★</div>
+              <p class="testimonial-quote">"I use Jo's for all my business travel. The reliability and fixed pricing make expense reporting a breeze. Highly professional drivers every single time."</p>
+              <div class="testimonial-author">
+                <div class="author-avatar">MT</div>
+                <div class="author-info">
+                  <span class="author-name">Mark Thompson</span>
+                  <span class="author-role">Oxford to London City</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="testimonial-card">
+              <div class="star-rating">★★★★★</div>
+              <p class="testimonial-quote">"Excellent for group travel. We booked an MPV for a family holiday and it was spacious and comfortable. The children loved the ride and the driver was great with the bags."</p>
+              <div class="testimonial-author">
+                <div class="author-avatar">EL</div>
+                <div class="author-info">
+                  <span class="author-name">Emma Lewis</span>
+                  <span class="author-role">Reading to Gatwick</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ Section -->
+      <section class="section faq-section bg-light">
+        <div class="container max-w-narrow">
+          <div class="section-header text-center">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <p class="section-sub">Clear answers to common questions about our airport transfer service.</p>
+          </div>
+
+          <div class="accordion" id="homeAccordion">
+            <div class="accordion-item active">
+              <button class="accordion-header" onclick="App.toggleAccordion(this)">
+                <span>How do I find my driver at the airport?</span>
+                <span class="accordion-chevron">▾</span>
+              </button>
+              <div class="accordion-body">
+                <p>Your driver will be waiting inside the arrivals terminal hall holding a clear electronic or printed name board displaying your name. We also send you the driver's name, vehicle registration, and mobile number via SMS 20 minutes before pickup.</p>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header" onclick="App.toggleAccordion(this)">
+                <span>What happens if my flight is delayed?</span>
+                <span class="accordion-chevron">▾</span>
+              </button>
+              <div class="accordion-body">
+                <p>We automatically monitor your flight status in real time using your flight number. Whether your flight is early or delayed by hours, your driver adjusts their schedule at no extra charge to ensure they are there right when you exit customs.</p>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header" onclick="App.toggleAccordion(this)">
+                <span>Are your prices fixed?</span>
+                <span class="accordion-chevron">▾</span>
+              </button>
+              <div class="accordion-body">
+                <p>Yes, all quotes given on our website are 100% fixed and inclusive of all airport drop-off fees, terminal parking, road tolls, and taxes. You will never encounter surge pricing or surprise fees.</p>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header" onclick="App.toggleAccordion(this)">
+                <span>Can I book for a large group with lots of luggage?</span>
+                <span class="accordion-chevron">▾</span>
+              </button>
+              <div class="accordion-body">
+                <p>Absolutely. Our Luxury MPVs accommodate up to 8 passengers comfortably with space for 8 large suitcases. For larger groups or corporate retreats, multiple vehicles can be coordinated simultaneously.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW: AIRPORTS DEDICATED PAGE -->
+    <!-- ============================================== -->
+    <section id="viewAirports" class="app-view">
+      <!-- Airports Page Hero Header -->
+      <section class="airports-page-hero">
+        <div class="container">
+          <div class="breadcrumbs-row">
+            <a href="#home" onclick="App.navigateTo('home')">Home</a>
+            <span class="bc-sep">/</span>
+            <span class="bc-current">UK Airports Coverage</span>
+          </div>
+
+          <div class="airports-hero-inner">
+            <span class="hero-badge-pill">
+              <span class="status-dot-pulse"></span>
+              Nationwide UK Terminal Coverage &bull; 24/7 Dispatch
+            </span>
+            <h1 class="airports-hero-title">UK Major Airport Transfers &amp; Terminals</h1>
+            <p class="airports-hero-sub">
+              Fixed-rate executive airport transfers serving all London terminals, Midlands and regional airports. Experience complimentary flight tracking, 60 minutes included waiting time, and personalized inside-terminal meet-and-greet.
+            </p>
+
+            <!-- Airport Filter Navigation Pills -->
+            <div class="airports-filter-nav">
+              <button class="airports-filter-btn active" data-filter="all" onclick="App.filterAirports('all', this)">All UK Airports</button>
+              <button class="airports-filter-btn" data-filter="london" onclick="App.filterAirports('london', this)">London Terminals</button>
+              <button class="airports-filter-btn" data-filter="regional" onclick="App.filterAirports('regional', this)">Midlands &amp; Regional</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Key Service Guarantees Bar -->
+      <section class="section-sm bg-light border-y">
+        <div class="container">
+          <div class="airports-guarantees-grid">
+            <div class="guarantee-tile">
+              <div class="guarantee-icon">🛰️</div>
+              <div class="guarantee-info">
+                <h4>Live Flight Monitoring</h4>
+                <p>We track your flight in real time. Pickup time adjusts automatically if your plane is delayed or early.</p>
+              </div>
+            </div>
+
+            <div class="guarantee-tile">
+              <div class="guarantee-icon">🤝</div>
+              <div class="guarantee-info">
+                <h4>Terminal Meet &amp; Greet</h4>
+                <p>Your chauffeur waits inside the arrivals hall holding a personalized name board with luggage assistance.</p>
+              </div>
+            </div>
+
+            <div class="guarantee-tile">
+              <div class="guarantee-icon">⏱️</div>
+              <div class="guarantee-info">
+                <h4>60 Mins Free Waiting Time</h4>
+                <p>Enjoy 60 minutes complimentary wait after your flight touches down to clear passport control &amp; customs.</p>
+              </div>
+            </div>
+
+            <div class="guarantee-tile">
+              <div class="guarantee-icon">🛡️</div>
+              <div class="guarantee-info">
+                <h4>100% Fixed Transparent Fares</h4>
+                <p>All airport terminal drop-off charges, parking fees, and road tolls are included in your quote.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Comprehensive Airport Directory Grid -->
+      <section class="section airports-directory-section">
+        <div class="container">
+          <div class="section-header text-center">
+            <h2 class="section-title">Major Terminals &amp; Service Details</h2>
+            <p class="section-sub">Select your arrival or departure airport below to view terminal meeting points, popular routes, and instant booking quotes.</p>
+          </div>
+
+          <div class="airports-detailed-grid" id="airportsDetailedGrid">
+            <!-- Airport 1: Heathrow -->
+            <div class="airport-detail-card" data-category="london">
+              <div class="airport-card-media">
+                <img src="./assets/images/airport_heathrow.jpg" alt="London Heathrow Airport Terminals" />
+                <span class="airport-badge-code">LHR</span>
+                <span class="airport-tag-location">London &amp; Thames Valley</span>
+              </div>
+              <div class="airport-card-body">
+                <div class="airport-title-header">
+                  <div>
+                    <h3 class="airport-title-text">London Heathrow Airport</h3>
+                    <span class="airport-subtitle-text">Terminals 2, 3, 4 &amp; 5 &bull; Hounslow, Greater London</span>
+                  </div>
+                  <div class="airport-fare-pill">
+                    <small>FROM</small>
+                    <strong>&pound;45</strong>
+                  </div>
+                </div>
+
+                <div class="airport-perks-strip">
+                  <span>&check; All Terminals Covered</span>
+                  <span>&check; 60m Free Wait</span>
+                  <span>&check; Meet &amp; Greet Inside</span>
+                </div>
+
+                <div class="airport-info-block">
+                  <h5 class="info-block-heading">Terminal Meeting Points:</h5>
+                  <ul class="terminal-meeting-list">
+                    <li><strong>Terminal 2 &amp; 3:</strong> In the arrivals hall opposite Costa Coffee.</li>
+                    <li><strong>Terminal 4:</strong> Ground level arrivals near WHSmith &amp; Costa.</li>
+                    <li><strong>Terminal 5:</strong> Ground floor arrivals concourse opposite International Arrivals.</li>
+                  </ul>
+                </div>
+
+                <div class="airport-info-block">
+                  <h5 class="info-block-heading">Popular Connections &amp; Estimated Times:</h5>
+                  <div class="route-price-tags">
+                    <span>Stroud &bull; 1h 45m &bull; <strong>&pound;75</strong></span>
+                    <span>Oxford &bull; 55m &bull; <strong>&pound;65</strong></span>
+                    <span>Reading &bull; 35m &bull; <strong>&pound;50</strong></span>
+                    <span>Central London &bull; 45m &bull; <strong>&pound;65</strong></span>
+                  </div>
+                </div>
+
+                <div class="airport-card-actions">
+                  <button class="btn btn-navy btn-block" onclick="App.bookAirportTransfer('London Heathrow Terminal 5', 'Stroud, Cotswolds, GL5', 75)">
+                    Book Heathrow Transfer &rarr;
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Airport 2: Gatwick -->
+            <div class="airport-detail-card" data-category="london">
+              <div class="airport-card-media">
+                <img src="./assets/images/airport_gatwick.jpg" alt="London Gatwick Airport Terminals" />
+                <span class="airport-badge-code">LGW</span>
+                <span class="airport-tag-location">Sussex &amp; South London</span>
+              </div>
+              <div class="airport-card-body">
+                <div class="airport-title-header">
+                  <div>
+                    <h3 class="airport-title-text">London Gatwick Airport</h3>
+                    <span class="airport-subtitle-text">North &amp; South Terminals &bull; Crawley, West Sussex</span>
+                  </div>
+                  <div class="airport-fare-pill">
+                    <small>FROM</small>
+                    <strong>&pound;65</strong>
+                  </div>
+                </div>
+
+                <div class="airport-perks-strip">
+                  <span>&check; North &amp; South Terminals</span>
+                  <span>&check; 60m Free Wait</span>
+                  <span>&check; Express Chauffeur Lane</span>
+                </div>
+
+                <div class="airport-info-block">
+                  <h5 class="info-block-heading">Terminal Meeting Points:</h5>
+                  <ul class="terminal-meeting-list">
+                    <li><strong>North Terminal:</strong> Inside arrivals hall opposite Costa Coffee.</li>
+                    <li><strong>South Terminal:</strong> Main arrivals greeting barrier by the terminal exit.</li>
+                  </ul>
+                </div>
+
+                <div class="airport-info-block">
+                  <h5 class="info-block-heading">Popular Connections &amp; Estimated Times:</h5>
+                  <div class="route-price-tags">
+                    <span>Brighton &bull; 40m &bull; <strong>&pound;55</strong></span>
+                    <span>Central London &bull; 1h 10m &bull; <strong>&pound;65</strong></span>
+                    <span>Surrey &amp; Kent &bull; 45m &bull; <strong>&pound;50</strong></span>
+                    <span>Reading &bull; 1h 15m &bull; <strong>&pound;75</strong></span>
+                  </div>
+                </div>
+
+                <div class="airport-card-actions">
+                  <button class="btn btn-navy btn-block" onclick="App.bookAirportTransfer('London Gatwick South Terminal', 'Reading, Berkshire', 65)">
+                    Book Gatwick Transfer &rarr;
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Airport 3: Stansted -->
+            <div class="airport-detail-card" data-category="london">
+              <div class="airport-card-media">
+                <img src="./assets/images/airport_stansted.jpg" alt="London Stansted Airport" />
+                <span class="airport-badge-code">STN</span>
+                <span class="airport-tag-location">Essex &amp; Cambridge</span>
+              </div>
+              <div class="airport-card-body">
+                <div class="airport-title-header">
+                  <div>
+                    <h3 class="airport-title-text">London Stansted Airport</h3>
+                    <span class="airport-subtitle-text">International Terminal &bull; Stansted Mountfitchet, Essex</span>
+                  </div>
+                  <div class="airport-fare-pill">
+                    <small>FROM</small>
+                    <strong>&pound;75</strong>
+                  </div>
+                </div>
+
+                <div class="airport-perks-strip">
+                  <span>&check; Main Terminal Concierge</span>
+                  <span>&check; 60m Free Wait</span>
+                  <span>&check; Flight Tracking</span>
+                </div>
+
+                <div class="airport-info-block">
+                  <h5 class="info-block-heading">Terminal Meeting Points:</h5>
+                  <ul class="terminal-meeting-list">
+                    <li><strong>Main Terminal:</strong> Designated international arrivals chauffeur waiting area next to the information desk.</li>
+                  </ul>
+                </div>
+
+                <div class="airport-info-block">
+                  <h5 class="info-block-heading">Popular Connections &amp; Estimated Times:</h5>
+                  <div class="route-price-tags">
+                    <span>Cambridge &bull; 35m &bull; <strong>&pound;55</strong></span>
+                    <span>London North &bull; 50m &bull; <strong>&pound;75</strong></span>
+                    <span>Essex / Herts &bull; 40m &bull; <strong>&pound;60</strong></span>
+                  </div>
+                </div>
+
+                <div class="airport-card-actions">
+                  <button class="btn btn-navy btn-block" onclick="App.bookAirportTransfer('London Stansted International Terminal', 'Cambridge, CB1', 75)">
+                    Book Stansted Transfer &rarr;
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Airport 4: Luton -->
+            <div class="airport-detail-card" data-category="london">
+              <div class="airport-card-media">
+                <img src="./assets/images/airport_luton.jpg" alt="London Luton Airport" />
+                <span class="airport-badge-code">LTN</span>
+                <span class="airport-tag-location">Bedfordshire &amp; North London</span>
+              </div>
+              <div class="airport-card-body">
+                <div class="airport-title-header">
+                  <div>
+                    <h3 class="airport-title-text">London Luton Airport</h3>
+                    <span class="airport-subtitle-text">Terminal 1 &amp; Private Aviation FBO &bull; Luton, Bedfordshire</span>
+                  </div>
+                  <div class="airport-fare-pill">
+                    <small>FROM</small>
+                    <strong>&pound;55</strong>
+                  </div>
+                </div>
+
+                <div class="airport-perks-strip">
+                  <span>&check; Terminal 1 &amp; Signature FBO</span>
+                  <span>&check; 60m Free Wait</span>
+                  <span>&check; Priority Drop-off</span>
+                </div>
+
+                <div class="airport-info-block">
+                  <h5 class="info-block-heading">Terminal Meeting Points:</h5>
+                  <ul class="terminal-meeting-list">
+                    <li><strong>Terminal 1:</strong> Main arrivals concourse opposite Costa.</li>
+                    <li><strong>Private FBO:</strong> Signature Flight Support &amp; Harrods Aviation gate greeting.</li>
+                  </ul>
+                </div>
+
+                <div class="airport-info-block">
+                  <h5 class="info-block-heading">Popular Connections &amp; Estimated Times:</h5>
+                  <div class="route-price-tags">
+                    <span>Milton Keynes &bull; 30m &bull; <strong>&pound;45</strong></span>
+                    <span>London West End &bull; 55m &bull; <strong>&pound;55</strong></span>
+                    <span>Oxford &bull; 1h 10m &bull; <strong>&pound;60</strong></span>
+                  </div>
+                </div>
+
+                <div class="airport-card-actions">
+                  <button class="btn btn-navy btn-block" onclick="App.bookAirportTransfer('London Luton Airport (LTN)', 'Milton Keynes, MK9', 55)">
+                    Book Luton Transfer &rarr;
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Airport 5: Birmingham -->
+            <div class="airport-detail-card" data-category="regional">
+              <div class="airport-card-media">
+                <img src="./assets/images/airport_birmingham.jpg" alt="Birmingham International Airport" />
+                <span class="airport-badge-code">BHX</span>
+                <span class="airport-tag-location">Midlands &amp; Cotswolds</span>
+              </div>
+              <div class="airport-card-body">
+                <div class="airport-title-header">
+                  <div>
+                    <h3 class="airport-title-text">Birmingham Airport</h3>
+                    <span class="airport-subtitle-text">Terminals 1 &amp; 2 &bull; Solihull, West Midlands</span>
+                  </div>
+                  <div class="airport-fare-pill">
+                    <small>FROM</small>
+                    <strong>&pound;85</strong>
+                  </div>
+                </div>
+
+                <div class="airport-perks-strip">
+                  <span>&check; Terminals 1 &amp; 2</span>
+                  <span>&check; 60m Free Wait</span>
+                  <span>&check; Direct M42 Access</span>
+                </div>
+
+                <div class="airport-info-block">
+                  <h5 class="info-block-heading">Terminal Meeting Points:</h5>
+                  <ul class="terminal-meeting-list">
+                    <li><strong>Terminals 1 &amp; 2:</strong> Main ground level arrivals hall directly opposite the baggage exit barrier.</li>
+                  </ul>
+                </div>
+
+                <div class="airport-info-block">
+                  <h5 class="info-block-heading">Popular Connections &amp; Estimated Times:</h5>
+                  <div class="route-price-tags">
+                    <span>Cotswolds &amp; Stroud &bull; 1h 15m &bull; <strong>&pound;75</strong></span>
+                    <span>Oxford &bull; 1h 10m &bull; <strong>&pound;85</strong></span>
+                    <span>Coventry &bull; 20m &bull; <strong>&pound;45</strong></span>
+                    <span>Bristol &bull; 1h 35m &bull; <strong>&pound;95</strong></span>
+                  </div>
+                </div>
+
+                <div class="airport-card-actions">
+                  <button class="btn btn-navy btn-block" onclick="App.bookAirportTransfer('Birmingham Airport (BHX)', 'Stroud, Cotswolds, GL5', 85)">
+                    Book Birmingham Transfer &rarr;
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- How Airport Pickups Work -->
+      <section class="section bg-light border-y">
+        <div class="container">
+          <div class="section-header text-center">
+            <h2 class="section-title">How Our Airport Pickup Works</h2>
+            <p class="section-sub">From runway touchdown to your doorstep, our airport transfer service is designed for effortless travel.</p>
+          </div>
+
+          <div class="steps-grid">
+            <div class="step-card">
+              <div class="step-badge">1</div>
+              <h3 class="step-title">Flight Touchdown</h3>
+              <p class="step-desc">Our dispatch system monitors your flight radar in real time, adjusting your driver's schedule automatically.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-badge">2</div>
+              <h3 class="step-title">Luggage &amp; Customs</h3>
+              <p class="step-desc">You receive 60 minutes of complimentary waiting time after landing to collect luggage and pass through border control.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-badge">3</div>
+              <h3 class="step-title">Arrivals Hall Greeting</h3>
+              <p class="step-desc">Your chauffeur awaits inside arrivals with a clear personalized name board, ready to take your bags.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-badge">4</div>
+              <h3 class="step-title">Executive Chauffeur Drive</h3>
+              <p class="step-desc">Relax in your climate-controlled Mercedes sedan, estate, or MPV as you are driven directly to your destination.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Airport Transfer Booking Banner -->
+      <section class="section">
+        <div class="container">
+          <div class="airport-booking-cta-card">
+            <div class="cta-card-content">
+              <span class="badge-pill-white">INSTANT FIXED QUOTE</span>
+              <h3 class="cta-card-title">Ready to Book Your Airport Transfer?</h3>
+              <p class="cta-card-sub">Reserve your chauffeur today with guaranteed fixed pricing, complimentary flight tracking, and free cancellation up to 24 hours before pickup.</p>
+              <div class="cta-card-buttons">
+                <button class="btn btn-light btn-lg" onclick="App.navigateTo('select-vehicle')">Book Your Transfer Now</button>
+                <button class="btn btn-outline-white btn-lg" onclick="App.navigateTo('home')">&larr; Return to Home</button>
+                <a href="tel:+441453888999" class="btn btn-glass btn-lg">Call 01453 888 999</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW 2: SELECT VEHICLE STEP -->
+    <!-- ============================================== -->
+    <section id="viewSelectVehicle" class="app-view">
+      <div class="container view-container">
+        <!-- Booking Flow Stepper Bar -->
+        <div class="flow-stepper">
+          <div class="step-indicator completed" onclick="App.navigateTo('home')">
+            <div class="step-circle">✓</div>
+            <span class="step-text">1. Journey Details</span>
+          </div>
+          <div class="step-line active"></div>
+          <div class="step-indicator active">
+            <div class="step-circle">2</div>
+            <span class="step-text">2. Vehicle Selection</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-indicator">
+            <div class="step-circle">3</div>
+            <span class="step-text">3. Passenger Details</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-indicator">
+            <div class="step-circle">4</div>
+            <span class="step-text">4. Payment</span>
+          </div>
+        </div>
+
+        <div class="booking-layout">
+          <!-- Left Column: Vehicle Selection List -->
+          <div class="booking-main-col">
+            <div class="view-headline-row">
+              <div>
+                <h1 class="view-title">Select Your Vehicle</h1>
+                <p class="view-subtitle">Choose from our premium fleet for your journey</p>
+              </div>
+              <span class="badge-count" id="vehicleCountBadge">4 Vehicles Available</span>
+            </div>
+
+            <div class="vehicle-select-list">
+              <!-- Vehicle 1: Sedan -->
+              <div class="vehicle-card-row" id="cardSedan" onclick="App.selectVehicle('sedan')">
+                <div class="vcard-img-wrap">
+                  <img src="./assets/images/car_sedan.jpg" alt="Executive Sedan" />
+                </div>
+                <div class="vcard-info">
+                  <div class="vcard-title-row">
+                    <h3 class="vcard-name">Sedan</h3>
+                    <div class="vcard-price-block">
+                      <span class="vcard-price-label">FROM</span>
+                      <span class="vcard-price-value">£45</span>
+                    </div>
+                  </div>
+                  <p class="vcard-tagline">Elegant comfort for individuals and couples.</p>
+                  <div class="vcard-specs">
+                    <span>👤 3 Max</span>
+                    <span>🧳 2 Large</span>
+                    <span>❄️ AC</span>
+                    <span>⏱️ 15m Free Wait</span>
+                  </div>
+                  <button class="btn btn-navy vcard-action-btn" onclick="App.confirmVehicleSelection('sedan', event)">Choose Sedan</button>
+                </div>
+              </div>
+
+              <!-- Vehicle 2: Executive (Mercedes S-Class / E-Class) -->
+              <div class="vehicle-card-row popular-border selected-vcard" id="cardExecutive" onclick="App.selectVehicle('executive')">
+                <div class="popular-ribbon-tag">MOST POPULAR</div>
+                <div class="vcard-img-wrap">
+                  <img src="./assets/images/car_executive.jpg" alt="Executive Class" />
+                </div>
+                <div class="vcard-info">
+                  <div class="vcard-title-row">
+                    <h3 class="vcard-name">Executive</h3>
+                    <div class="vcard-price-block">
+                      <span class="vcard-price-label">FROM</span>
+                      <span class="vcard-price-value">£75</span>
+                    </div>
+                  </div>
+                  <p class="vcard-tagline">First-class travel experience with extra legroom.</p>
+                  <div class="vcard-specs">
+                    <span>👤 3 Max</span>
+                    <span>🧳 2 Large</span>
+                    <span>✈️ Flight Monitoring</span>
+                    <span>👋 Meet & Greet</span>
+                    <span>📶 Free WiFi</span>
+                  </div>
+                  <button class="btn btn-primary vcard-action-btn" onclick="App.confirmVehicleSelection('executive', event)">Choose Executive</button>
+                </div>
+              </div>
+
+              <!-- Vehicle 3: Estate -->
+              <div class="vehicle-card-row" id="cardEstate" onclick="App.selectVehicle('estate')">
+                <div class="vcard-img-wrap">
+                  <img src="./assets/images/car_estate.jpg" alt="Executive Estate" />
+                </div>
+                <div class="vcard-info">
+                  <div class="vcard-title-row">
+                    <h3 class="vcard-name">Estate</h3>
+                    <div class="vcard-price-block">
+                      <span class="vcard-price-label">FROM</span>
+                      <span class="vcard-price-value">£55</span>
+                    </div>
+                  </div>
+                  <p class="vcard-tagline">Perfect for families with extra luggage requirements.</p>
+                  <div class="vcard-specs">
+                    <span>👤 4 Max</span>
+                    <span>🧳 4 Large</span>
+                    <span>👶 Child Seat Avail.</span>
+                    <span>❄️ Dual Climate</span>
+                  </div>
+                  <button class="btn btn-navy vcard-action-btn" onclick="App.confirmVehicleSelection('estate', event)">Choose Estate</button>
+                </div>
+              </div>
+
+              <!-- Vehicle 4: Luxury MPV -->
+              <div class="vehicle-card-row" id="cardMpv" onclick="App.selectVehicle('mpv')">
+                <div class="vcard-img-wrap">
+                  <img src="./assets/images/car_mpv.jpg" alt="Luxury MPV" />
+                </div>
+                <div class="vcard-info">
+                  <div class="vcard-title-row">
+                    <h3 class="vcard-name">Luxury MPV</h3>
+                    <div class="vcard-price-block">
+                      <span class="vcard-price-label">FROM</span>
+                      <span class="vcard-price-value">£95</span>
+                    </div>
+                  </div>
+                  <p class="vcard-tagline">Spacious group travel without compromising on style.</p>
+                  <div class="vcard-specs">
+                    <span>👤 8 Max</span>
+                    <span>🧳 8 Large</span>
+                    <span>🛋️ Captain Chairs</span>
+                    <span>⚡ USB Chargers</span>
+                  </div>
+                  <button class="btn btn-navy vcard-action-btn" onclick="App.confirmVehicleSelection('mpv', event)">Choose Luxury MPV</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Dynamic Sticky Booking Summary -->
+          <div class="booking-sidebar-col">
+            <div class="summary-card sticky-sidebar">
+              <div class="summary-header">
+                <h3 class="summary-title">Booking Summary</h3>
+                <span class="summary-subtitle">Review your journey details</span>
+              </div>
+
+              <!-- Route Timeline -->
+              <div class="route-timeline-box">
+                <div class="timeline-step">
+                  <span class="timeline-dot pickup-dot"></span>
+                  <div class="timeline-info">
+                    <span class="timeline-label">PICKUP ADDRESS</span>
+                    <strong class="timeline-address" id="sidebarPickup">Stroud, Cotswolds, GL5</strong>
+                  </div>
+                </div>
+
+                <div class="timeline-connector"></div>
+
+                <div class="timeline-step">
+                  <span class="timeline-dot dropoff-dot"></span>
+                  <div class="timeline-info">
+                    <span class="timeline-label">DROP-OFF ADDRESS</span>
+                    <strong class="timeline-address" id="sidebarDropoff">London Heathrow Terminal 5</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Date & Time Row -->
+              <div class="summary-datetime-row">
+                <div>
+                  <span class="meta-label">📅 DATE</span>
+                  <strong class="meta-val" id="sidebarDate">Sat, 24 Aug 2026</strong>
+                </div>
+                <div>
+                  <span class="meta-label">⏰ TIME</span>
+                  <strong class="meta-val" id="sidebarTime">04:30 AM</strong>
+                </div>
+              </div>
+
+              <!-- Route Map Graphic -->
+              <div class="route-map-preview">
+                <div class="route-badge-overlay">
+                  <span>🚗 Est. 1h 45m duration (92 miles)</span>
+                </div>
+              </div>
+
+              <!-- Price Breakdown -->
+              <div class="price-breakdown-box">
+                <div class="price-row">
+                  <span>Base Fare (Est.)</span>
+                  <span id="sidebarBaseFare">£68.00</span>
+                </div>
+                <div class="price-row">
+                  <span>Airport Fees & Taxes</span>
+                  <span id="sidebarTaxes">£7.00</span>
+                </div>
+                <div class="price-divider"></div>
+                <div class="price-row total-row">
+                  <span>Total Amount</span>
+                  <span class="total-price-text" id="sidebarTotal">£75.00</span>
+                </div>
+                <span class="price-notice">✓ Fixed Pricing • No Hidden Fees • Incl. VAT</span>
+              </div>
+
+              <!-- Professional Standard Notes -->
+              <div class="sidebar-standards">
+                <h4>OUR PROFESSIONAL STANDARD</h4>
+                <ul>
+                  <li>✓ Premium comfort and cleanliness</li>
+                  <li>✓ Licensed & vetted professional drivers</li>
+                  <li>✓ Complimentary flight tracking</li>
+                </ul>
+                <div class="trust-icons-row">
+                  <div class="trust-pill">🔒 SECURE</div>
+                  <div class="trust-pill">📅 FREE CANCEL</div>
+                  <div class="trust-pill">🚫 NO HIDDEN</div>
+                </div>
+              </div>
+
+              <!-- Assistance Box -->
+              <div class="need-assistance-card">
+                <div class="assistance-icon">ℹ️</div>
+                <div class="assistance-text">
+                  <strong>Need assistance?</strong>
+                  <p>Our 24/7 support team is here to help with your booking. Call <a href="tel:+441453888999">+44 (0) 1453 888 999</a></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW 3: PASSENGER DETAILS STEP -->
+    <!-- ============================================== -->
+    <section id="viewPassengerDetails" class="app-view">
+      <div class="container view-container">
+        <!-- Booking Flow Stepper Bar -->
+        <div class="flow-stepper">
+          <div class="step-indicator completed" onclick="App.navigateTo('home')">
+            <div class="step-circle">✓</div>
+            <span class="step-text">1. Journey</span>
+          </div>
+          <div class="step-line active"></div>
+          <div class="step-indicator completed" onclick="App.navigateTo('select-vehicle')">
+            <div class="step-circle">✓</div>
+            <span class="step-text">2. Vehicle</span>
+          </div>
+          <div class="step-line active"></div>
+          <div class="step-indicator active">
+            <div class="step-circle">3</div>
+            <span class="step-text">3. Details</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-indicator">
+            <div class="step-circle">4</div>
+            <span class="step-text">4. Payment</span>
+          </div>
+        </div>
+
+        <div class="booking-layout">
+          <!-- Left Column: Passenger Form -->
+          <div class="booking-main-col">
+            <div class="view-headline">
+              <h1 class="view-title">Passenger Details</h1>
+              <p class="view-subtitle">Please provide passenger information for booking confirmation and driver coordination.</p>
+            </div>
+
+            <form id="passengerDetailsForm" onsubmit="App.handlePassengerSubmit(event)">
+              <!-- Contact Information Group -->
+              <div class="form-card-box">
+                <h3 class="card-box-title">
+                  <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  Contact Information
+                </h3>
+
+                <div class="form-group">
+                  <label for="passFullName" class="form-label">Full Name</label>
+                  <input type="text" id="passFullName" class="form-control" placeholder="e.g. Johnathan Doe" value="James Doe" required />
+                </div>
+
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label for="passEmail" class="form-label">Email Address</label>
+                    <input type="email" id="passEmail" class="form-control" placeholder="john@example.com" value="james@example.com" required />
+                  </div>
+                  <div class="form-group">
+                    <label for="passPhone" class="form-label">Phone Number</label>
+                    <div class="input-prefix-wrap">
+                      <span class="phone-prefix">+44 (UK)</span>
+                      <input type="tel" id="passPhone" class="form-control prefix-input" placeholder="7700 900000" value="7700 900000" required />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Journey Information Group -->
+              <div class="form-card-box">
+                <h3 class="card-box-title">
+                  <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"></path></svg>
+                  Journey Information
+                </h3>
+                <div class="form-group">
+                  <label for="passFlightNum" class="form-label">Flight Number (Optional)</label>
+                  <input type="text" id="passFlightNum" class="form-control" placeholder="e.g. BA123" value="BA123" />
+                  <span class="field-hint">Providing your flight number allows us to monitor delays and adjust your pickup time automatically.</span>
+                </div>
+              </div>
+
+              <!-- Special Requests -->
+              <div class="form-card-box">
+                <h3 class="card-box-title">
+                  <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                  Special Requests
+                </h3>
+
+                <div class="tag-selector-row">
+                  <button type="button" class="tag-chip" data-req="child_seat" onclick="App.toggleRequestChip(this)">Child Seat</button>
+                  <button type="button" class="tag-chip active" data-req="meet_greet" onclick="App.toggleRequestChip(this)">Meet & Greet</button>
+                  <button type="button" class="tag-chip" data-req="extra_luggage" onclick="App.toggleRequestChip(this)">Extra Luggage</button>
+                  <button type="button" class="tag-chip" data-req="wheelchair" onclick="App.toggleRequestChip(this)">Wheelchair Access</button>
+                </div>
+
+                <div class="form-group mt-3">
+                  <label for="passNotes" class="form-label">Any additional notes for your driver?</label>
+                  <textarea id="passNotes" class="form-control textarea-field" rows="3" placeholder="Terminal 5 departures drop-off preferred, 2 medium suitcases."></textarea>
+                </div>
+              </div>
+
+              <!-- Create Account Banner -->
+              <div class="account-prompt-card">
+                <div class="account-prompt-text">
+                  <div class="account-prompt-title">
+                    <span class="star-badge-icon">⭐</span>
+                    <strong>Create Your Account</strong>
+                  </div>
+                  <p>Join our rewards program to track your bookings in real-time, access history, and enjoy faster future checkouts.</p>
+                  <div class="prompt-perks">
+                    <span>✓ Track Bookings</span>
+                    <span>✓ Access History</span>
+                  </div>
+                </div>
+                <div class="account-prompt-actions">
+                  <button type="button" class="btn btn-primary btn-sm" onclick="App.createAccountMock()">Continue with Email</button>
+                  <button type="button" class="btn btn-light btn-sm" onclick="App.guestCheckoutMock()">Guest Checkout</button>
+                </div>
+              </div>
+
+              <!-- Form Navigation Footer -->
+              <div class="form-nav-row">
+                <button type="button" class="btn btn-outline" onclick="App.navigateTo('select-vehicle')">← Back to Vehicles</button>
+                <button type="submit" class="btn btn-navy btn-xl" id="btnContinueToPayment">Continue to Payment →</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Right Column: Booking Summary -->
+          <div class="booking-sidebar-col">
+            <div class="summary-card sticky-sidebar">
+              <div class="summary-header">
+                <h3 class="summary-title">Booking Summary</h3>
+                <span class="ref-badge">Reference: #JRC-2026-8821</span>
+              </div>
+
+              <!-- Selected Vehicle Mini Card -->
+              <div class="selected-vehicle-banner" id="passengerVehicleBanner">
+                <img src="./assets/images/car_executive.jpg" alt="Selected Vehicle" class="mini-car-img" id="passVehicleImg" />
+                <div class="mini-car-info">
+                  <strong id="passVehicleName">Executive Class</strong>
+                  <span>Mercedes-Benz E-Class or similar</span>
+                  <div class="mini-car-specs">👤 3 &nbsp;•&nbsp; 🧳 2</div>
+                </div>
+              </div>
+
+              <!-- Route Timeline -->
+              <div class="route-timeline-box">
+                <div class="timeline-step">
+                  <span class="timeline-dot pickup-dot"></span>
+                  <div class="timeline-info">
+                    <span class="timeline-label">PICKUP</span>
+                    <strong class="timeline-address" id="passSidebarPickup">Stroud, Gloucestershire</strong>
+                  </div>
+                </div>
+                <div class="timeline-connector"></div>
+                <div class="timeline-step">
+                  <span class="timeline-dot dropoff-dot"></span>
+                  <div class="timeline-info">
+                    <span class="timeline-label">DROP-OFF</span>
+                    <strong class="timeline-address" id="passSidebarDropoff">London Heathrow Terminal 5</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="summary-datetime-row">
+                <div>
+                  <span class="meta-label">Date & Time</span>
+                  <strong class="meta-val" id="passSidebarDateTime">Dec 14, 08:30 AM</strong>
+                </div>
+                <div>
+                  <span class="meta-label">Est. Duration</span>
+                  <strong class="meta-val">1h 45m (92 miles)</strong>
+                </div>
+              </div>
+
+              <div class="price-breakdown-box">
+                <div class="price-row">
+                  <span>Base Fare</span>
+                  <span id="passBaseFare">£68.00</span>
+                </div>
+                <div class="price-row">
+                  <span>Airport Fees & Taxes</span>
+                  <span id="passTaxes">£7.00</span>
+                </div>
+                <div class="price-divider"></div>
+                <div class="price-row total-row">
+                  <div>
+                    <span class="total-title">Total</span>
+                    <span class="total-sub">(Fixed Price)</span>
+                  </div>
+                  <span class="total-price-text" id="passTotalPrice">£75.00</span>
+                </div>
+                <span class="price-notice text-right">Incl. VAT</span>
+              </div>
+
+              <!-- Trust Grid -->
+              <div class="trust-grid-2x2">
+                <div class="trust-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <span>SECURE BOOKING</span>
+                </div>
+                <div class="trust-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  <span>FREE CANCELLATION</span>
+                </div>
+                <div class="trust-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+                  <span>PRO DRIVERS</span>
+                </div>
+                <div class="trust-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                  <span>NO HIDDEN FEES</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW 4: PAYMENT & REVIEW STEP -->
+    <!-- ============================================== -->
+    <section id="viewPayment" class="app-view">
+      <div class="container view-container">
+        <!-- Stepper Bar -->
+        <div class="flow-stepper">
+          <div class="step-indicator completed" onclick="App.navigateTo('home')">
+            <div class="step-circle">✓</div>
+            <span class="step-text">Journey</span>
+          </div>
+          <div class="step-line active"></div>
+          <div class="step-indicator completed" onclick="App.navigateTo('select-vehicle')">
+            <div class="step-circle">✓</div>
+            <span class="step-text">Vehicle</span>
+          </div>
+          <div class="step-line active"></div>
+          <div class="step-indicator completed" onclick="App.navigateTo('passenger-details')">
+            <div class="step-circle">✓</div>
+            <span class="step-text">Details</span>
+          </div>
+          <div class="step-line active"></div>
+          <div class="step-indicator active">
+            <div class="step-circle">4</div>
+            <span class="step-text">Payment</span>
+          </div>
+        </div>
+
+        <div class="booking-layout">
+          <!-- Left Main Column -->
+          <div class="booking-main-col">
+            <h1 class="view-title">
+              <svg class="icon-lg text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+              Review Your Booking
+            </h1>
+
+            <!-- Review Summary Cards Row -->
+            <div class="review-cards-grid">
+              <!-- Journey Summary Box -->
+              <div class="review-box">
+                <div class="review-box-header">
+                  <span class="review-box-title">JOURNEY SUMMARY</span>
+                  <button type="button" class="btn-link" onclick="App.navigateTo('select-vehicle')">Edit ✏️</button>
+                </div>
+                <div class="review-route-line">
+                  <span class="bullet-pickup">📍</span>
+                  <div>
+                    <span class="label-tiny">Pickup</span>
+                    <strong id="revPickup">Stroud, Gloucestershire</strong>
+                  </div>
+                </div>
+                <div class="review-route-line">
+                  <span class="bullet-dropoff">🏁</span>
+                  <div>
+                    <span class="label-tiny">Drop-off</span>
+                    <strong id="revDropoff">Heathrow Airport Terminal 5</strong>
+                  </div>
+                </div>
+                <div class="review-meta-row">
+                  <div>
+                    <span class="label-tiny">Date & Time</span>
+                    <span id="revDateTime">Dec 14, 09:30 AM</span>
+                  </div>
+                  <div>
+                    <span class="label-tiny">Passengers</span>
+                    <span id="revPassengers">2 Adults</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Passenger Information Box -->
+              <div class="review-box">
+                <div class="review-box-header">
+                  <span class="review-box-title">PASSENGER INFORMATION</span>
+                  <button type="button" class="btn-link" onclick="App.navigateTo('passenger-details')">Edit ✏️</button>
+                </div>
+                <div class="pass-avatar-row">
+                  <div class="avatar-circle">JD</div>
+                  <div>
+                    <strong class="pass-name-display" id="revPassName">James Doe</strong>
+                    <span class="pass-email-display" id="revPassEmail">james@example.com</span>
+                  </div>
+                </div>
+                <div class="pass-phone-row">
+                  <span class="label-tiny">Phone Number</span>
+                  <strong id="revPassPhone">+44 7700 900000</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Vehicle Detail Banner -->
+            <div class="vehicle-featured-banner">
+              <div class="vfeat-img">
+                <img src="./assets/images/car_executive.jpg" alt="Selected Car" id="revCarImg" />
+              </div>
+              <div class="vfeat-details">
+                <span class="vfeat-badge">EXECUTIVE CHOICE</span>
+                <h3 class="vfeat-name" id="revCarName">Executive Sedan</h3>
+                <span class="vfeat-model">Mercedes-Benz E-Class or equivalent</span>
+                <div class="vfeat-perks">
+                  <span>✈️ Flight Monitoring</span>
+                  <span>👋 Meet & Greet</span>
+                  <span>⏱️ Free Waiting Time</span>
+                  <span>❄️ Air Conditioning</span>
+                  <span>👔 Professional Driver</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Secure Payment Box -->
+            <div class="payment-card-box">
+              <div class="payment-header-row">
+                <h3 class="payment-title">
+                  <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  Secure Payment
+                </h3>
+                <div class="payment-card-badges">
+                  <span class="badge-card-type visa">VISA</span>
+                  <span class="badge-card-type mc">MC</span>
+                  <span class="badge-card-type amex">AMEX</span>
+                  <span class="badge-card-type apple">Apple Pay</span>
+                </div>
+              </div>
+
+              <div class="security-guarantees-row">
+                <span>🔒 Secure SSL 256-bit</span>
+                <span>🛡️ Stripe Protected</span>
+                <span>💳 PCI Compliant</span>
+              </div>
+
+              <!-- Payment Form -->
+              <form id="paymentForm" onsubmit="App.handlePaymentSubmit(event)">
+                <div class="form-group">
+                  <label for="cardHolder" class="form-label">CARDHOLDER NAME</label>
+                  <input type="text" id="cardHolder" class="form-control" placeholder="James Doe" value="James Doe" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="cardNumber" class="form-label">CARD NUMBER</label>
+                  <div class="input-card-wrapper">
+                    <input type="text" id="cardNumber" class="form-control" placeholder="4242 •••• •••• 4242" maxlength="19" value="4242 •••• •••• 4242" required />
+                    <span class="card-chip-icon">💳</span>
+                  </div>
+                </div>
+
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label for="cardExpiry" class="form-label">EXPIRY DATE</label>
+                    <input type="text" id="cardExpiry" class="form-control" placeholder="MM/YY" maxlength="5" value="12/28" required />
+                  </div>
+                  <div class="form-group">
+                    <label for="cardCvv" class="form-label">CVV</label>
+                    <input type="password" id="cardCvv" class="form-control" placeholder="123" maxlength="4" value="888" required />
+                  </div>
+                </div>
+
+                <!-- Refund Banner -->
+                <div class="refund-info-banner">
+                  <span class="refund-icon">ℹ️</span>
+                  <span>Cancel up to 24 hours before pickup for a full refund.</span>
+                </div>
+
+                <!-- Why Customers Choose Us -->
+                <div class="trust-mini-section">
+                  <span class="trust-mini-title">WHY CUSTOMERS CHOOSE US</span>
+                  <div class="trust-mini-grid">
+                    <span>✓ Professional Drivers</span>
+                    <span>✓ Fixed Pricing</span>
+                    <span>✓ Reliable Transfers</span>
+                    <span>✓ Secure Payments</span>
+                  </div>
+                </div>
+
+                <!-- Pay Button -->
+                <button type="submit" class="btn btn-navy btn-xl btn-block" id="btnCompletePayment">
+                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <span id="btnPayText">Securely Complete Booking • £75.00</span>
+                </button>
+                <p class="payment-disclaimer text-center">No payment details are stored on our servers. Powered by Stripe.</p>
+              </form>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div class="booking-sidebar-col">
+            <div class="summary-card sticky-sidebar">
+              <h3 class="summary-title">Booking Summary</h3>
+
+              <div class="summary-fare-list">
+                <div class="fare-row">
+                  <span>Vehicle Fare</span>
+                  <strong id="finalVehicleFare">£75.00</strong>
+                </div>
+                <div class="fare-row">
+                  <span>Taxes & Fees</span>
+                  <span class="badge-included">Included</span>
+                </div>
+                <div class="fare-row">
+                  <span>Flight Monitoring</span>
+                  <span class="badge-included">Included</span>
+                </div>
+                <div class="fare-row">
+                  <span>Meet & Greet</span>
+                  <span class="badge-included">Included</span>
+                </div>
+                <div class="price-divider"></div>
+                <div class="fare-row total-row">
+                  <strong class="total-title">Total Fare</strong>
+                  <strong class="total-price-text" id="finalTotalFare">£75.00</strong>
+                </div>
+              </div>
+
+              <div class="summary-perks-list">
+                <div class="perk-item">✓ Fixed Pricing Guaranteed</div>
+                <div class="perk-item">✓ No Hidden Charges</div>
+                <div class="perk-item">✓ Instant SMS & Email Confirmation</div>
+                <div class="perk-item">✓ Licensed & Vetted Drivers</div>
+              </div>
+
+              <!-- Need Help Card -->
+              <div class="sidebar-help-card">
+                <div class="help-head">
+                  <span class="icon-support">🎧</span>
+                  <strong>Need Help?</strong>
+                </div>
+                <p>24/7 Support & Emergency Booking Assistance</p>
+                <a href="tel:+441453888999" class="btn btn-navy btn-sm btn-block">+44 (0) 1453 888 999</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW 5: CUSTOMER DASHBOARD -->
+    <!-- ============================================== -->
+    <section id="viewDashboard" class="app-view">
+      <div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="dashboard-sidebar">
+          <div class="dash-brand-block">
+            <img src="./assets/images/logo.png" alt="Logo" class="dash-logo" />
+            <span class="dash-brand-title">JO'S RURAL CARS</span>
+          </div>
+
+          <nav class="dash-nav-menu">
+            <button class="dash-nav-item active" data-tab="overview">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              <span>Dashboard</span>
+            </button>
+            <button class="dash-nav-item" data-tab="profile" onclick="App.showDashboardTab('profile')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <span>Profile</span>
+            </button>
+            <button class="dash-nav-item" data-tab="payments" onclick="App.showDashboardTab('payments')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+              <span>Payments</span>
+            </button>
+            <button class="dash-nav-item" data-tab="history" onclick="App.showDashboardTab('history')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+              <span>History</span>
+            </button>
+            <button class="dash-nav-item" data-tab="help" onclick="App.navigateTo('contact')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              <span>Help Center</span>
+            </button>
+          </nav>
+
+          <!-- Rural Support Box -->
+          <div class="dash-support-widget">
+            <span class="support-title">🎧 Rural Support 24/7</span>
+            <p class="support-desc">Emergency Booking Assistance available for all transfers.</p>
+            <div class="support-btns-row">
+              <a href="tel:+441453888999" class="btn btn-navy btn-xs">Call Now</a>
+              <a href="https://wa.me/441453888999" target="_blank" class="btn btn-outline btn-xs">WhatsApp</a>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main Dashboard Content Area -->
+        <div class="dashboard-content-area">
+          <div class="dash-top-bar">
+            <div>
+              <h1 class="dash-welcome-title">Welcome back, James</h1>
+              <p class="dash-welcome-sub">Ready for your next rural transfer?</p>
+            </div>
+            <button class="btn btn-navy" onclick="App.navigateTo('select-vehicle')">
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+              Book New Journey
+            </button>
+          </div>
+
+          <!-- Active Live Next Journey Tracker Card -->
+          <div class="live-journey-card">
+            <div class="live-card-header">
+              <div>
+                <span class="label-accent">NEXT JOURNEY</span>
+                <h3 class="live-route-title" id="liveRouteTitle">Reading → Heathrow T5</h3>
+              </div>
+              <div class="countdown-badge">
+                <span class="countdown-clock">⏳</span>
+                <strong id="liveCountdown">3 Days Remaining</strong>
+              </div>
+            </div>
+
+            <!-- 4-step progress tracker -->
+            <div class="journey-tracker-track">
+              <div class="track-step done">
+                <div class="track-circle">✓</div>
+                <span class="track-label">Booking Confirmed</span>
+                <span class="track-time">Oct 21, 08:15</span>
+              </div>
+              <div class="track-bar done"></div>
+              <div class="track-step active">
+                <div class="track-circle">🚗</div>
+                <span class="track-label">Driver Assigned</span>
+                <span class="track-time">Dave M. (Mercedes E)</span>
+              </div>
+              <div class="track-bar"></div>
+              <div class="track-step">
+                <div class="track-circle">🛣️</div>
+                <span class="track-label">Driver En Route</span>
+                <span class="track-time">Pending</span>
+              </div>
+              <div class="track-bar"></div>
+              <div class="track-step">
+                <div class="track-circle">🏁</div>
+                <span class="track-label">Trip Completed</span>
+                <span class="track-time">Terminal 5</span>
+              </div>
+            </div>
+
+            <div class="live-card-footer">
+              <div class="live-meta" id="liveMeta">
+                <span>📅 24 Dec 2026, 04:30 AM</span>
+                <span>🚘 Executive Sedan (Mercedes-Benz)</span>
+                <span>👤 2 Passengers • 2 Bags</span>
+              </div>
+              <button class="btn btn-outline-white btn-sm" onclick="App.showManageTripModal()">Manage This Trip</button>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div class="quick-actions-row">
+            <button class="quick-action-pill" onclick="App.navigateTo('select-vehicle')">
+              <span>➕</span> New Booking
+            </button>
+            <button class="quick-action-pill" onclick="App.rebookLastTrip()">
+              <span>🔄</span> Rebook Last
+            </button>
+            <button class="quick-action-pill" onclick="App.openLiveSupport()">
+              <span>💬</span> Live Support
+            </button>
+            <button class="quick-action-pill" onclick="App.showSavedRoutes()">
+              <span>🔖</span> Saved Routes
+            </button>
+          </div>
+
+          <!-- Customer Stats Grid -->
+          <div class="dash-stats-grid">
+            <div class="dash-stat-box">
+              <span class="stat-icon-wrap">✈️</span>
+              <div class="stat-details">
+                <span class="stat-value" id="dashStatUpcoming">2</span>
+                <span class="stat-name">UPCOMING</span>
+              </div>
+            </div>
+
+            <div class="dash-stat-box">
+              <span class="stat-icon-wrap">🎯</span>
+              <div class="stat-details">
+                <span class="stat-value" id="dashStatCompleted">14</span>
+                <span class="stat-name">COMPLETED</span>
+              </div>
+            </div>
+
+            <div class="dash-stat-box">
+              <span class="stat-icon-wrap">💳</span>
+              <div class="stat-details">
+                <span class="stat-value" id="dashStatTotal">£1.2k</span>
+                <span class="stat-name">TOTAL SPENT</span>
+              </div>
+            </div>
+
+            <div class="dash-stat-box">
+              <span class="stat-icon-wrap">📍</span>
+              <div class="stat-details">
+                <span class="stat-value">3</span>
+                <span class="stat-name">FAV ROUTES</span>
+              </div>
+            </div>
+
+            <div class="dash-stat-box">
+              <span class="stat-icon-wrap">👑</span>
+              <div class="stat-details">
+                <span class="stat-value text-gold">Gold</span>
+                <span class="stat-name">LEVEL</span>
+              </div>
+            </div>
+
+            <div class="dash-stat-box">
+              <span class="stat-icon-wrap">📅</span>
+              <div class="stat-details">
+                <span class="stat-value">2022</span>
+                <span class="stat-name">SINCE</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Booking History Section -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <h3 class="dash-card-title">Your Booking History</h3>
+              <div class="dash-table-filters">
+                <input type="text" id="dashHistorySearch" class="form-control form-control-sm" placeholder="🔍 Search bookings..." oninput="App.filterBookingHistory(this.value)" />
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="dash-table" id="bookingHistoryTable">
+                <thead>
+                  <tr>
+                    <th>Ref #</th>
+                    <th>Vehicle</th>
+                    <th>Pickup</th>
+                    <th>Drop-off</th>
+                    <th>Date & Time</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dashTableBody">
+                  <!-- Row 1 -->
+                  <tr>
+                    <td><strong>#JR-8821</strong></td>
+                    <td>Executive Saloon</td>
+                    <td>Reading <span class="text-muted">(RG1 2QE)</span></td>
+                    <td>Heathrow T5 <span class="text-muted">(TW6 2GA)</span></td>
+                    <td>Oct 24, 2026, 04:30 AM</td>
+                    <td><span class="badge-status badge-confirmed">Confirmed</span></td>
+                    <td>
+                      <button class="btn btn-navy btn-xs" onclick="App.rebookTrip('Reading', 'Heathrow T5', 65)">Rebook</button>
+                    </td>
+                  </tr>
+                  <!-- Row 2 -->
+                  <tr>
+                    <td><strong>#JR-8790</strong></td>
+                    <td>MPV (6-Seater)</td>
+                    <td>Wokingham <span class="text-muted">(RG40 1AS)</span></td>
+                    <td>Gatwick South <span class="text-muted">(RH6 0NP)</span></td>
+                    <td>Oct 20, 2026, 10:15 AM</td>
+                    <td><span class="badge-status badge-completed">Completed</span></td>
+                    <td>
+                      <button class="btn btn-navy btn-xs" onclick="App.rebookTrip('Wokingham', 'Gatwick South', 85)">Rebook</button>
+                    </td>
+                  </tr>
+                  <!-- Row 3 -->
+                  <tr>
+                    <td><strong>#JR-8640</strong></td>
+                    <td>Business Class</td>
+                    <td>Stroud <span class="text-muted">(GL5 1AB)</span></td>
+                    <td>Birmingham BHX <span class="text-muted">(B26 3QJ)</span></td>
+                    <td>Sep 12, 2026, 06:00 AM</td>
+                    <td><span class="badge-status badge-completed">Completed</span></td>
+                    <td>
+                      <button class="btn btn-navy btn-xs" onclick="App.rebookTrip('Stroud', 'Birmingham BHX', 85)">Rebook</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="dash-card-footer text-center">
+              <button class="btn-link" onclick="App.showAllBookings()">View All Bookings</button>
+            </div>
+          </div>
+
+          <!-- Bottom Promotional & Favorite Routes Grid -->
+          <div class="dash-split-grid">
+            <!-- Promo Card -->
+            <div class="dash-promo-card">
+              <span class="badge-pill-white">PREMIUM SERVICE</span>
+              <h3 class="promo-title">Executive Mercedes Fleet</h3>
+              <p class="promo-text">Arrive in style with our new S-Class range. Ideal for business meetings and long-distance transfers.</p>
+              <button class="btn btn-light" onclick="App.selectVehicleAndProceed('executive')">Upgrade Ride</button>
+            </div>
+
+            <!-- Favorite Routes Card -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3 class="dash-card-title">Favorite Routes</h3>
+              </div>
+              <div class="fav-routes-list">
+                <div class="fav-route-item">
+                  <div class="fav-route-info">
+                    <span class="fav-route-icon">✈️</span>
+                    <div>
+                      <strong>Reading → Heathrow</strong>
+                      <span class="text-muted text-xs">Last booked 4 days ago</span>
+                    </div>
+                  </div>
+                  <div class="fav-route-right">
+                    <span class="fav-price">£65</span>
+                    <button class="btn btn-navy btn-xs" onclick="App.rebookTrip('Reading', 'Heathrow Terminal 5', 65)">Rebook</button>
+                  </div>
+                </div>
+
+                <div class="fav-route-item">
+                  <div class="fav-route-info">
+                    <span class="fav-route-icon">📍</span>
+                    <div>
+                      <strong>Oxford → Gatwick</strong>
+                      <span class="text-muted text-xs">Set Route Rate</span>
+                    </div>
+                  </div>
+                  <div class="fav-route-right">
+                    <span class="fav-price">£115</span>
+                    <button class="btn btn-navy btn-xs" onclick="App.rebookTrip('Oxford', 'Gatwick Airport', 115)">Rebook</button>
+                  </div>
+                </div>
+
+                <div class="fav-route-item">
+                  <div class="fav-route-info">
+                    <span class="fav-route-icon">🚗</span>
+                    <div>
+                      <strong>London → Heathrow</strong>
+                      <span class="text-muted text-xs">Commuter Rate</span>
+                    </div>
+                  </div>
+                  <div class="fav-route-right">
+                    <span class="fav-price">£85</span>
+                    <button class="btn btn-navy btn-xs" onclick="App.rebookTrip('Central London', 'Heathrow Terminal 2', 85)">Rebook</button>
+                  </div>
+                </div>
+              </div>
+              <div class="dash-card-footer text-center">
+                <button class="btn-link" onclick="App.showSavedRoutes()">View All Routes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW 6: CONTACT US PAGE -->
+    <!-- ============================================== -->
+    <section id="viewContact" class="app-view">
+      <!-- Contact Hero -->
+      <section class="contact-hero">
+        <div class="container text-center">
+          <h1 class="contact-hero-title">Contact JO'S RURAL CARS</h1>
+          <p class="contact-hero-sub">Need assistance with a booking or have a question? Our team is here to help you experience a seamless journey across the UK.</p>
+        </div>
+      </section>
+
+      <!-- 3 Info Cards -->
+      <section class="container info-cards-container">
+        <div class="contact-cards-grid">
+          <div class="cinfo-card">
+            <div class="cinfo-icon">📞</div>
+            <h3 class="cinfo-title">Phone</h3>
+            <p class="cinfo-desc">Available for immediate support.</p>
+            <a href="tel:+441453888999" class="cinfo-link">+44 (0) 1453 888 999</a>
+            <span class="cinfo-sub">24/7 Support & Emergency Line</span>
+          </div>
+
+          <div class="cinfo-card">
+            <div class="cinfo-icon">✉️</div>
+            <h3 class="cinfo-title">Email</h3>
+            <p class="cinfo-desc">Responses within 2 business hours.</p>
+            <a href="mailto:bookings@josruralcars.co.uk" class="cinfo-link">bookings@josruralcars.co.uk</a>
+            <span class="cinfo-sub">General, Booking & Customer Service</span>
+          </div>
+
+          <div class="cinfo-card">
+            <div class="cinfo-icon">🕒</div>
+            <h3 class="cinfo-title">Service Area</h3>
+            <p class="cinfo-desc">We cover all major UK terminals.</p>
+            <strong class="cinfo-highlight">24/7 Nationwide Coverage</strong>
+            <span class="cinfo-sub">All UK Airports & Seaports</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Message Form & Quick Contact Options -->
+      <section class="section">
+        <div class="container contact-form-grid">
+          <!-- Form -->
+          <div class="contact-form-card">
+            <h3 class="cform-title">Send Us a Message</h3>
+            <form id="contactForm" onsubmit="App.handleContactSubmit(event)">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="contactName" class="form-label">Full Name</label>
+                  <input type="text" id="contactName" class="form-control" placeholder="John Doe" required />
+                </div>
+                <div class="form-group">
+                  <label for="contactEmail" class="form-label">Email Address</label>
+                  <input type="email" id="contactEmail" class="form-control" placeholder="john@example.com" required />
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="contactPhone" class="form-label">Phone Number</label>
+                  <input type="tel" id="contactPhone" class="form-control" placeholder="+44 7000 000000" />
+                </div>
+                <div class="form-group">
+                  <label for="contactSubject" class="form-label">Subject</label>
+                  <select id="contactSubject" class="form-control">
+                    <option value="General Inquiry">General Inquiry</option>
+                    <option value="Quote Request">Quote Request</option>
+                    <option value="Existing Booking">Existing Booking Change</option>
+                    <option value="Corporate Account">Corporate Account</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="contactMessage" class="form-label">Message</label>
+                <textarea id="contactMessage" class="form-control" rows="4" placeholder="How can we help you today?" required></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-navy btn-lg" id="btnSendMessage">Send Message</button>
+            </form>
+          </div>
+
+          <!-- Quick Contact Options Sidebar -->
+          <div class="contact-sidebar">
+            <div class="quick-options-box">
+              <h4 class="quick-title">Quick Contact Options</h4>
+              <div class="quick-buttons-grid">
+                <a href="tel:+441453888999" class="quick-btn">
+                  <span>📞</span> Call Us
+                </a>
+                <a href="mailto:bookings@josruralcars.co.uk" class="quick-btn">
+                  <span>✉️</span> Email Us
+                </a>
+                <a href="https://wa.me/441453888999" target="_blank" class="quick-btn">
+                  <span>💬</span> WhatsApp Us
+                </a>
+                <button type="button" class="quick-btn" onclick="App.navigateTo('select-vehicle')">
+                  <span>📋</span> Get a Quote
+                </button>
+              </div>
+            </div>
+
+            <div class="guarantee-box">
+              <div class="guarantee-header">
+                <span>🛡️</span>
+                <strong>Punctuality Guaranteed</strong>
+              </div>
+              <p>We track all flights in real-time to ensure your driver is waiting as soon as you land.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Terminal Badges -->
+      <section class="terminals-bar bg-light">
+        <div class="container text-center">
+          <h4 class="terminals-heading">Primary Airport Terminals</h4>
+          <div class="terminals-row">
+            <div class="term-badge">
+              <span>✈️ Heathrow</span>
+              <small>LHR Terminal 1-5</small>
+            </div>
+            <div class="term-badge">
+              <span>✈️ Gatwick</span>
+              <small>LGW North & South</small>
+            </div>
+            <div class="term-badge">
+              <span>✈️ Stansted</span>
+              <small>STN International</small>
+            </div>
+            <div class="term-badge">
+              <span>✈️ Luton</span>
+              <small>LTN International</small>
+            </div>
+            <div class="term-badge">
+              <span>✈️ Birmingham</span>
+              <small>BHX Terminals</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Emergency Line Banner -->
+      <section class="emergency-banner">
+        <div class="container text-center">
+          <span class="emergency-tag">🚨 Immediate Assistance</span>
+          <h3 class="emergency-title">Need urgent help with a transfer?</h3>
+          <p class="emergency-sub">Our emergency dispatch team is standing by 24/7 to help with last-minute bookings or travel changes.</p>
+          <div class="emergency-btns">
+            <a href="tel:+441453888999" class="btn btn-primary btn-lg">Call Emergency Line</a>
+            <button class="btn btn-outline-white btn-lg" onclick="App.openLiveSupport()">Chat with Support</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Ready to Travel Banner -->
+      <section class="ready-banner">
+        <div class="container text-center">
+          <h2 class="ready-title">Ready to Travel?</h2>
+          <div class="ready-actions">
+            <button class="btn btn-navy btn-lg" onclick="App.navigateTo('select-vehicle')">Book Now</button>
+            <button class="btn btn-outline btn-lg" onclick="App.navigateTo('select-vehicle')">View Fleet</button>
+          </div>
+        </div>
+      </section>
+    </section>
+
+  </main>
+
+  <!-- ============================================== -->
+  <!-- MODAL: BOOKING CONFIRMATION & RECEIPT -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalBookingSuccess">
+    <div class="modal-card">
+      <div class="modal-header-success">
+        <div class="modal-check-circle">✓</div>
+        <h3 class="modal-title">Booking Confirmed!</h3>
+        <p class="modal-subtitle">Your chauffeur has been booked successfully.</p>
+      </div>
+
+      <div class="modal-body">
+        <div class="receipt-box">
+          <div class="receipt-row">
+            <span>Booking Reference:</span>
+            <strong id="modalBookingRef">#JRC-2026-8821</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Passenger:</span>
+            <strong id="modalPassengerName">James Doe</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Pickup:</span>
+            <strong id="modalPickupLoc">Stroud, Cotswolds, GL5</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Destination:</span>
+            <strong id="modalDropoffLoc">London Heathrow Terminal 5</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Date & Time:</span>
+            <strong id="modalDateTime">Sat, 24 Aug 2026 at 04:30 AM</strong>
+          </div>
+          <div class="receipt-row">
+            <span>Vehicle:</span>
+            <strong id="modalVehicle">Executive Mercedes-Benz</strong>
+          </div>
+          <div class="receipt-row total-highlight">
+            <span>Total Paid (Fixed):</span>
+            <strong id="modalTotalPrice">£75.00</strong>
+          </div>
+        </div>
+        <p class="receipt-notice">A confirmation email and SMS with live driver dispatch details have been sent to your contact address.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-navy btn-block" onclick="App.goToDashboardAfterBooking()">Go to Customer Dashboard</button>
+        <button class="btn btn-outline btn-block mt-2" onclick="App.closeSuccessModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Footer -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <!-- Col 1: Brand & Bio -->
+      <div class="footer-col brand-col">
+        <div class="footer-brand">
+          <img src="./assets/images/logo.png" alt="Jo's Rural Cars" class="footer-logo-img" />
+          <span class="footer-brand-name">JO'S RURAL CARS</span>
+        </div>
+        <p class="footer-bio">
+          Providing premium, reliable, and professional airport transfer services across rural Berkshire, Oxfordshire, the Cotswolds, and the wider UK.
+        </p>
+        <div class="social-links-row">
+          <a href="#" class="social-icon" title="Facebook">FB</a>
+          <a href="#" class="social-icon" title="Instagram">IG</a>
+          <a href="#" class="social-icon" title="LinkedIn">IN</a>
+        </div>
+      </div>
+
+      <!-- Col 2: Services -->
+      <div class="footer-col">
+        <h4 class="footer-col-title">SERVICES</h4>
+        <ul class="footer-links">
+          <li><a href="#airports" onclick="App.navigateTo('airports')">Airport Transfers</a></li>
+          <li><a href="#select-vehicle" onclick="App.navigateTo('select-vehicle')">Corporate Travel</a></li>
+          <li><a href="#select-vehicle" onclick="App.navigateTo('select-vehicle')">Long Distance Rides</a></li>
+          <li><a href="#select-vehicle" onclick="App.navigateTo('select-vehicle')">Event Transportation</a></li>
+          <li><a href="#airports" onclick="App.navigateTo('airports')">Meet &amp; Greet</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 3: Coverage -->
+      <div class="footer-col">
+        <h4 class="footer-col-title">COVERAGE</h4>
+        <ul class="footer-links">
+          <li><a href="#airports" onclick="App.navigateTo('airports')">Heathrow (LHR)</a></li>
+          <li><a href="#airports" onclick="App.navigateTo('airports')">Gatwick (LGW)</a></li>
+          <li><a href="#airports" onclick="App.navigateTo('airports')">Stansted (STN)</a></li>
+          <li><a href="#airports" onclick="App.navigateTo('airports')">Luton (LTN)</a></li>
+          <li><a href="#airports" onclick="App.navigateTo('airports')">Birmingham (BHX)</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 4: Quick Links -->
+      <div class="footer-col">
+        <h4 class="footer-col-title">QUICK LINKS</h4>
+        <ul class="footer-links">
+          <li><a href="#home" onclick="App.navigateTo('home')">About Us</a></li>
+          <li><a href="#select-vehicle" onclick="App.navigateTo('select-vehicle')">Our Fleet</a></li>
+          <li><a href="#dashboard" onclick="App.navigateTo('dashboard')">Customer Dashboard</a></li>
+          <li><a href="#contact" onclick="App.navigateTo('contact')">FAQs & Support</a></li>
+          <li><a href="#contact" onclick="App.navigateTo('contact')">Terms & Conditions</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 5: Contact Info -->
+      <div class="footer-col contact-col">
+        <h4 class="footer-col-title">CONTACT INFO</h4>
+        <p class="footer-contact-item">
+          📞 <strong>+44 (0) 1453 888 999</strong>
+        </p>
+        <p class="footer-contact-item">
+          ✉️ <a href="mailto:bookings@josruralcars.co.uk">bookings@josruralcars.co.uk</a>
+        </p>
+        <p class="footer-contact-item">
+          📍 Rural Berkshire & The Cotswolds, United Kingdom
+        </p>
+        <div class="footer-payments-row">
+          <span>💳 Visa</span>
+          <span>💳 Mastercard</span>
+          <span>💳 AMEX</span>
+          <span>📱 Apple Pay</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="container footer-bottom-inner">
+        <p>© 2026 JO'S RURAL CARS Ltd. All rights reserved. Professional Private Hire Service.</p>
+        <div class="footer-legal-links">
+          <a href="#contact" onclick="App.navigateTo('contact')">Privacy Policy</a>
+          <a href="#contact" onclick="App.navigateTo('contact')">Terms of Service</a>
+          <a href="#contact" onclick="App.navigateTo('contact')">Safety Guidelines</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
