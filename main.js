@@ -581,6 +581,13 @@ const App = (() => {
           : `£${totalAmount.toFixed(0)}`;
       }
 
+      // Update Side-dock Booking count badge
+      const sideDockBadge = document.getElementById('sideDockBookingCount');
+      if (sideDockBadge) {
+        const count = upcomingBookings.length || bookings.length;
+        sideDockBadge.textContent = count > 0 ? `${count} RIDE${count > 1 ? 'S' : ''}` : 'RIDES';
+      }
+
       // Update Next Journey card with first upcoming trip
       if (upcomingBookings.length > 0) {
         const nextBooking = upcomingBookings[0];

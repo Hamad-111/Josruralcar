@@ -27,7 +27,7 @@
         <a href="#home" class="nav-link active" data-page="home" id="navHome">Home</a>
         <a href="#airports" class="nav-link" data-page="airports" id="navAirports">Airports</a>
         <a href="#select-vehicle" class="nav-link" data-page="select-vehicle" id="navFleet">Fleet</a>
-        <a href="#dashboard" class="nav-link" data-page="dashboard" id="navDashboard">My Bookings</a>
+        <a href="#admin" class="nav-link" data-page="admin" id="navAdmin">Admin</a>
         <a href="#contact" class="nav-link" data-page="contact" id="navContact">Contact</a>
       </nav>
 
@@ -56,22 +56,22 @@
       <a href="#home" class="mobile-link" data-page="home">Home</a>
       <a href="#airports" class="mobile-link" data-page="airports">Airports</a>
       <a href="#select-vehicle" class="mobile-link" data-page="select-vehicle">Fleet & Vehicles</a>
-      <a href="#dashboard" class="mobile-link" data-page="dashboard">My Bookings</a>
-      <a href="#contact" class="mobile-link" data-page="contact">Contact Us</a>
       <a href="#admin" class="mobile-link" data-page="admin">🛡️ Dispatch Admin Portal</a>
+      <a href="#dashboard" class="mobile-link" data-page="dashboard">📅 My Bookings</a>
+      <a href="#contact" class="mobile-link" data-page="contact">Contact Us</a>
       <button class="btn btn-navy full-width" onclick="App.navigateTo('select-vehicle')">Book Your Ride</button>
     </div>
   </header>
 
   <!-- ============================================== -->
-  <!-- FIXED SIDE-LINE ADMIN CONTROL TRIGGER          -->
+  <!-- FIXED SIDE-LINE MY BOOKINGS TRIGGER            -->
   <!-- ============================================== -->
-  <aside class="admin-side-dock" id="adminSideDock" aria-label="Quick Dispatch Admin Access">
-    <button type="button" class="admin-side-dock-btn" onclick="App.navigateTo('admin')" title="Access 24/7 Dispatch Control &amp; Operations Panel">
-      <span class="admin-dock-pulse"></span>
-      <span class="admin-dock-icon">🛡️</span>
-      <span class="admin-dock-text">ADMIN DESK</span>
-      <span class="admin-dock-badge">DISPATCH</span>
+  <aside class="booking-side-dock" id="bookingSideDock" aria-label="Quick My Bookings Access">
+    <button type="button" class="booking-side-dock-btn" onclick="App.navigateTo('dashboard')" title="View My Bookings, Flight Status &amp; Travel Receipts">
+      <span class="booking-dock-pulse"></span>
+      <span class="booking-dock-icon">📅</span>
+      <span class="booking-dock-text">MY BOOKINGS</span>
+      <span class="booking-dock-badge" id="sideDockBookingCount">RIDES</span>
     </button>
   </aside>
 
