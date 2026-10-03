@@ -29,7 +29,6 @@
         <a href="#select-vehicle" class="nav-link" data-page="select-vehicle" id="navFleet">Fleet</a>
         <a href="#dashboard" class="nav-link" data-page="dashboard" id="navDashboard">My Bookings</a>
         <a href="#contact" class="nav-link" data-page="contact" id="navContact">Contact</a>
-        <a href="#admin" class="nav-link admin-nav-link" data-page="admin" id="navAdmin" title="Admin Dispatch Center">🛡️ Dispatch Admin</a>
       </nav>
 
       <div class="header-actions">
@@ -63,6 +62,18 @@
       <button class="btn btn-navy full-width" onclick="App.navigateTo('select-vehicle')">Book Your Ride</button>
     </div>
   </header>
+
+  <!-- ============================================== -->
+  <!-- FIXED SIDE-LINE ADMIN CONTROL TRIGGER          -->
+  <!-- ============================================== -->
+  <aside class="admin-side-dock" id="adminSideDock" aria-label="Quick Dispatch Admin Access">
+    <button type="button" class="admin-side-dock-btn" onclick="App.navigateTo('admin')" title="Access 24/7 Dispatch Control &amp; Operations Panel">
+      <span class="admin-dock-pulse"></span>
+      <span class="admin-dock-icon">🛡️</span>
+      <span class="admin-dock-text">ADMIN DESK</span>
+      <span class="admin-dock-badge">DISPATCH</span>
+    </button>
+  </aside>
 
   <!-- Notification Toast Bar -->
   <div id="toastNotification" class="toast-notification" role="status" aria-live="polite"></div>
@@ -2222,6 +2233,9 @@
                   <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                   <span>Sync Supabase</span>
                 </button>
+                <button type="button" class="btn btn-outline-white btn-sm" onclick="App.openAddUserModal()">
+                  <span>👥 + Add User</span>
+                </button>
                 <button type="button" class="btn btn-outline-white btn-sm" onclick="App.openAddDriverModal()">
                   <span>👔 + Add Driver</span>
                 </button>
@@ -2240,13 +2254,17 @@
                 <span>📋 Live Bookings</span>
                 <span class="badge-status badge-confirmed" id="adminBadgeBookingsCount">0</span>
               </button>
-              <button type="button" class="admin-tab-btn" data-admin-tab="cars" onclick="App.switchAdminTab('cars', this)">
-                <span>🚗 Cars &amp; Fleet</span>
-                <span class="badge-status badge-completed" id="adminBadgeCarsCount">4</span>
+              <button type="button" class="admin-tab-btn" data-admin-tab="users" onclick="App.switchAdminTab('users', this)">
+                <span>👥 Customers &amp; Users</span>
+                <span class="badge-status badge-confirmed" id="adminBadgeUsersCount">4</span>
               </button>
               <button type="button" class="admin-tab-btn" data-admin-tab="drivers" onclick="App.switchAdminTab('drivers', this)">
                 <span>👔 Chauffeurs</span>
                 <span class="badge-status badge-completed" id="adminBadgeDriversCount">4</span>
+              </button>
+              <button type="button" class="admin-tab-btn" data-admin-tab="cars" onclick="App.switchAdminTab('cars', this)">
+                <span>🚗 Cars &amp; Fleet</span>
+                <span class="badge-status badge-completed" id="adminBadgeCarsCount">4</span>
               </button>
               <button type="button" class="admin-tab-btn" data-admin-tab="system" onclick="App.switchAdminTab('system', this)">
                 <span>⚙️ System Rates &amp; Settings</span>
@@ -2256,7 +2274,7 @@
         </div>
 
         <div class="container">
-          <!-- 4 KPI Stat Boxes -->
+          <!-- 5 KPI Stat Boxes -->
           <div class="admin-stats-grid">
             <div class="admin-stat-card">
               <div class="admin-stat-icon blue">✈️</div>
@@ -2264,6 +2282,15 @@
                 <div class="admin-stat-val" id="adminKpiTotalBookings">0</div>
                 <div class="admin-stat-label">TOTAL BOOKINGS</div>
                 <div class="admin-stat-trend" id="adminKpiRevenue">£0.00 Revenue</div>
+              </div>
+            </div>
+
+            <div class="admin-stat-card">
+              <div class="admin-stat-icon gold">👥</div>
+              <div>
+                <div class="admin-stat-val" id="adminKpiTotalUsers">4</div>
+                <div class="admin-stat-label">CLIENT ACCOUNTS</div>
+                <div class="admin-stat-trend" id="adminKpiVipUsers">2 VIP Tiers Active</div>
               </div>
             </div>
 
@@ -2342,7 +2369,54 @@
             </div>
           </div>
 
-          <!-- TAB PANE 2: CARS & FLEET MANAGEMENT -->
+          <!-- TAB PANE: REGISTERED CUSTOMERS & USERS -->
+          <div class="admin-tab-pane" id="adminPaneUsers">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div>
+                  <h3 class="admin-card-title">
+                    <span>👥 Passenger Accounts &amp; Customer Relationship Desk</span>
+                  </h3>
+                  <p class="text-xs text-muted">Complete control over passenger accounts, VIP tiers, credit statuses, booking history, and direct dispatch.</p>
+                </div>
+
+                <div class="admin-search-wrap">
+                  <div class="booking-status-tabs" id="adminUserFilterTabs">
+                    <button type="button" class="bstatus-tab active" data-user-filter="all" onclick="App.filterAdminUsers('all', this)">All Customers</button>
+                    <button type="button" class="bstatus-tab" data-user-filter="Active" onclick="App.filterAdminUsers('Active', this)">Active</button>
+                    <button type="button" class="bstatus-tab" data-user-filter="Gold VIP" onclick="App.filterAdminUsers('Gold VIP', this)">Gold VIP</button>
+                    <button type="button" class="bstatus-tab" data-user-filter="Corporate" onclick="App.filterAdminUsers('Corporate', this)">Corporate</button>
+                    <button type="button" class="bstatus-tab" data-user-filter="Suspended" onclick="App.filterAdminUsers('Suspended', this)">Suspended</button>
+                  </div>
+                  <input type="text" id="adminUserSearch" class="form-control form-control-sm" placeholder="🔍 Search name, phone, email, tier..." oninput="App.searchAdminUsers(this.value)" style="min-width: 220px;" />
+                  <button type="button" class="btn btn-navy btn-sm" onclick="App.openAddUserModal()">+ Add Customer</button>
+                </div>
+              </div>
+
+              <!-- Users Table Wrap -->
+              <div class="admin-table-wrap">
+                <table class="admin-table" id="adminUsersTable">
+                  <thead>
+                    <tr>
+                      <th>Passenger / Client</th>
+                      <th>Contact Details</th>
+                      <th>Tier Level</th>
+                      <th>Account Status</th>
+                      <th>Total Rides</th>
+                      <th>Total Spend</th>
+                      <th>Service Notes / Preferences</th>
+                      <th class="text-right">Admin Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminUsersTableBody">
+                    <!-- Populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB PANE 3: CARS & FLEET MANAGEMENT -->
           <div class="admin-tab-pane" id="adminPaneCars">
             <div class="admin-card">
               <div class="admin-card-header">
@@ -3017,6 +3091,77 @@
           <div class="modal-actions-row">
             <button type="submit" class="btn btn-navy">Register Chauffeur</button>
             <button type="button" class="btn btn-outline" onclick="App.closeAddDriverModal()">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: ADD CUSTOMER ACCOUNT -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalAddUser">
+    <div class="modal-card" style="max-width: 580px;">
+      <div class="modal-header-standard">
+        <div>
+          <h3 class="modal-title">Register Customer Account</h3>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Add new private client, corporate account, or VIP passenger</p>
+        </div>
+        <button type="button" class="modal-close-icon" onclick="App.closeAddUserModal()" aria-label="Close modal">&times;</button>
+      </div>
+
+      <form id="formAddUser" onsubmit="App.handleAddUserSubmit(event)">
+        <div class="modal-body">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="usrFormName" class="form-label">FULL NAME *</label>
+              <input type="text" id="usrFormName" class="form-control" placeholder="e.g. Lord Edward Hastings" required />
+            </div>
+            <div class="form-group">
+              <label for="usrFormPhone" class="form-label">MOBILE PHONE *</label>
+              <input type="tel" id="usrFormPhone" class="form-control" placeholder="+44 7700 900333" required />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="usrFormEmail" class="form-label">EMAIL ADDRESS *</label>
+              <input type="email" id="usrFormEmail" class="form-control" placeholder="client@example.com" required />
+            </div>
+            <div class="form-group">
+              <label for="usrFormTier" class="form-label">MEMBERSHIP TIER</label>
+              <select id="usrFormTier" class="form-control">
+                <option value="Standard">Standard Passenger</option>
+                <option value="Gold VIP">Gold VIP Chauffeur Tier</option>
+                <option value="Corporate">Corporate Invoiced Account</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="usrFormLocation" class="form-label">HOME BASE / CITY</label>
+              <input type="text" id="usrFormLocation" class="form-control" placeholder="e.g. Tetbury, Gloucestershire" />
+            </div>
+            <div class="form-group">
+              <label for="usrFormStatus" class="form-label">INITIAL STATUS</label>
+              <select id="usrFormStatus" class="form-control">
+                <option value="Active">Active &amp; Verified</option>
+                <option value="Suspended">Suspended / Pending Review</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="usrFormNotes" class="form-label">CUSTOMER PREFERENCES / DISPATCH NOTES</label>
+            <textarea id="usrFormNotes" class="form-control" rows="2" placeholder="e.g. Requires Mercedes S-Class, bottled water, terminal meet &amp; greet."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="modal-actions-row">
+            <button type="submit" class="btn btn-navy">Create Customer Account</button>
+            <button type="button" class="btn btn-outline" onclick="App.closeAddUserModal()">Cancel</button>
           </div>
         </div>
       </form>

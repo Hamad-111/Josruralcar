@@ -81,7 +81,65 @@ const App = (() => {
       bookingsSearch: '',
       carsFilter: 'all',
       driversFilter: 'all',
+      usersFilter: 'all',
+      usersSearch: '',
       bookings: [],
+      users: (() => {
+        try {
+          const saved = localStorage.getItem('jos_admin_users');
+          if (saved) return JSON.parse(saved);
+        } catch (e) {}
+        return [
+          {
+            id: 'usr-1',
+            name: 'James Doe',
+            email: 'james@example.com',
+            phone: '+44 7700 900000',
+            tier: 'Gold VIP',
+            status: 'Active',
+            location: 'Reading, Berkshire',
+            notes: 'Prefers quiet rides, terminal 5 departures drop-off.',
+            rides: 14,
+            spent: 1050
+          },
+          {
+            id: 'usr-2',
+            name: 'Lady Clara Morrison',
+            email: 'clara@morrison.co.uk',
+            phone: '+44 7700 900888',
+            tier: 'Corporate',
+            status: 'Active',
+            location: 'Tetbury, Gloucestershire',
+            notes: 'Regular Tetbury to Heathrow & Gatwick executive transfers.',
+            rides: 8,
+            spent: 960
+          },
+          {
+            id: 'usr-3',
+            name: 'Sir Robert Sterling',
+            email: 'r.sterling@cotswolds.org',
+            phone: '+44 7700 900712',
+            tier: 'Gold VIP',
+            status: 'Active',
+            location: 'Cirencester, Cotswolds',
+            notes: 'Luxury MPV preferred for Cotswolds tours & flight transfers.',
+            rides: 22,
+            spent: 2450
+          },
+          {
+            id: 'usr-4',
+            name: 'Dr. Alistair Finch',
+            email: 'afinch@oxford.ac.uk',
+            phone: '+44 7700 900334',
+            tier: 'Standard',
+            status: 'Active',
+            location: 'Oxford City Centre',
+            notes: 'Academic travel to Heathrow and Luton.',
+            rides: 5,
+            spent: 480
+          }
+        ];
+      })(),
       cars: (() => {
         try {
           const saved = localStorage.getItem('jos_admin_cars');
@@ -1047,8 +1105,9 @@ const App = (() => {
       // Render tab components
       updateAdminKpis();
       renderAdminBookings();
-      renderAdminCars();
+      renderAdminUsers();
       renderAdminDrivers();
+      renderAdminCars();
 
       // Sync System Rates Inputs
       const r = state.admin.rates;
@@ -1075,41 +1134,49 @@ const App = (() => {
     }
   }
 
-  // Update 4 KPI Metric Cards & Tab Badges
+  // Update 5 KPI Metric Cards & Tab Badges
   function updateAdminKpis() {
     const bookings = state.admin.bookings || [];
     const cars = state.admin.cars || [];
     const drivers = state.admin.drivers || [];
+    const users = state.admin.users || [];
 
     const totalBookings = bookings.length;
     const totalRev = bookings.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
     const activeCarsCount = cars.filter(c => c.status === 'Available' || c.status === 'On Journey').length;
     const onDutyDriversCount = drivers.filter(d => d.status === 'On Duty' || d.status === 'On Trip').length;
     const pendingTrips = bookings.filter(b => b.status === 'Confirmed' || b.status === 'En Route').length;
+    const vipUsersCount = users.filter(u => u.tier === 'Gold VIP' || u.tier === 'Corporate').length;
 
     const elTotal = document.getElementById('adminKpiTotalBookings');
     const elRev = document.getElementById('adminKpiRevenue');
     const elCars = document.getElementById('adminKpiActiveCars');
     const elDrivers = document.getElementById('adminKpiActiveDrivers');
     const elPending = document.getElementById('adminKpiPending');
+    const elUsers = document.getElementById('adminKpiTotalUsers');
+    const elVip = document.getElementById('adminKpiVipUsers');
 
     if (elTotal) elTotal.textContent = totalBookings;
     if (elRev) elRev.textContent = `£${totalRev.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Revenue`;
     if (elCars) elCars.textContent = `${activeCarsCount} / ${cars.length}`;
     if (elDrivers) elDrivers.textContent = `${onDutyDriversCount} / ${drivers.length}`;
     if (elPending) elPending.textContent = pendingTrips;
+    if (elUsers) elUsers.textContent = users.length;
+    if (elVip) elVip.textContent = `${vipUsersCount} VIP Tiers Active`;
 
     // Badges in Sub-tab buttons
     const bCount = document.getElementById('adminBadgeBookingsCount');
+    const uCount = document.getElementById('adminBadgeUsersCount');
     const cCount = document.getElementById('adminBadgeCarsCount');
     const dCount = document.getElementById('adminBadgeDriversCount');
 
     if (bCount) bCount.textContent = totalBookings;
+    if (uCount) uCount.textContent = users.length;
     if (cCount) cCount.textContent = cars.length;
     if (dCount) dCount.textContent = onDutyDriversCount;
   }
 
-  // Switch Sub-tabs (Live Bookings, Cars, Drivers, System)
+  // Switch Sub-tabs (Live Bookings, Users, Drivers, Cars, System)
   function switchAdminTab(tabName, clickedBtn) {
     state.admin.activeTab = tabName;
 
@@ -1126,8 +1193,9 @@ const App = (() => {
     document.querySelectorAll('.admin-tab-pane').forEach(pane => pane.classList.remove('active'));
     const paneMap = {
       'bookings': 'adminPaneBookings',
-      'cars': 'adminPaneCars',
+      'users': 'adminPaneUsers',
       'drivers': 'adminPaneDrivers',
+      'cars': 'adminPaneCars',
       'system': 'adminPaneSystem'
     };
     const targetPaneId = paneMap[tabName] || 'adminPaneBookings';
@@ -1305,6 +1373,212 @@ const App = (() => {
     showToast(`Booking ${ref} cancelled.`);
   }
 
+  // ==============================================================
+  // USER & CUSTOMER ACCOUNTS MANAGEMENT METHODS
+  // ==============================================================
+
+  function saveAdminUsers() {
+    try {
+      localStorage.setItem('jos_admin_users', JSON.stringify(state.admin.users));
+    } catch (e) {
+      console.warn('Could not save users to localStorage:', e);
+    }
+  }
+
+  // Render Registered Customers & Users Table
+  function renderAdminUsers() {
+    const tbody = document.getElementById('adminUsersTableBody');
+    if (!tbody) return;
+
+    const filter = (state.admin.usersFilter || 'all').toLowerCase();
+    const query = (state.admin.usersSearch || '').toLowerCase().trim();
+
+    let list = state.admin.users || [];
+
+    // Filter by tier or status
+    if (filter !== 'all') {
+      list = list.filter(u => {
+        const status = (u.status || '').toLowerCase();
+        const tier = (u.tier || '').toLowerCase();
+        return status === filter.toLowerCase() || tier === filter.toLowerCase();
+      });
+    }
+
+    // Filter by search query
+    if (query) {
+      list = list.filter(u => {
+        const text = `${u.name || ''} ${u.email || ''} ${u.phone || ''} ${u.tier || ''} ${u.location || ''}`.toLowerCase();
+        return text.includes(query);
+      });
+    }
+
+    if (list.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align: center; padding: 36px 20px; color: #64748b;">
+            <span style="font-size: 1.8rem; display: block; margin-bottom: 8px;">👥</span>
+            <strong>No customer accounts found matching current filters</strong>
+            <p class="text-xs" style="margin-top: 4px;">Click "+ Add Customer" to register a client or VIP passenger account.</p>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = list.map(u => {
+      const initials = (u.name || 'U').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+      const isActive = u.status === 'Active';
+      const statusClass = isActive ? 'badge-confirmed' : 'badge-cancelled';
+      const safeName = (u.name || '').replace(/'/g, "\\'");
+      const safePhone = (u.phone || '').replace(/'/g, "\\'");
+
+      return `
+        <tr data-user-id="${u.id}">
+          <td>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="user-avatar-initials">${initials}</div>
+              <div>
+                <strong style="color: var(--color-navy); display: block;">${u.name}</strong>
+                <span class="text-xs text-muted">📍 ${u.location || 'UK Client'}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div style="font-size: 0.85rem;"><a href="tel:${u.phone}" style="color: var(--color-navy); font-weight: 600; text-decoration: none;">📞 ${u.phone}</a></div>
+            <div class="text-xs"><a href="mailto:${u.email}" style="color: #64748b; text-decoration: none;">✉️ ${u.email}</a></div>
+          </td>
+          <td>
+            <select class="admin-select-sm" onchange="App.changeUserTier('${u.id}', this.value)" title="Change Client Tier">
+              <option value="Standard" ${u.tier === 'Standard' ? 'selected' : ''}>Standard</option>
+              <option value="Gold VIP" ${u.tier === 'Gold VIP' ? 'selected' : ''}>Gold VIP 👑</option>
+              <option value="Corporate" ${u.tier === 'Corporate' ? 'selected' : ''}>Corporate 💼</option>
+            </select>
+          </td>
+          <td>
+            <span class="badge-status ${statusClass}">${u.status}</span>
+          </td>
+          <td>
+            <strong style="color: var(--color-navy);">${u.rides || 0}</strong> transfers
+          </td>
+          <td>
+            <strong style="color: var(--color-navy); font-family: var(--font-heading);">&pound;${(Number(u.spent) || 0).toLocaleString()}</strong>
+          </td>
+          <td>
+            <span class="text-xs text-muted" style="max-width: 220px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${u.notes || ''}">
+              ${u.notes || 'Standard executive service'}
+            </span>
+          </td>
+          <td class="text-right">
+            <div class="table-action-btns" style="justify-content: flex-end;">
+              <button type="button" class="btn btn-navy btn-xs" title="Dispatch transfer for this customer" onclick="App.dispatchForUser('${safeName}', '${safePhone}')">
+                🚖 Dispatch
+              </button>
+              <a href="tel:${u.phone}" class="btn btn-outline btn-xs" title="Call Customer">📞</a>
+              <button type="button" class="btn btn-outline btn-xs" title="${isActive ? 'Suspend Account' : 'Activate Account'}" onclick="App.toggleUserStatus('${u.id}')">
+                ${isActive ? '⏸️ Suspend' : '▶️ Activate'}
+              </button>
+              <button type="button" class="btn btn-outline btn-xs" style="color: #b91c1c; border-color: #fecaca;" title="Delete User" onclick="App.deleteUser('${u.id}')">
+                🗑️
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function filterAdminUsers(filterValue, btn) {
+    state.admin.usersFilter = filterValue;
+    document.querySelectorAll('#adminUserFilterTabs .bstatus-tab').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderAdminUsers();
+  }
+
+  function searchAdminUsers(query) {
+    state.admin.usersSearch = query;
+    renderAdminUsers();
+  }
+
+  function toggleUserStatus(userId) {
+    const user = state.admin.users.find(u => u.id === userId);
+    if (!user) return;
+    user.status = user.status === 'Active' ? 'Suspended' : 'Active';
+    saveAdminUsers();
+    renderAdminUsers();
+    showToast(`Customer account for ${user.name} is now ${user.status}.`);
+  }
+
+  function changeUserTier(userId, newTier) {
+    const user = state.admin.users.find(u => u.id === userId);
+    if (!user) return;
+    user.tier = newTier;
+    saveAdminUsers();
+    updateAdminKpis();
+    renderAdminUsers();
+    showToast(`Upgraded ${user.name} to ${newTier} tier.`);
+  }
+
+  function deleteUser(userId) {
+    const user = state.admin.users.find(u => u.id === userId);
+    if (!confirm(`Are you sure you want to remove customer account for ${user?.name || 'this user'}?`)) return;
+    state.admin.users = state.admin.users.filter(u => u.id !== userId);
+    saveAdminUsers();
+    updateAdminKpis();
+    renderAdminUsers();
+    showToast('Customer account removed.');
+  }
+
+  function dispatchForUser(userName, userPhone) {
+    openManualBookingModal();
+    const elName = document.getElementById('mbFormName');
+    const elPhone = document.getElementById('mbFormPhone');
+    if (elName) elName.value = userName;
+    if (elPhone) elPhone.value = userPhone;
+    showToast(`Dispatch modal opened for ${userName}.`);
+  }
+
+  function openAddUserModal() {
+    const modal = document.getElementById('modalAddUser');
+    if (modal) modal.classList.add('show');
+  }
+
+  function closeAddUserModal() {
+    const modal = document.getElementById('modalAddUser');
+    if (modal) modal.classList.remove('show');
+    document.getElementById('formAddUser')?.reset();
+  }
+
+  function handleAddUserSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById('usrFormName').value.trim();
+    const phone = document.getElementById('usrFormPhone').value.trim();
+    const email = document.getElementById('usrFormEmail').value.trim();
+    const tier = document.getElementById('usrFormTier').value;
+    const location = document.getElementById('usrFormLocation').value.trim() || 'Cotswolds & London';
+    const status = document.getElementById('usrFormStatus').value;
+    const notes = document.getElementById('usrFormNotes').value.trim() || 'Standard executive service';
+
+    const newUser = {
+      id: 'usr-' + Date.now(),
+      name,
+      phone,
+      email,
+      tier,
+      location,
+      status,
+      notes,
+      rides: 0,
+      spent: 0
+    };
+
+    state.admin.users.push(newUser);
+    saveAdminUsers();
+    closeAddUserModal();
+    updateAdminKpis();
+    renderAdminUsers();
+    showToast(`Customer account for ${name} registered successfully.`);
+  }
+
   // Render Cars Fleet Grid
   function renderAdminCars() {
     const grid = document.getElementById('adminCarsGrid');
@@ -1427,8 +1701,9 @@ const App = (() => {
 
     grid.innerHTML = drivers.map(drv => {
       const isOnDuty = drv.status === 'On Duty';
-      const statusClass = isOnDuty ? 'badge-confirmed' : (drv.status === 'On Trip' ? 'badge-completed' : 'badge-cancelled');
+      const statusClass = isOnDuty ? 'badge-confirmed' : (drv.status === 'On Trip' ? 'badge-completed' : (drv.status === 'Suspended' ? 'badge-cancelled' : 'badge-completed'));
       const initials = (drv.name || 'D').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+      const safeName = (drv.name || '').replace(/'/g, "\\'");
 
       return `
         <div class="admin-driver-card">
@@ -1454,7 +1729,19 @@ const App = (() => {
             ` : ''}
             <div class="admin-driver-detail-item">
               <span>Assigned Vehicle:</span>
-              <strong>${drv.car || 'Relief Chauffeur'}</strong>
+              <select class="admin-select-sm" onchange="App.changeDriverCar('${drv.id}', this.value)" title="Assign Fleet Car" style="font-size: 0.76rem; max-width: 170px;">
+                <option value="">Unassigned (Relief)</option>
+                ${state.admin.cars.map(c => `<option value="${c.plate} (${c.category})" ${drv.car && drv.car.includes(c.plate) ? 'selected' : ''}>${c.plate} - ${c.name}</option>`).join('')}
+              </select>
+            </div>
+            <div class="admin-driver-detail-item">
+              <span>Duty Status:</span>
+              <select class="admin-select-sm" onchange="App.changeDriverStatus('${drv.id}', this.value)" title="Update Duty Status" style="font-size: 0.76rem;">
+                <option value="On Duty" ${drv.status === 'On Duty' ? 'selected' : ''}>On Duty</option>
+                <option value="On Trip" ${drv.status === 'On Trip' ? 'selected' : ''}>On Trip</option>
+                <option value="Off Duty" ${drv.status === 'Off Duty' ? 'selected' : ''}>Off Duty</option>
+                <option value="Suspended" ${drv.status === 'Suspended' ? 'selected' : ''}>Suspended</option>
+              </select>
             </div>
             <div class="admin-driver-detail-item">
               <span>Rating &amp; Transfers:</span>
@@ -1463,10 +1750,13 @@ const App = (() => {
           </div>
 
           <div class="admin-driver-actions">
-            <button type="button" class="btn btn-navy btn-xs" style="flex: 1;" onclick="App.toggleDriverDutyStatus('${drv.id}')">
-              ${isOnDuty ? 'Set Off Duty' : 'Set On Duty'}
+            <button type="button" class="btn btn-navy btn-xs" style="flex: 1;" title="Dispatch new trip for this driver" onclick="App.dispatchForDriver('${safeName}')">
+              🚖 Dispatch
             </button>
             <a href="tel:${drv.phone}" class="btn btn-outline btn-xs" title="Call Chauffeur">📞 Call</a>
+            <button type="button" class="btn btn-outline btn-xs" onclick="App.toggleDriverDutyStatus('${drv.id}')">
+              ${isOnDuty ? 'Set Off Duty' : 'Set On Duty'}
+            </button>
             <button type="button" class="btn btn-outline btn-xs" style="color: #b91c1c; border-color: #fecaca;" title="Remove Driver" onclick="App.deleteDriver('${drv.id}')">🗑️</button>
           </div>
         </div>
@@ -1491,6 +1781,35 @@ const App = (() => {
     updateAdminKpis();
     renderAdminDrivers();
     showToast(`${drv.name} is now ${drv.status}.`);
+  }
+
+  // Change Driver Status directly
+  function changeDriverStatus(driverId, newStatus) {
+    const drv = state.admin.drivers.find(d => d.id === driverId);
+    if (!drv) return;
+    drv.status = newStatus;
+    saveAdminDrivers();
+    updateAdminKpis();
+    renderAdminDrivers();
+    showToast(`Chauffeur ${drv.name} status updated to ${newStatus}.`);
+  }
+
+  // Change Driver Vehicle pairing directly
+  function changeDriverCar(driverId, newCar) {
+    const drv = state.admin.drivers.find(d => d.id === driverId);
+    if (!drv) return;
+    drv.car = newCar;
+    saveAdminDrivers();
+    renderAdminDrivers();
+    showToast(`Assigned ${newCar || 'Relief vehicle'} to ${drv.name}.`);
+  }
+
+  // Dispatch Trip specifically for this Driver
+  function dispatchForDriver(driverName) {
+    openManualBookingModal();
+    const elDriver = document.getElementById('mbFormDriver');
+    if (elDriver) elDriver.value = driverName;
+    showToast(`Dispatch modal opened with assigned chauffeur ${driverName}.`);
   }
 
   // Delete Driver
@@ -1963,6 +2282,16 @@ ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS admin_notes TEXT;
     updateBookingStatusFromAdmin,
     assignDriverFromAdmin,
     deleteBookingFromAdmin,
+    renderAdminUsers,
+    filterAdminUsers,
+    searchAdminUsers,
+    toggleUserStatus,
+    changeUserTier,
+    deleteUser,
+    dispatchForUser,
+    openAddUserModal,
+    closeAddUserModal,
+    handleAddUserSubmit,
     renderAdminCars,
     filterAdminCars,
     toggleCarStatus,
@@ -1970,6 +2299,9 @@ ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS admin_notes TEXT;
     renderAdminDrivers,
     filterAdminDrivers,
     toggleDriverDutyStatus,
+    changeDriverStatus,
+    changeDriverCar,
+    dispatchForDriver,
     deleteDriver,
     openAddVehicleModal,
     closeAddVehicleModal,
