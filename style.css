@@ -4974,31 +4974,305 @@ input:checked + .switch-slider:before {
 }
 
 @media (max-width: 768px) {
+  /* Floating Side Dock for Mobile */
   .booking-side-dock,
   .admin-side-dock {
     top: auto;
-    bottom: 22px;
-    right: 14px;
+    bottom: max(16px, env(safe-area-inset-bottom, 16px));
+    right: 12px;
     transform: none;
+    z-index: 10000;
   }
+
+  .booking-side-dock.active-on-dashboard,
+  .admin-side-dock.active-on-admin {
+    opacity: 0.35;
+    pointer-events: none;
+    transform: scale(0.92);
+    transition: all 0.3s ease;
+  }
+
   .booking-side-dock-btn,
   .admin-side-dock-btn {
     border-radius: var(--radius-full);
-    border: 1px solid rgba(245, 158, 11, 0.6);
+    border: 1px solid rgba(245, 158, 11, 0.75);
     padding: 8px 14px;
     flex-direction: row;
+    align-items: center;
     gap: 8px;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, #091124 0%, #1e3a8a 100%);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
   }
-  .booking-side-dock-btn:hover,
-  .admin-side-dock-btn:hover {
-    transform: translateY(-2px);
+
+  .booking-side-dock-btn:active,
+  .admin-side-dock-btn:active {
+    transform: scale(0.96);
   }
+
   .booking-dock-text,
   .admin-dock-text {
     writing-mode: horizontal-tb;
     transform: none;
     margin: 0;
-    font-size: 0.72rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.06em;
+  }
+
+  .booking-dock-badge,
+  .admin-dock-badge {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .booking-dock-pulse,
+  .admin-dock-pulse {
+    position: static;
+    margin-left: 2px;
+    width: 6px;
+    height: 6px;
+  }
+
+  /* Admin Hero Banner Mobile */
+  .admin-hero-banner {
+    padding: 22px 0 18px;
+  }
+
+  .admin-header-flex {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .admin-title {
+    font-size: 1.6rem;
+    line-height: 1.2;
+  }
+
+  .admin-subtitle {
+    font-size: 0.85rem;
+    line-height: 1.45;
+  }
+
+  .admin-header-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  .admin-header-actions .btn {
+    width: 100%;
+    justify-content: center;
+    font-size: 0.78rem;
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
+
+  .admin-header-actions .btn-primary {
+    grid-column: 1 / -1;
+    font-size: 0.86rem;
+    padding: 10px;
+  }
+
+  /* Admin Navigation Tabs Mobile */
+  .admin-tabs-nav {
+    margin: 16px -16px 0;
+    padding: 4px 16px 8px;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .admin-tabs-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-tab-btn {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  /* Admin KPI Metrics Grid Mobile */
+  .admin-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 18px 0;
+  }
+
+  .admin-stat-card:nth-child(5) {
+    grid-column: 1 / -1;
+  }
+
+  .admin-stat-card {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .admin-stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+
+  .admin-stat-val {
+    font-size: 1.35rem;
+  }
+
+  .admin-stat-label {
+    font-size: 0.68rem;
+  }
+
+  /* Admin Management Cards & Filter Bars */
+  .admin-card {
+    padding: 18px 14px;
+    border-radius: var(--radius-md);
+  }
+
+  .admin-card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .admin-card-title {
+    font-size: 1.12rem;
+  }
+
+  .admin-search-wrap {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .admin-search-wrap input {
+    width: 100%;
+    font-size: 0.82rem;
+    padding: 8px 12px 8px 34px;
+  }
+
+  .bstatus-tabs {
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    gap: 6px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .bstatus-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bstatus-tab {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+
+  /* Admin Tables Mobile Swipe */
+  .admin-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -14px;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+  }
+
+  .admin-table {
+    min-width: 660px;
+    font-size: 0.78rem;
+  }
+
+  .admin-table th {
+    padding: 10px 12px;
+    font-size: 0.68rem;
+  }
+
+  .admin-table td {
+    padding: 10px 12px;
+  }
+
+  .admin-select-sm {
+    font-size: 0.74rem;
+    padding: 4px 6px;
+  }
+
+  /* Fleet & Driver Grids Mobile */
+  .admin-cars-grid,
+  .admin-drivers-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .admin-driver-detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .admin-driver-detail-item .admin-select-sm {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .admin-driver-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .admin-driver-actions .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  /* System Controls Grid Mobile */
+  .admin-control-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .rate-input-group {
+    padding: 8px 0;
+  }
+
+  .rate-input-control {
+    width: 84px;
+    padding: 5px 8px;
+    font-size: 0.86rem;
+  }
+}
+
+/* Extra-Compact Mobile Screens (<= 440px) */
+@media (max-width: 440px) {
+  .booking-side-dock-btn,
+  .admin-side-dock-btn {
+    padding: 7px 12px;
+    gap: 6px;
+  }
+
+  .booking-dock-text,
+  .admin-dock-text {
+    font-size: 0.7rem;
+  }
+
+  .admin-header-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-stat-card:nth-child(5) {
+    grid-column: auto;
   }
 }
 

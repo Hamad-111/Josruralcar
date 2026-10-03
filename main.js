@@ -328,6 +328,16 @@ const App = (() => {
     const drawer = document.getElementById('mobileDrawer');
     if (drawer) drawer.classList.remove('open');
 
+    // Update side dock active state on mobile
+    const bookingSideDock = document.getElementById('bookingSideDock');
+    if (bookingSideDock) {
+      if (viewId === 'dashboard') {
+        bookingSideDock.classList.add('active-on-dashboard');
+      } else {
+        bookingSideDock.classList.remove('active-on-dashboard');
+      }
+    }
+
     // Trigger Admin Data Loading if navigating to admin
     if (viewId === 'admin') {
       loadAdminDashboard();
