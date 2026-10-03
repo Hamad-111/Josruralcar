@@ -89,3 +89,117 @@ export async function insertBooking(bookingRecord) {
     return { success: false, error: err.message };
   }
 }
+
+/**
+ * Update an existing booking in Supabase
+ */
+export async function updateBooking(identifier, updates) {
+  try {
+    let query = supabase.from('bookings').update({ ...updates, updated_at: new Date().toISOString() });
+    if (typeof identifier === 'number' || (!isNaN(identifier) && !String(identifier).startsWith('#'))) {
+      query = query.eq('id', identifier);
+    } else {
+      query = query.eq('ref', identifier);
+    }
+
+    const { data, error } = await query.select();
+    if (error) {
+      console.error('Error updating booking in Supabase:', error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (err) {
+    console.error('Update booking exception:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Delete or deactivate booking in Supabase
+ */
+export async function deleteBooking(identifier) {
+  try {
+    let query = supabase.from('bookings').delete();
+    if (typeof identifier === 'number' || (!isNaN(identifier) && !String(identifier).startsWith('#'))) {
+      query = query.eq('id', identifier);
+    } else {
+      query = query.eq('ref', identifier);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error deleting booking in Supabase:', error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (err) {
+    console.error('Delete booking exception:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Fetch drivers from Supabase if table exists
+ */
+export async function fetchDriversFromSupabase() {
+  try {
+    const { data, error } = await supabase
+      .from('drivers')
+      .select('*')
+      .order('name');
+    if (error) return null;
+    return data;
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Insert driver to Supabase if table exists
+ */
+export async function insertDriverToSupabase(driverRecord) {
+  try {
+    const { data, error } = await supabase
+      .from('drivers')
+      .insert([driverRecord])
+      .select()
+      .single();
+    if (error) return null;
+    return data;
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Fetch vehicles from Supabase if table exists
+ */
+export async function fetchVehiclesFromSupabase() {
+  try {
+    const { data, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .order('name');
+    if (error) return null;
+    return data;
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Insert vehicle to Supabase if table exists
+ */
+export async function insertVehicleToSupabase(vehicleRecord) {
+  try {
+    const { data, error } = await supabase
+      .from('vehicles')
+      .insert([vehicleRecord])
+      .select()
+      .single();
+    if (error) return null;
+    return data;
+  } catch (err) {
+    return null;
+  }
+}

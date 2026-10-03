@@ -29,6 +29,7 @@
         <a href="#select-vehicle" class="nav-link" data-page="select-vehicle" id="navFleet">Fleet</a>
         <a href="#dashboard" class="nav-link" data-page="dashboard" id="navDashboard">My Bookings</a>
         <a href="#contact" class="nav-link" data-page="contact" id="navContact">Contact</a>
+        <a href="#admin" class="nav-link admin-nav-link" data-page="admin" id="navAdmin" title="Admin Dispatch Center">🛡️ Dispatch Admin</a>
       </nav>
 
       <div class="header-actions">
@@ -58,6 +59,7 @@
       <a href="#select-vehicle" class="mobile-link" data-page="select-vehicle">Fleet & Vehicles</a>
       <a href="#dashboard" class="mobile-link" data-page="dashboard">My Bookings</a>
       <a href="#contact" class="mobile-link" data-page="contact">Contact Us</a>
+      <a href="#admin" class="mobile-link" data-page="admin">🛡️ Dispatch Admin Portal</a>
       <button class="btn btn-navy full-width" onclick="App.navigateTo('select-vehicle')">Book Your Ride</button>
     </div>
   </header>
@@ -2197,6 +2199,337 @@
       </section>
     </section>
 
+    <!-- ============================================== -->
+    <!-- VIEW 7: ADMIN & DISPATCH CONTROL CENTER -->
+    <!-- ============================================== -->
+    <section id="viewAdmin" class="app-view">
+      <div class="admin-view-wrap">
+        <!-- Admin Command Bar Hero -->
+        <div class="admin-hero-banner">
+          <div class="container">
+            <div class="admin-header-flex">
+              <div>
+                <span class="admin-title-badge">
+                  <span class="status-dot-pulse"></span>
+                  OPERATIONS DESK &bull; 24/7 DISPATCH
+                </span>
+                <h1 class="admin-title">Dispatch Control Center</h1>
+                <p class="admin-subtitle">Live bookings oversight, chauffeur assignment, fleet vehicle management &amp; pricing control.</p>
+              </div>
+
+              <div class="admin-header-actions">
+                <button type="button" class="btn btn-outline-white btn-sm" onclick="App.syncAdminWithSupabase()">
+                  <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                  <span>Sync Supabase</span>
+                </button>
+                <button type="button" class="btn btn-outline-white btn-sm" onclick="App.openAddDriverModal()">
+                  <span>👔 + Add Driver</span>
+                </button>
+                <button type="button" class="btn btn-outline-white btn-sm" onclick="App.openAddVehicleModal()">
+                  <span>🚗 + Add Car</span>
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="App.openManualBookingModal()">
+                  <span>➕ New Dispatch</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Admin Sub-navigation Tabs -->
+            <div class="admin-tabs-nav" id="adminTabsNav">
+              <button type="button" class="admin-tab-btn active" data-admin-tab="bookings" onclick="App.switchAdminTab('bookings', this)">
+                <span>📋 Live Bookings</span>
+                <span class="badge-status badge-confirmed" id="adminBadgeBookingsCount">0</span>
+              </button>
+              <button type="button" class="admin-tab-btn" data-admin-tab="cars" onclick="App.switchAdminTab('cars', this)">
+                <span>🚗 Cars &amp; Fleet</span>
+                <span class="badge-status badge-completed" id="adminBadgeCarsCount">4</span>
+              </button>
+              <button type="button" class="admin-tab-btn" data-admin-tab="drivers" onclick="App.switchAdminTab('drivers', this)">
+                <span>👔 Chauffeurs</span>
+                <span class="badge-status badge-completed" id="adminBadgeDriversCount">4</span>
+              </button>
+              <button type="button" class="admin-tab-btn" data-admin-tab="system" onclick="App.switchAdminTab('system', this)">
+                <span>⚙️ System Rates &amp; Settings</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="container">
+          <!-- 4 KPI Stat Boxes -->
+          <div class="admin-stats-grid">
+            <div class="admin-stat-card">
+              <div class="admin-stat-icon blue">✈️</div>
+              <div>
+                <div class="admin-stat-val" id="adminKpiTotalBookings">0</div>
+                <div class="admin-stat-label">TOTAL BOOKINGS</div>
+                <div class="admin-stat-trend" id="adminKpiRevenue">£0.00 Revenue</div>
+              </div>
+            </div>
+
+            <div class="admin-stat-card">
+              <div class="admin-stat-icon green">🚗</div>
+              <div>
+                <div class="admin-stat-val" id="adminKpiActiveCars">4</div>
+                <div class="admin-stat-label">FLEET VEHICLES</div>
+                <div class="admin-stat-trend">100% In Service</div>
+              </div>
+            </div>
+
+            <div class="admin-stat-card">
+              <div class="admin-stat-icon gold">👔</div>
+              <div>
+                <div class="admin-stat-val" id="adminKpiActiveDrivers">3 / 4</div>
+                <div class="admin-stat-label">CHAUFFEURS ON DUTY</div>
+                <div class="admin-stat-trend">Ready for Dispatch</div>
+              </div>
+            </div>
+
+            <div class="admin-stat-card">
+              <div class="admin-stat-icon purple">🛰️</div>
+              <div>
+                <div class="admin-stat-val" id="adminKpiPending">0</div>
+                <div class="admin-stat-label">PENDING TRIPS</div>
+                <div class="admin-stat-trend" id="adminKpiDbStatus">Supabase Live</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB PANE 1: LIVE BOOKINGS & DISPATCH -->
+          <div class="admin-tab-pane active" id="adminPaneBookings">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div>
+                  <h3 class="admin-card-title">
+                    <span>📋 Real-time Bookings &amp; Chauffeur Dispatch</span>
+                  </h3>
+                  <p class="text-xs text-muted">Update journey statuses, assign executive cars &amp; drivers, or dispatch new transfers directly.</p>
+                </div>
+
+                <div class="admin-search-wrap">
+                  <div class="booking-status-tabs" id="adminBookingFilterTabs">
+                    <button type="button" class="bstatus-tab active" data-status="all" onclick="App.filterAdminBookings('all', this)">All</button>
+                    <button type="button" class="bstatus-tab" data-status="confirmed" onclick="App.filterAdminBookings('confirmed', this)">Confirmed</button>
+                    <button type="button" class="bstatus-tab" data-status="en route" onclick="App.filterAdminBookings('en route', this)">En Route</button>
+                    <button type="button" class="bstatus-tab" data-status="completed" onclick="App.filterAdminBookings('completed', this)">Completed</button>
+                    <button type="button" class="bstatus-tab" data-status="cancelled" onclick="App.filterAdminBookings('cancelled', this)">Cancelled</button>
+                  </div>
+                  <input type="text" id="adminBookingSearch" class="form-control form-control-sm" placeholder="🔍 Search by Ref, passenger, route..." oninput="App.searchAdminBookings(this.value)" style="min-width: 240px;" />
+                </div>
+              </div>
+
+              <!-- Bookings Dispatch Table -->
+              <div class="admin-table-wrap">
+                <table class="admin-table" id="adminBookingsTable">
+                  <thead>
+                    <tr>
+                      <th>Ref #</th>
+                      <th>Passenger</th>
+                      <th>Pickup &bull; Drop-off</th>
+                      <th>Schedule</th>
+                      <th>Vehicle Class</th>
+                      <th>Assigned Chauffeur</th>
+                      <th>Fare</th>
+                      <th>Status Control</th>
+                      <th class="text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminBookingsTableBody">
+                    <!-- Populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB PANE 2: CARS & FLEET MANAGEMENT -->
+          <div class="admin-tab-pane" id="adminPaneCars">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div>
+                  <h3 class="admin-card-title">
+                    <span>🚗 Fleet Vehicles Management</span>
+                  </h3>
+                  <p class="text-xs text-muted">Register, edit, and assign vehicles across executive saloons, estates, and MPVs.</p>
+                </div>
+
+                <div class="admin-search-wrap">
+                  <div class="booking-status-tabs" id="adminCarFilterTabs">
+                    <button type="button" class="bstatus-tab active" data-car-cat="all" onclick="App.filterAdminCars('all', this)">All Fleet</button>
+                    <button type="button" class="bstatus-tab" data-car-cat="Sedan" onclick="App.filterAdminCars('Sedan', this)">Sedans</button>
+                    <button type="button" class="bstatus-tab" data-car-cat="Executive" onclick="App.filterAdminCars('Executive', this)">Executive</button>
+                    <button type="button" class="bstatus-tab" data-car-cat="Estate" onclick="App.filterAdminCars('Estate', this)">Estates</button>
+                    <button type="button" class="bstatus-tab" data-car-cat="MPV" onclick="App.filterAdminCars('MPV', this)">MPVs</button>
+                  </div>
+                  <button type="button" class="btn btn-navy btn-sm" onclick="App.openAddVehicleModal()">+ Add New Car</button>
+                </div>
+              </div>
+
+              <!-- Cars Grid -->
+              <div class="admin-cars-grid" id="adminCarsGrid">
+                <!-- Populated dynamically via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB PANE 3: CHAUFFEUR DRIVERS MANAGEMENT -->
+          <div class="admin-tab-pane" id="adminPaneDrivers">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div>
+                  <h3 class="admin-card-title">
+                    <span>👔 Chauffeur Drivers &amp; Licensing</span>
+                  </h3>
+                  <p class="text-xs text-muted">Manage vetted executive chauffeurs, duty statuses, contact numbers, and vehicle pairings.</p>
+                </div>
+
+                <div class="admin-search-wrap">
+                  <div class="booking-status-tabs" id="adminDriverFilterTabs">
+                    <button type="button" class="bstatus-tab active" data-driver-status="all" onclick="App.filterAdminDrivers('all', this)">All Drivers</button>
+                    <button type="button" class="bstatus-tab" data-driver-status="On Duty" onclick="App.filterAdminDrivers('On Duty', this)">On Duty</button>
+                    <button type="button" class="bstatus-tab" data-driver-status="On Trip" onclick="App.filterAdminDrivers('On Trip', this)">On Trip</button>
+                    <button type="button" class="bstatus-tab" data-driver-status="Off Duty" onclick="App.filterAdminDrivers('Off Duty', this)">Off Duty</button>
+                  </div>
+                  <button type="button" class="btn btn-navy btn-sm" onclick="App.openAddDriverModal()">+ Add New Driver</button>
+                </div>
+              </div>
+
+              <!-- Drivers Grid -->
+              <div class="admin-drivers-grid" id="adminDriversGrid">
+                <!-- Populated dynamically via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB PANE 4: SYSTEM RATES & DISPATCH CONTROLS -->
+          <div class="admin-tab-pane" id="adminPaneSystem">
+            <div class="admin-control-grid">
+              <!-- Airport Rates Card -->
+              <div class="admin-card">
+                <h3 class="admin-card-title" style="margin-bottom: 14px;">
+                  <span>💷 Fixed Airport Transfer Base Rates</span>
+                </h3>
+                <p class="text-xs text-muted" style="margin-bottom: 20px;">Adjust fixed pricing rates for all major UK terminals. Fares update instantly on customer quotes.</p>
+
+                <div class="rate-input-group">
+                  <div>
+                    <strong>London Heathrow (LHR) Terminals 2-5</strong>
+                    <span class="text-xs text-muted" style="display:block;">Includes drop-off &amp; flight tracking</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span>&pound;</span>
+                    <input type="number" id="sysRateHeathrow" class="rate-input-control" value="45" min="20" step="5" title="London Heathrow Base Fare" placeholder="45" aria-label="London Heathrow Base Fare" />
+                  </div>
+                </div>
+
+                <div class="rate-input-group">
+                  <div>
+                    <strong>London Gatwick (LGW) North &amp; South</strong>
+                    <span class="text-xs text-muted" style="display:block;">Includes terminal fee &amp; 60m wait</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span>&pound;</span>
+                    <input type="number" id="sysRateGatwick" class="rate-input-control" value="65" min="20" step="5" title="London Gatwick Base Fare" placeholder="65" aria-label="London Gatwick Base Fare" />
+                  </div>
+                </div>
+
+                <div class="rate-input-group">
+                  <div>
+                    <strong>London Luton (LTN) International</strong>
+                    <span class="text-xs text-muted" style="display:block;">Includes express drop-off charge</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span>&pound;</span>
+                    <input type="number" id="sysRateLuton" class="rate-input-control" value="55" min="20" step="5" title="London Luton Base Fare" placeholder="55" aria-label="London Luton Base Fare" />
+                  </div>
+                </div>
+
+                <div class="rate-input-group">
+                  <div>
+                    <strong>London Stansted (STN) Terminals</strong>
+                    <span class="text-xs text-muted" style="display:block;">Includes terminal toll</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span>&pound;</span>
+                    <input type="number" id="sysRateStansted" class="rate-input-control" value="60" min="20" step="5" title="London Stansted Base Fare" placeholder="60" aria-label="London Stansted Base Fare" />
+                  </div>
+                </div>
+
+                <div class="rate-input-group">
+                  <div>
+                    <strong>Birmingham (BHX) Terminals</strong>
+                    <span class="text-xs text-muted" style="display:block;">Midlands express connection</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span>&pound;</span>
+                    <input type="number" id="sysRateBirmingham" class="rate-input-control" value="75" min="20" step="5" title="Birmingham Airport Base Fare" placeholder="75" aria-label="Birmingham Airport Base Fare" />
+                  </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                  <button type="button" class="btn btn-navy btn-block" onclick="App.saveSystemRates()">Save Updated Rates</button>
+                </div>
+              </div>
+
+              <!-- Operational Policies & Database Tools Card -->
+              <div class="admin-card">
+                <h3 class="admin-card-title" style="margin-bottom: 14px;">
+                  <span>⚙️ System Policies &amp; Cloud Database</span>
+                </h3>
+                <p class="text-xs text-muted" style="margin-bottom: 20px;">Global dispatch controls, live notifications, and database synchronisation.</p>
+
+                <div class="toggle-switch-row">
+                  <div>
+                    <strong>Inside-Terminal Meet &amp; Greet</strong>
+                    <span class="text-xs text-muted" style="display:block;">Chauffeur waits inside arrivals with name board</span>
+                  </div>
+                  <label class="custom-switch" for="sysToggleMeetGreet">
+                    <input type="checkbox" id="sysToggleMeetGreet" checked title="Toggle Meet and Greet" aria-label="Toggle Inside-Terminal Meet and Greet" onchange="App.toggleSystemSetting('meetGreet', this.checked)">
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="toggle-switch-row">
+                  <div>
+                    <strong>60 Mins Complimentary Wait</strong>
+                    <span class="text-xs text-muted" style="display:block;">Free waiting time after flight touchdown</span>
+                  </div>
+                  <label class="custom-switch" for="sysToggleFreeWait">
+                    <input type="checkbox" id="sysToggleFreeWait" checked title="Toggle 60 Mins Wait" aria-label="Toggle 60 Minutes Complimentary Wait" onchange="App.toggleSystemSetting('freeWait', this.checked)">
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="toggle-switch-row">
+                  <div>
+                    <strong>Emergency Dispatch Banner</strong>
+                    <span class="text-xs text-muted" style="display:block;">Display 24/7 emergency dispatch helpline</span>
+                  </div>
+                  <label class="custom-switch" for="sysToggleEmergency">
+                    <input type="checkbox" id="sysToggleEmergency" checked title="Toggle Emergency Banner" aria-label="Toggle Emergency Dispatch Banner" onchange="App.toggleSystemSetting('emergencyBanner', this.checked)">
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div style="background: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 14px; margin-top: 20px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong style="font-size: 0.85rem; color: var(--color-navy);">Supabase Cloud Database</strong>
+                    <span class="badge-status badge-confirmed" id="adminDbStatusBadge">Connected</span>
+                  </div>
+                  <p class="text-xs text-muted" style="margin-bottom: 12px;">Endpoint: <code>https://thwamlzdialhwwsyqiyd.supabase.co</code></p>
+                  
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-outline btn-xs" onclick="App.exportBookingsCsv()">📥 Export Bookings CSV</button>
+                    <button type="button" class="btn btn-outline btn-xs" onclick="App.copySupabaseSql()">📋 Copy SQL Migrations</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- ============================================== -->
@@ -2406,7 +2739,7 @@
             <span>📞 Call Operations Hotline (24/7)</span>
             <strong style="font-family: var(--font-heading);">01453 888 999</strong>
           </a>
-          <a href="https://wa.me/441453888999" target="_blank" class="btn btn-outline btn-block" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px;">
+          <a href="https://wa.me/441453888999" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-block" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px;">
             <span>💬 Live WhatsApp Dispatch Desk</span>
             <span>Connect &rarr;</span>
           </a>
@@ -2529,6 +2862,257 @@
           <button type="button" class="btn btn-outline" onclick="App.closePaymentsModal()">Close</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: ADD FLEET VEHICLE -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalAddVehicle">
+    <div class="modal-card" style="max-width: 580px;">
+      <div class="modal-header-standard">
+        <div>
+          <h3 class="modal-title">Register New Fleet Vehicle</h3>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Add executive saloon, estate, or MPV to Jo's Rural Cars fleet</p>
+        </div>
+        <button type="button" class="modal-close-icon" onclick="App.closeAddVehicleModal()" aria-label="Close modal">&times;</button>
+      </div>
+
+      <form id="formAddVehicle" onsubmit="App.handleAddVehicleSubmit(event)">
+        <div class="modal-body">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="carFormName" class="form-label">VEHICLE MAKE &amp; MODEL *</label>
+              <input type="text" id="carFormName" class="form-control" placeholder="e.g. Mercedes-Benz E-Class Saloon" required />
+            </div>
+            <div class="form-group">
+              <label for="carFormPlate" class="form-label">REGISTRATION / NUMBER PLATE *</label>
+              <input type="text" id="carFormPlate" class="form-control" placeholder="e.g. KV74 ZLA" style="text-transform: uppercase;" required />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="carFormCategory" class="form-label">CATEGORY *</label>
+              <select id="carFormCategory" class="form-control" required>
+                <option value="Sedan">Executive Sedan / Saloon</option>
+                <option value="Executive">Luxury Chauffeur (S-Class)</option>
+                <option value="Estate">Executive Estate / Touring</option>
+                <option value="MPV">Luxury MPV (up to 8 passengers)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="carFormBasePrice" class="form-label">BASE RATE (&pound;) *</label>
+              <input type="number" id="carFormBasePrice" class="form-control" placeholder="45" min="20" step="5" required />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="carFormPassengers" class="form-label">MAX PASSENGERS</label>
+              <input type="number" id="carFormPassengers" class="form-control" value="3" min="1" max="16" required />
+            </div>
+            <div class="form-group">
+              <label for="carFormLuggage" class="form-label">SUITCASE CAPACITY</label>
+              <input type="number" id="carFormLuggage" class="form-control" value="2" min="1" max="16" required />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="carFormDriver" class="form-label">ASSIGN PRIMARY CHAUFFEUR</label>
+              <select id="carFormDriver" class="form-control">
+                <option value="">Unassigned (Pool Vehicle)</option>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="carFormStatus" class="form-label">INITIAL STATUS</label>
+              <select id="carFormStatus" class="form-control">
+                <option value="Available">Available / On Duty</option>
+                <option value="On Journey">On Journey</option>
+                <option value="Maintenance">Maintenance / Inspection</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="carFormImg" class="form-label">VEHICLE IMAGE</label>
+            <select id="carFormImg" class="form-control">
+              <option value="./assets/images/car_sedan.jpg">Mercedes-Benz E-Class Sedan (Silver/Black)</option>
+              <option value="./assets/images/car_executive.jpg">Mercedes-Benz S-Class Chauffeur Edition</option>
+              <option value="./assets/images/car_estate.jpg">Mercedes-Benz E-Class Estate (Hybrid)</option>
+              <option value="./assets/images/car_mpv.jpg">Mercedes-Benz V-Class Luxury MPV</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="modal-actions-row">
+            <button type="submit" class="btn btn-navy">Save Vehicle to Fleet</button>
+            <button type="button" class="btn btn-outline" onclick="App.closeAddVehicleModal()">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: ADD CHAUFFEUR DRIVER -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalAddDriver">
+    <div class="modal-card" style="max-width: 560px;">
+      <div class="modal-header-standard">
+        <div>
+          <h3 class="modal-title">Register Chauffeur Driver</h3>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Add verified driver with UK private hire licensing</p>
+        </div>
+        <button type="button" class="modal-close-icon" onclick="App.closeAddDriverModal()" aria-label="Close modal">&times;</button>
+      </div>
+
+      <form id="formAddDriver" onsubmit="App.handleAddDriverSubmit(event)">
+        <div class="modal-body">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="drvFormName" class="form-label">CHAUFFEUR FULL NAME *</label>
+              <input type="text" id="drvFormName" class="form-control" placeholder="e.g. Richard Evans" required />
+            </div>
+            <div class="form-group">
+              <label for="drvFormPhone" class="form-label">CONTACT MOBILE *</label>
+              <input type="tel" id="drvFormPhone" class="form-control" placeholder="e.g. +44 7700 900555" required />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="drvFormEmail" class="form-label">EMAIL ADDRESS</label>
+              <input type="email" id="drvFormEmail" class="form-control" placeholder="driver@josruralcars.co.uk" />
+            </div>
+            <div class="form-group">
+              <label for="drvFormBadge" class="form-label">PRIVATE HIRE BADGE ID *</label>
+              <input type="text" id="drvFormBadge" class="form-control" placeholder="e.g. PHD-GL-9102" required />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="drvFormCar" class="form-label">ASSIGNED FLEET CAR</label>
+              <select id="drvFormCar" class="form-control">
+                <option value="">Unassigned (Relief Driver)</option>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="drvFormStatus" class="form-label">DUTY STATUS</label>
+              <select id="drvFormStatus" class="form-control">
+                <option value="On Duty">On Duty (Available)</option>
+                <option value="On Trip">On Journey</option>
+                <option value="Off Duty">Off Duty</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="modal-actions-row">
+            <button type="submit" class="btn btn-navy">Register Chauffeur</button>
+            <button type="button" class="btn btn-outline" onclick="App.closeAddDriverModal()">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: MANUAL TELEPHONE / WALK-IN BOOKING -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalAdminManualBooking">
+    <div class="modal-card" style="max-width: 620px;">
+      <div class="modal-header-standard">
+        <div>
+          <h3 class="modal-title">Create Dispatch Booking</h3>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Enter telephone, concierge, or corporate transfer directly</p>
+        </div>
+        <button type="button" class="modal-close-icon" onclick="App.closeManualBookingModal()" aria-label="Close modal">&times;</button>
+      </div>
+
+      <form id="formManualBooking" onsubmit="App.handleManualBookingSubmit(event)">
+        <div class="modal-body">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="mbFormName" class="form-label">PASSENGER NAME *</label>
+              <input type="text" id="mbFormName" class="form-control" placeholder="e.g. Lady Clara Morrison" required />
+            </div>
+            <div class="form-group">
+              <label for="mbFormPhone" class="form-label">PHONE NUMBER *</label>
+              <input type="tel" id="mbFormPhone" class="form-control" placeholder="+44 7700 900888" required />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="mbFormPickup" class="form-label">PICKUP LOCATION *</label>
+              <input type="text" id="mbFormPickup" class="form-control" placeholder="e.g. Tetbury, Cotswolds, GL8" required />
+            </div>
+            <div class="form-group">
+              <label for="mbFormDropoff" class="form-label">DROP-OFF AIRPORT / TERMINAL *</label>
+              <input type="text" id="mbFormDropoff" class="form-control" placeholder="e.g. London Heathrow Terminal 5" required />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="mbFormDate" class="form-label">DATE *</label>
+              <input type="date" id="mbFormDate" class="form-control" required />
+            </div>
+            <div class="form-group">
+              <label for="mbFormTime" class="form-label">TIME *</label>
+              <input type="time" id="mbFormTime" class="form-control" value="06:00" required />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="mbFormVehicle" class="form-label">VEHICLE CLASS</label>
+              <select id="mbFormVehicle" class="form-control">
+                <option value="Executive Sedan (Mercedes E-Class)">Executive Sedan (Mercedes E-Class)</option>
+                <option value="Business Class (Mercedes S-Class)">Business Class (Mercedes S-Class LWB)</option>
+                <option value="Executive Estate (Mercedes Estate)">Executive Estate (Mercedes Estate)</option>
+                <option value="Luxury MPV (Mercedes V-Class)">Luxury MPV (Mercedes V-Class)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="mbFormDriver" class="form-label">ASSIGN CHAUFFEUR</label>
+              <select id="mbFormDriver" class="form-control">
+                <option value="">Unassigned (Dispatch Pending)</option>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="mbFormAmount" class="form-label">TOTAL FARE (&pound;) *</label>
+              <input type="number" id="mbFormAmount" class="form-control" value="75" min="25" step="5" required />
+            </div>
+            <div class="form-group">
+              <label for="mbFormPayment" class="form-label">PAYMENT STATUS</label>
+              <select id="mbFormPayment" class="form-control">
+                <option value="Paid">Paid (Card / Stripe)</option>
+                <option value="Pending Cash">Pending Cash to Chauffeur</option>
+                <option value="Invoiced">Corporate Account Invoice</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="modal-actions-row">
+            <button type="submit" class="btn btn-navy">Create &amp; Dispatch Journey</button>
+            <button type="button" class="btn btn-outline" onclick="App.closeManualBookingModal()">Cancel</button>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
 
