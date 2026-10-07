@@ -27,20 +27,28 @@
         <a href="#home" class="nav-link active" data-page="home" id="navHome">Home</a>
         <a href="#airports" class="nav-link" data-page="airports" id="navAirports">Airports</a>
         <a href="#select-vehicle" class="nav-link" data-page="select-vehicle" id="navFleet">Fleet</a>
-        <a href="#admin" class="nav-link" data-page="admin" id="navAdmin">Admin</a>
+        <a href="#dashboard" class="nav-link" data-page="dashboard" id="navDashboard">My Bookings</a>
         <a href="#contact" class="nav-link" data-page="contact" id="navContact">Contact</a>
       </nav>
 
       <div class="header-actions">
-        <span class="supabase-status-pill" id="supabaseStatus" title="Supabase Database Status">
+        <span class="supabase-status-pill d-none" id="supabaseStatus" title="Supabase Database Status">
           <span class="db-dot"></span>
           <span class="db-text">Connecting to DB...</span>
         </span>
+        <button type="button" class="btn btn-outline btn-sm" id="btnHeaderAuth" onclick="App.navigateTo('signin')">Sign In</button>
+        <div class="header-user-badge d-none" id="headerUserBadge">
+          <button type="button" class="user-badge-btn" onclick="App.openProfileModal()" title="View Passenger Profile">
+            <span class="avatar-xs" id="headerAvatar">JD</span>
+            <span class="user-name-text" id="headerUserName">Client</span>
+          </button>
+          <button type="button" class="btn-signout-mini" onclick="App.handleSignOut()" title="Sign Out">⎋</button>
+        </div>
         <a href="tel:+441453888999" class="phone-link" title="Call Us 24/7">
           <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
           <span>01453 888 999</span>
         </a>
-        <button class="btn btn-navy" id="btnBookNowHeader" onclick="App.navigateTo('select-vehicle')">Book Now</button>
+        <button class="btn btn-navy" id="btnBookNowHeader" onclick="App.startBookingFlow('select-vehicle')">Book Now</button>
       </div>
 
       <!-- Mobile Hamburger Button -->
@@ -55,11 +63,11 @@
     <div class="mobile-drawer" id="mobileDrawer">
       <a href="#home" class="mobile-link" data-page="home">Home</a>
       <a href="#airports" class="mobile-link" data-page="airports">Airports</a>
-      <a href="#select-vehicle" class="mobile-link" data-page="select-vehicle">Fleet & Vehicles</a>
-      <a href="#admin" class="mobile-link" data-page="admin">🛡️ Dispatch Admin Portal</a>
+      <a href="#select-vehicle" class="mobile-link" data-page="select-vehicle">Fleet &amp; Vehicles</a>
       <a href="#dashboard" class="mobile-link" data-page="dashboard">📅 My Bookings</a>
       <a href="#contact" class="mobile-link" data-page="contact">Contact Us</a>
-      <button class="btn btn-navy full-width" onclick="App.navigateTo('select-vehicle')">Book Your Ride</button>
+      <button type="button" class="mobile-link text-left" id="mobileAuthLink" onclick="App.navigateTo('signin')">👤 Sign In / Register</button>
+      <button class="btn btn-navy full-width" onclick="App.startBookingFlow('select-vehicle')">Book Your Ride</button>
     </div>
   </header>
 
@@ -1013,15 +1021,223 @@
     </section>
 
     <!-- ============================================== -->
+    <!-- VIEW: CUSTOMER SIGN IN (STEP BEFORE BOOKING)   -->
+    <!-- ============================================== -->
+    <section id="viewSignIn" class="app-view">
+      <div class="container view-container">
+        <!-- Booking Flow Stepper Bar -->
+        <div class="flow-stepper">
+          <div class="step-indicator done">
+            <div class="step-circle">✓</div>
+            <span class="step-text">1. Select Vehicle</span>
+          </div>
+          <div class="step-line done"></div>
+          <div class="step-indicator active" id="stepperStepVehicles">
+            <div class="step-circle">2</div>
+            <span class="step-text">2. Customer Sign In</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-indicator" style="opacity: 0.7;">
+            <div class="step-circle">3</div>
+            <span class="step-text">3. Passenger Details</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-indicator" style="opacity: 0.5;">
+            <div class="step-circle">4</div>
+            <span class="step-text">4. Payment</span>
+          </div>
+        </div>
+
+        <!-- Pending Journey Banner -->
+        <div class="signin-journey-banner">
+          <div class="sjb-left">
+            <span class="sjb-badge">📍 Selected Route for Booking</span>
+            <div class="sjb-route">
+              <strong id="signinPickupDisplay">Stroud, Cotswolds, GL5</strong>
+              <span class="sjb-arrow">&rarr;</span>
+              <strong id="signinDropoffDisplay">London Heathrow Airport (LHR)</strong>
+            </div>
+            <div class="sjb-meta">
+              <span id="signinDateDisplay">📅 Sat, 24 Oct 2026</span>
+              <span id="signinTimeDisplay">⏰ 04:30 AM</span>
+              <span id="signinPassDisplay">👥 2 Passengers</span>
+              <span id="signinVehicleDisplay">🚗 Executive Mercedes (£75.00)</span>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm sjb-edit-btn" onclick="App.navigateTo('select-vehicle')">
+            ✏️ Change Vehicle
+          </button>
+        </div>
+
+        <!-- Sign In Layout Grid -->
+        <div class="signin-booking-grid">
+          <!-- Main Authentication Card -->
+          <div class="signin-auth-card">
+            <!-- If already signed in message -->
+            <div id="signinAlreadyLoggedInBanner" class="signin-already-box d-none">
+              <div class="signin-already-header">
+                <span class="avatar-sm" id="signinCurrentAvatar">JD</span>
+                <div>
+                  <h3 style="margin: 0; font-size: 1.05rem; color: var(--color-navy);">Signed In as <span id="signinCurrentName">James Doe</span></h3>
+                  <p class="text-xs text-muted" style="margin: 2px 0 0 0;" id="signinCurrentEmail">james@example.com &bull; Gold VIP</p>
+                </div>
+                <span class="badge-status badge-confirmed" style="margin-left: auto;">Active Session</span>
+              </div>
+              <p style="font-size: 0.88rem; color: #475569; margin: 16px 0;">
+                Your account is verified and ready. Proceed to the next step to finalize passenger details and payment.
+              </p>
+              <div style="display: flex; gap: 12px;">
+                <button type="button" class="btn btn-navy" style="flex: 1;" onclick="App.proceedToNextBookingStep()">
+                  Proceed to Passenger Details &rarr;
+                </button>
+                <button type="button" class="btn btn-outline" onclick="App.handleSignOut()">
+                  Switch Account
+                </button>
+              </div>
+            </div>
+
+            <!-- Auth Forms Wrapper (shown when logged out) -->
+            <div id="signinFormsWrapper">
+              <div class="signin-auth-header">
+                <h2 class="view-title" style="font-size: 1.5rem; margin-bottom: 4px;">Sign In to Book Your Ride</h2>
+                <p class="view-subtitle" style="font-size: 0.88rem;">
+                  Sign in or create an account to confirm your chauffeur transfer. Your profile details and booking will be synchronized automatically.
+                </p>
+              </div>
+
+              <!-- Auth Mode Tabs -->
+              <div class="auth-tabs" style="border-radius: var(--radius-md) var(--radius-md) 0 0; margin-bottom: 20px;">
+                <button type="button" class="auth-tab-btn active" id="tabSignInPage" onclick="App.switchSignInPageTab('signin')">
+                  Sign In to VIP Account
+                </button>
+                <button type="button" class="auth-tab-btn" id="tabSignUpPage" onclick="App.switchSignInPageTab('signup')">
+                  New Customer? Register
+                </button>
+              </div>
+
+              <!-- 1-Click Demo Profiles for Rapid Testing -->
+              <div class="signin-quick-demo-row">
+                <span class="text-xs text-muted" style="font-weight: 600;">⚡ 1-Click Fast Sign In:</span>
+                <div class="quick-login-chips">
+                  <button type="button" class="quick-chip-btn" onclick="App.quickSignInAs('james@example.com')">
+                    👑 James Doe (VIP)
+                  </button>
+                  <button type="button" class="quick-chip-btn" onclick="App.quickSignInAs('clara@morrison.co.uk')">
+                    💼 Lady Clara (Corporate)
+                  </button>
+                  <button type="button" class="quick-chip-btn" onclick="App.quickSignInAs('guest')">
+                    ⚡ Instant Guest
+                  </button>
+                </div>
+              </div>
+
+              <!-- Form: Sign In -->
+              <form id="formSignInPage" onsubmit="App.handleSignInPageSubmit(event)">
+                <div class="form-group" style="margin-bottom: 16px;">
+                  <label for="pageSignInEmail" class="form-label">EMAIL ADDRESS *</label>
+                  <input type="email" id="pageSignInEmail" class="form-control" placeholder="name@example.com" required value="james@example.com" />
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label for="pageSignInPassword" class="form-label" style="margin: 0;">PASSWORD *</label>
+                    <a href="javascript:void(0)" onclick="App.openAuthModal('forgot')" class="text-xs" style="color: var(--color-primary); text-decoration: none;">Forgot password?</a>
+                  </div>
+                  <input type="password" id="pageSignInPassword" class="form-control" placeholder="••••••••" required value="password123" />
+                </div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 0.84rem; color: #475569; cursor: pointer;">
+                    <input type="checkbox" id="pageSignInRemember" checked /> Remember my session
+                  </label>
+                </div>
+                <button type="submit" class="btn btn-navy full-width" id="btnPageSignIn" style="padding: 14px; font-size: 1rem;">
+                  Sign In &amp; Continue to Vehicle Selection &rarr;
+                </button>
+              </form>
+
+              <!-- Form: Sign Up (Register) -->
+              <form id="formSignUpPage" class="d-none" onsubmit="App.handleSignUpPageSubmit(event)">
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label for="pageSignUpName" class="form-label">FULL NAME *</label>
+                  <input type="text" id="pageSignUpName" class="form-control" placeholder="e.g. Eleanor Vance" required />
+                </div>
+                <div class="form-row-2" style="margin-bottom: 14px;">
+                  <div class="form-group">
+                    <label for="pageSignUpEmail" class="form-label">EMAIL ADDRESS *</label>
+                    <input type="email" id="pageSignUpEmail" class="form-control" placeholder="eleanor@example.com" required />
+                  </div>
+                  <div class="form-group">
+                    <label for="pageSignUpPhone" class="form-label">UK CONTACT MOBILE *</label>
+                    <input type="tel" id="pageSignUpPhone" class="form-control" placeholder="07700 900555" required />
+                  </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                  <label for="pageSignUpPassword" class="form-label">CREATE PASSWORD *</label>
+                  <input type="password" id="pageSignUpPassword" class="form-control" placeholder="Min. 8 characters" minlength="6" required />
+                </div>
+                <button type="submit" class="btn btn-navy full-width" id="btnPageSignUp" style="padding: 14px; font-size: 1rem;">
+                  Create VIP Account &amp; Unlock Next Step &rarr;
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Right Column: Booking Guarantee & VIP Perks -->
+          <div class="signin-perks-col">
+            <div class="signin-perks-card">
+              <h3 class="perks-card-title">Why Jo's Rural Cars?</h3>
+              <p class="text-xs text-muted" style="margin-bottom: 16px;">Direct booking protection &amp; VIP private hire standards across Gloucestershire, Cotswolds, and London airports.</p>
+              
+              <div class="perk-item">
+                <span class="perk-icon">🛡️</span>
+                <div>
+                  <strong>Guaranteed Chauffeur Hold</strong>
+                  <p class="text-xs text-muted">Your booking is locked in our dispatch center with a vetted driver and Mercedes vehicle.</p>
+                </div>
+              </div>
+
+              <div class="perk-item">
+                <span class="perk-icon">✈️</span>
+                <div>
+                  <strong>Real-Time Flight Radar Monitoring</strong>
+                  <p class="text-xs text-muted">We track your flight arrival live. Automatic complimentary 60-minute wait time post-touchdown.</p>
+                </div>
+              </div>
+
+              <div class="perk-item">
+                <span class="perk-icon">📱</span>
+                <div>
+                  <strong>Driver SMS &amp; WhatsApp Notifications</strong>
+                  <p class="text-xs text-muted">Receive driver photo badge, direct mobile number, and vehicle registration 2 hours before pickup.</p>
+                </div>
+              </div>
+
+              <div class="perk-item">
+                <span class="perk-icon">🧾</span>
+                <div>
+                  <strong>Instant VAT Receipts &amp; Travel History</strong>
+                  <p class="text-xs text-muted">Access, download, and re-book previous transfers directly from your VIP passenger dashboard.</p>
+                </div>
+              </div>
+
+              <div class="perk-footer-note">
+                <span>🔒 256-bit Encrypted SSL &bull; Licensed Private Hire Operator</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
     <!-- VIEW 2: SELECT VEHICLE STEP -->
     <!-- ============================================== -->
     <section id="viewSelectVehicle" class="app-view">
       <div class="container view-container">
         <!-- Booking Flow Stepper Bar -->
         <div class="flow-stepper">
-          <div class="step-indicator completed" onclick="App.navigateTo('home')">
+          <div class="step-indicator completed" onclick="App.navigateTo('signin')">
             <div class="step-circle">✓</div>
-            <span class="step-text">1. Journey Details</span>
+            <span class="step-text">1. Customer Sign In</span>
           </div>
           <div class="step-line active"></div>
           <div class="step-indicator active">
@@ -1254,9 +1470,9 @@
       <div class="container view-container">
         <!-- Booking Flow Stepper Bar -->
         <div class="flow-stepper">
-          <div class="step-indicator completed" onclick="App.navigateTo('home')">
+          <div class="step-indicator completed" onclick="App.navigateTo('signin')">
             <div class="step-circle">✓</div>
-            <span class="step-text">1. Journey</span>
+            <span class="step-text">1. Sign In</span>
           </div>
           <div class="step-line active"></div>
           <div class="step-indicator completed" onclick="App.navigateTo('select-vehicle')">
@@ -1471,9 +1687,9 @@
       <div class="container view-container">
         <!-- Stepper Bar -->
         <div class="flow-stepper">
-          <div class="step-indicator completed" onclick="App.navigateTo('home')">
+          <div class="step-indicator completed" onclick="App.navigateTo('signin')">
             <div class="step-circle">✓</div>
-            <span class="step-text">Journey</span>
+            <span class="step-text">Sign In</span>
           </div>
           <div class="step-line active"></div>
           <div class="step-indicator completed" onclick="App.navigateTo('select-vehicle')">
@@ -1739,7 +1955,7 @@
             <p class="support-desc">Emergency Booking Assistance available for all transfers.</p>
             <div class="support-btns-row">
               <a href="tel:+441453888999" class="btn btn-navy btn-xs">Call Now</a>
-              <a href="https://wa.me/441453888999" target="_blank" class="btn btn-outline btn-xs">WhatsApp</a>
+              <a href="https://wa.me/441453888999" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs">WhatsApp</a>
             </div>
           </div>
         </aside>
@@ -1755,64 +1971,86 @@
             <button type="button" class="dash-m-tab" data-tab="help" onclick="App.showDashboardTab('help', this)">Help Center</button>
           </div>
 
-          <div class="dash-top-bar">
-            <div>
-              <h1 class="dash-welcome-title">Welcome back, James</h1>
-              <p class="dash-welcome-sub">Ready for your next rural transfer?</p>
+          <!-- Auth Gate for Logged Out Visitors -->
+          <div id="dashAuthGate" class="dash-auth-gate-card d-none">
+            <div class="dash-auth-gate-inner">
+              <span class="auth-gate-badge">
+                <span class="status-pulse-dot gold"></span> VIP PASSENGER PORTAL
+              </span>
+              <h2 class="auth-gate-title">Sign In to Access Your Dashboard</h2>
+              <p class="auth-gate-desc">
+                Sign in to manage your executive airport journeys, track ongoing transfers live, download VAT receipts, and manage account details.
+              </p>
+              <div class="auth-gate-actions">
+                <button type="button" class="btn btn-navy btn-md" onclick="App.navigateTo('signin')">
+                  👤 Sign In to Your Account
+                </button>
+                <button type="button" class="btn btn-outline btn-md" onclick="App.startBookingFlow('select-vehicle')">
+                  🚗 Book a Transfer
+                </button>
+              </div>
             </div>
-            <button class="btn btn-navy" onclick="App.navigateTo('select-vehicle')">
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-              Book New Journey
-            </button>
           </div>
 
+          <!-- Authenticated Passenger Content -->
+          <div id="dashAuthContent">
+            <div class="dash-top-bar">
+              <div>
+                <h1 class="dash-welcome-title">Welcome back, James</h1>
+                <p class="dash-welcome-sub">Ready for your next rural transfer?</p>
+              </div>
+              <button class="btn btn-navy" onclick="App.navigateTo('select-vehicle')">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                Book New Journey
+              </button>
+            </div>
+
           <!-- Active Live Next Journey Tracker Card -->
-          <div class="live-journey-card">
+          <div class="live-journey-card" id="liveJourneyCard">
             <div class="live-card-header">
               <div>
                 <span class="label-accent">NEXT JOURNEY</span>
-                <h3 class="live-route-title" id="liveRouteTitle">Reading → Heathrow T5</h3>
+                <h3 class="live-route-title" id="liveRouteTitle">Loading real-time journey...</h3>
               </div>
               <div class="countdown-badge">
                 <span class="countdown-clock">⏳</span>
-                <strong id="liveCountdown">3 Days Remaining</strong>
+                <strong id="liveCountdown">Checking...</strong>
               </div>
             </div>
 
-            <!-- 4-step progress tracker -->
-            <div class="journey-tracker-track">
+            <div class="journey-tracker-track" id="liveJourneyTrack">
               <div class="track-step done">
                 <div class="track-circle">✓</div>
                 <span class="track-label">Booking Confirmed</span>
-                <span class="track-time">Oct 21, 08:15</span>
+                <span class="track-time" id="trkStep1">Confirmed</span>
               </div>
               <div class="track-bar done"></div>
-              <div class="track-step active">
+              <div class="track-step" id="trkStep2Wrap">
                 <div class="track-circle">🚗</div>
                 <span class="track-label">Driver Assigned</span>
-                <span class="track-time">Dave M. (Mercedes E)</span>
+                <span class="track-time" id="trkStep2">Standby</span>
               </div>
-              <div class="track-bar"></div>
-              <div class="track-step">
+              <div class="track-bar" id="trkBar2"></div>
+              <div class="track-step" id="trkStep3Wrap">
                 <div class="track-circle">🛣️</div>
-                <span class="track-label">Driver En Route</span>
-                <span class="track-time">Pending</span>
+                <span class="track-label">En Route</span>
+                <span class="track-time" id="trkStep3">Pending</span>
               </div>
-              <div class="track-bar"></div>
-              <div class="track-step">
+              <div class="track-bar" id="trkBar3"></div>
+              <div class="track-step" id="trkStep4Wrap">
                 <div class="track-circle">🏁</div>
-                <span class="track-label">Trip Completed</span>
-                <span class="track-time">Terminal 5</span>
+                <span class="track-label">Completed</span>
+                <span class="track-time" id="trkStep4">Terminal Drop</span>
               </div>
             </div>
 
             <div class="live-card-footer">
               <div class="live-meta" id="liveMeta">
-                <span>📅 24 Dec 2026, 04:30 AM</span>
-                <span>🚘 Executive Sedan (Mercedes-Benz)</span>
-                <span>👤 2 Passengers • 2 Bags</span>
+                <span>📅 Scheduled Flight Transfer</span>
+                <span>🚘 Executive Chauffeur Service</span>
+                <span>👤 Jo's Rural Cars Fleet</span>
               </div>
-              <button class="btn btn-outline-white btn-sm" onclick="App.showManageTripModal()">Manage This Trip</button>
+              <button type="button" class="btn btn-outline-white btn-sm" id="btnManageActiveTrip" onclick="App.showManageTripModal()">Manage This Trip</button>
             </div>
           </div>
 
@@ -1837,7 +2075,7 @@
             <div class="dash-stat-box">
               <span class="stat-icon-wrap">✈️</span>
               <div class="stat-details">
-                <span class="stat-value" id="dashStatUpcoming">2</span>
+                <span class="stat-value" id="dashStatUpcoming">0</span>
                 <span class="stat-name">UPCOMING</span>
               </div>
             </div>
@@ -1845,7 +2083,7 @@
             <div class="dash-stat-box">
               <span class="stat-icon-wrap">🎯</span>
               <div class="stat-details">
-                <span class="stat-value" id="dashStatCompleted">14</span>
+                <span class="stat-value" id="dashStatCompleted">0</span>
                 <span class="stat-name">COMPLETED</span>
               </div>
             </div>
@@ -1853,7 +2091,7 @@
             <div class="dash-stat-box">
               <span class="stat-icon-wrap">💳</span>
               <div class="stat-details">
-                <span class="stat-value" id="dashStatTotal">£1.2k</span>
+                <span class="stat-value" id="dashStatTotal">£0.00</span>
                 <span class="stat-name">TOTAL SPENT</span>
               </div>
             </div>
@@ -1861,15 +2099,15 @@
             <div class="dash-stat-box">
               <span class="stat-icon-wrap">📍</span>
               <div class="stat-details">
-                <span class="stat-value">3</span>
-                <span class="stat-name">FAV ROUTES</span>
+                <span class="stat-value" id="dashStatRoutes">0</span>
+                <span class="stat-name">ROUTES</span>
               </div>
             </div>
 
             <div class="dash-stat-box">
               <span class="stat-icon-wrap">👑</span>
               <div class="stat-details">
-                <span class="stat-value text-gold">Gold</span>
+                <span class="stat-value text-gold" id="dashStatTier">VIP</span>
                 <span class="stat-name">LEVEL</span>
               </div>
             </div>
@@ -1877,8 +2115,8 @@
             <div class="dash-stat-box">
               <span class="stat-icon-wrap">📅</span>
               <div class="stat-details">
-                <span class="stat-value">2022</span>
-                <span class="stat-name">SINCE</span>
+                <span class="stat-value" id="dashStatYear">2026</span>
+                <span class="stat-name">MEMBER</span>
               </div>
             </div>
           </div>
@@ -1911,57 +2149,11 @@
                   </tr>
                 </thead>
                 <tbody id="dashTableBody">
-                  <!-- Row 1 -->
-                  <tr data-status="confirmed">
-                    <td><strong>#JR-8821</strong></td>
-                    <td>Executive Saloon</td>
-                    <td>Reading <span class="text-muted">(RG1 2QE)</span></td>
-                    <td>Heathrow T5 <span class="text-muted">(TW6 2GA)</span></td>
-                    <td>Oct 24, 2026, 04:30 AM</td>
-                    <td><span class="badge-status badge-confirmed">Confirmed</span></td>
-                    <td class="text-right">
-                      <div class="table-action-btns">
-                        <button type="button" class="btn btn-outline btn-xs" title="View & Print Official Receipt" onclick="App.viewReceipt('#JR-8821', 'Reading (RG1 2QE)', 'Heathrow T5 (TW6 2GA)', 65, 'Oct 24, 2026', '04:30 AM', 'Executive Saloon (Mercedes E-Class)')">
-                          <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                          <span>Receipt</span>
-                        </button>
-                        <button type="button" class="btn btn-navy btn-xs" onclick="App.rebookTrip('Reading (RG1 2QE)', 'Heathrow T5 (TW6 2GA)', 65)">Rebook</button>
-                      </div>
-                    </td>
-                  </tr>
-                  <!-- Row 2 -->
-                  <tr data-status="completed">
-                    <td><strong>#JR-8790</strong></td>
-                    <td>MPV (6-Seater)</td>
-                    <td>Wokingham <span class="text-muted">(RG40 1AS)</span></td>
-                    <td>Gatwick South <span class="text-muted">(RH6 0NP)</span></td>
-                    <td>Oct 20, 2026, 10:15 AM</td>
-                    <td><span class="badge-status badge-completed">Completed</span></td>
-                    <td class="text-right">
-                      <div class="table-action-btns">
-                        <button type="button" class="btn btn-outline btn-xs" title="View & Print Official Receipt" onclick="App.viewReceipt('#JR-8790', 'Wokingham (RG40 1AS)', 'Gatwick South (RH6 0NP)', 85, 'Oct 20, 2026', '10:15 AM', 'MPV 6-Seater (Mercedes V-Class)')">
-                          <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                          <span>Receipt</span>
-                        </button>
-                        <button type="button" class="btn btn-navy btn-xs" onclick="App.rebookTrip('Wokingham (RG40 1AS)', 'Gatwick South (RH6 0NP)', 85)">Rebook</button>
-                      </div>
-                    </td>
-                  </tr>
-                  <!-- Row 3 -->
-                  <tr data-status="completed">
-                    <td><strong>#JR-8640</strong></td>
-                    <td>Business Class</td>
-                    <td>Stroud <span class="text-muted">(GL5 1AB)</span></td>
-                    <td>Birmingham BHX <span class="text-muted">(B26 3QJ)</span></td>
-                    <td>Sep 12, 2026, 06:00 AM</td>
-                    <td><span class="badge-status badge-completed">Completed</span></td>
-                    <td class="text-right">
-                      <div class="table-action-btns">
-                        <button type="button" class="btn btn-outline btn-xs" title="View & Print Official Receipt" onclick="App.viewReceipt('#JR-8640', 'Stroud (GL5 1AB)', 'Birmingham BHX (B26 3QJ)', 85, 'Sep 12, 2026', '06:00 AM', 'Business Class (Mercedes S-Class)')">
-                          <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                          <span>Receipt</span>
-                        </button>
-                        <button type="button" class="btn btn-navy btn-xs" onclick="App.rebookTrip('Stroud (GL5 1AB)', 'Birmingham BHX (B26 3QJ)', 85)">Rebook</button>
+                  <tr>
+                    <td colspan="7" class="text-center" style="padding: 36px 16px;">
+                      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--color-text-muted);">
+                        <span style="font-size: 1.8rem;">⏳</span>
+                        <p style="font-size: 0.9rem; font-weight: 600;">Loading transfers from Supabase database...</p>
                       </div>
                     </td>
                   </tr>
@@ -2036,6 +2228,418 @@
                 <button class="btn-link" onclick="App.showSavedRoutes()">View All Routes</button>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW: NORMAL RIDE TRACKING & JOURNEY RECORDER  -->
+    <!-- ============================================== -->
+    <section id="viewTracking" class="app-view">
+      <div class="tracking-view-wrap">
+        
+        <!-- Header Banner -->
+        <div class="tracking-header-bar">
+          <div class="container">
+            <div class="tracking-header-flex">
+              <div class="tracking-title-wrap">
+                <button type="button" class="btn btn-outline-white btn-sm" onclick="App.navigateTo('dashboard')">
+                  &larr; Back to Dashboard
+                </button>
+                <div>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span class="live-status-pill" id="trackStatusPill">
+                      <span class="status-pulse-dot green"></span> Booking Confirmed
+                    </span>
+                    <span class="badge-status badge-confirmed" id="trackTripRefDisplay">#JR-8821</span>
+                  </div>
+                  <h1 style="margin-top:4px;">Chauffeur Journey &amp; Ride Tracking</h1>
+                </div>
+              </div>
+
+              <div class="tracking-header-actions">
+                <div id="trackLastUpdatedTime" class="map-glass-badge">
+                  <span>⏱️ Journey Elapsed: <strong id="trackSpeedDisplay" style="color:#38bdf8;">00:00</strong></span>
+                </div>
+                <button type="button" class="btn btn-outline-white btn-sm" onclick="App.copyTrackingLink()" title="Copy tracking link">
+                  🔗 Share Tracking
+                </button>
+                <button type="button" class="btn btn-gold btn-sm" id="btnTrackManage" onclick="App.showManageTripModal()">
+                  Manage Booking
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="container py-4">
+          <!-- Main Tracking Grid -->
+          <div class="tracking-normal-grid">
+            
+            <!-- Left Column: Confirmed Journey Card, Stepper, Controls & Drop-off -->
+            <div class="tracking-main-card">
+              
+              <!-- 1. Confirmed Route Overview Card -->
+              <div class="confirmed-route-card">
+                <div class="route-header-flex">
+                  <div>
+                    <span class="label-accent">CONFIRMED ITINERARY</span>
+                    <h2 class="confirmed-route-title" id="trackRouteTitle">Stroud, Cotswolds &rarr; London Heathrow Terminal 5</h2>
+                  </div>
+                  <div class="confirmed-fare-box">
+                    <span class="fare-label">Fixed Fare</span>
+                    <span class="fare-val" id="trackFareDisplay">£75.00</span>
+                  </div>
+                </div>
+
+                <div class="confirmed-stops-container">
+                  <div class="confirmed-stop pickup">
+                    <div class="stop-icon-circle">📍</div>
+                    <div class="stop-content">
+                      <span class="stop-badge">PICKUP CONFIRMED</span>
+                      <h4 id="trackPickupAddress">Stroud, Cotswolds, GL5</h4>
+                      <p class="stop-sub" id="trackPickupMeta">Pickup Scheduled: Today at 04:30 AM</p>
+                    </div>
+                  </div>
+
+                  <div class="stops-connector-line">
+                    <div class="connector-progress-fill" id="trackProgressFill" style="height: 35%;"></div>
+                  </div>
+
+                  <div class="confirmed-stop dropoff">
+                    <div class="stop-icon-circle">🏁</div>
+                    <div class="stop-content">
+                      <span class="stop-badge">DROP-OFF CONFIRMED</span>
+                      <h4 id="trackDropoffAddress">London Heathrow Terminal 5</h4>
+                      <p class="stop-sub" id="trackDropoffMeta">Estimated Drop-off: ~06:15 AM &bull; Flights Monitored</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="route-quick-badges">
+                  <span class="rq-badge">🛣️ Remaining: <strong id="trackDistRemaining">~88 Miles</strong> (<span id="trackEtaRemaining">~ETA 06:15 AM</span>)</span>
+                  <span class="rq-badge">✈️ Terminal 5 Drop-Off</span>
+                  <span class="rq-badge">💼 2 Bags &bull; 2 Passengers</span>
+                  <span class="rq-badge">🛡️ Fixed Price Guaranteed</span>
+                </div>
+              </div>
+
+              <!-- 2. Normal 5-Stage Visual Progress Stepper -->
+              <div class="journey-stepper-card">
+                <div class="stepper-card-header">
+                  <div>
+                    <h3 class="stepper-title">Journey Stage &amp; Status</h3>
+                    <p class="text-xs text-muted">The ongoing ride is recorded live from pickup confirmation until passenger drop-off.</p>
+                  </div>
+                  <span class="stepper-stage-tag" id="trackCurrentStageTag">Stage 1 of 5: Confirmed</span>
+                </div>
+
+                <div class="normal-steps-bar" id="normalStepsContainer">
+                  <!-- Step 1: Confirmed -->
+                  <div class="normal-step done" id="stepNode1">
+                    <div class="step-num">✓</div>
+                    <div class="step-info">
+                      <strong>Confirmed</strong>
+                      <span id="stepTime1">04:30 AM</span>
+                    </div>
+                  </div>
+                  <div class="step-line-bar done" id="stepLine1"></div>
+
+                  <!-- Step 2: En Route -->
+                  <div class="normal-step" id="stepNode2">
+                    <div class="step-num">🚗</div>
+                    <div class="step-info">
+                      <strong>Chauffeur En Route</strong>
+                      <span id="stepTime2">Standby</span>
+                    </div>
+                  </div>
+                  <div class="step-line-bar" id="stepLine2"></div>
+
+                  <!-- Step 3: Arrived -->
+                  <div class="normal-step" id="stepNode3">
+                    <div class="step-num">📍</div>
+                    <div class="step-info">
+                      <strong>At Pickup</strong>
+                      <span id="stepTime3">Standby</span>
+                    </div>
+                  </div>
+                  <div class="step-line-bar" id="stepLine3"></div>
+
+                  <!-- Step 4: In Progress -->
+                  <div class="normal-step" id="stepNode4">
+                    <div class="step-num">🛣️</div>
+                    <div class="step-info">
+                      <strong>In Progress</strong>
+                      <span id="stepTime4">Pending</span>
+                    </div>
+                  </div>
+                  <div class="step-line-bar" id="stepLine4"></div>
+
+                  <!-- Step 5: Dropped Off -->
+                  <div class="normal-step" id="stepNode5">
+                    <div class="step-num">🏁</div>
+                    <div class="step-info">
+                      <strong>Dropped Off</strong>
+                      <span id="stepTime5">Final</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Chauffeur Status Action Controls -->
+              <div class="ride-action-controls-card">
+                <div class="controls-card-header">
+                  <div>
+                    <h4 class="controls-title">Chauffeur &amp; Journey Dispatch Controls</h4>
+                    <p class="text-xs text-muted">Update journey milestones in real time. The ongoing ride is recorded until drop-off.</p>
+                  </div>
+                </div>
+
+                <div class="stage-buttons-grid">
+                  <button type="button" class="btn-stage-action" id="btnStageEnRoute" onclick="App.advanceRide('en_route')">
+                    <span class="btn-stage-icon">🚗</span>
+                    <div class="btn-stage-text">
+                      <strong>Chauffeur En Route</strong>
+                      <small>Heading to pickup location</small>
+                    </div>
+                  </button>
+
+                  <button type="button" class="btn-stage-action" id="btnStageArrived" onclick="App.advanceRide('arrived')">
+                    <span class="btn-stage-icon">📍</span>
+                    <div class="btn-stage-text">
+                      <strong>Arrived at Pickup</strong>
+                      <small>Waiting for passenger</small>
+                    </div>
+                  </button>
+
+                  <button type="button" class="btn-stage-action" id="btnStageInProgress" onclick="App.advanceRide('in_progress')">
+                    <span class="btn-stage-icon">🛣️</span>
+                    <div class="btn-stage-text">
+                      <strong>Start Journey (Picked Up)</strong>
+                      <small>En route to drop-off</small>
+                    </div>
+                  </button>
+
+                  <button type="button" class="btn-stage-action btn-stage-dropoff" id="btnStageDropoff" onclick="App.advanceRide('dropped_off')">
+                    <span class="btn-stage-icon">🏁</span>
+                    <div class="btn-stage-text">
+                      <strong>Complete Drop-off</strong>
+                      <small>Passenger safely dropped off</small>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 4. Drop-off Completion Card (Appears when completed) -->
+              <div class="dropoff-complete-card d-none" id="dropoffCompleteCard">
+                <div class="complete-header">
+                  <div class="complete-icon">🎉</div>
+                  <div>
+                    <h3 class="complete-title">Journey Completed &amp; Dropped Off!</h3>
+                    <p class="complete-sub" id="dropoffCompleteSummary">Passenger safely dropped off at London Heathrow Terminal 5. Total trip duration: 1h 14m.</p>
+                  </div>
+                </div>
+                <div class="complete-actions">
+                  <button type="button" class="btn btn-gold" onclick="App.openReceiptForActiveTrip()">
+                    📄 View Official Receipt
+                  </button>
+                  <button type="button" class="btn btn-outline-white" onclick="App.navigateTo('dashboard')">
+                    Back to Bookings
+                  </button>
+                  <button type="button" class="btn btn-navy" onclick="App.navigateTo('select-vehicle')">
+                    Book Return Transfer
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Right Column: Chauffeur Details, Flight Radar, Recording Log & Track Lookup -->
+            <aside class="tracking-sidebar">
+              
+              <!-- Chauffeur Profile Card -->
+              <div class="track-card-glass">
+                <div class="chauffeur-header-row">
+                  <div class="chauffeur-avatar-badge">
+                    <span id="trackDriverAvatar">👔</span>
+                    <span class="chauffeur-online-dot"></span>
+                  </div>
+                  <div class="chauffeur-details">
+                    <h3 id="trackDriverName">Dave M.</h3>
+                    <div class="chauffeur-car-tag" id="trackVehicleModel">Executive Mercedes-Benz E-Class &bull; YS24 OKL</div>
+                    <div class="chauffeur-stars">★★★★★ 4.98 (Vetted Chauffeur)</div>
+                  </div>
+                </div>
+
+                <div class="chauffeur-action-btns">
+                  <a href="tel:+441453888999" class="btn btn-navy btn-sm" id="trackDriverPhoneLink">
+                    📞 Call Chauffeur
+                  </a>
+                  <a href="https://wa.me/441453888999" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+                    💬 WhatsApp
+                  </a>
+                </div>
+              </div>
+
+              <!-- Ongoing Ride Recording Log -->
+              <div class="track-card-glass">
+                <h4 class="card-subtitle-gold">JOURNEY RECORDING LOG</h4>
+                <div class="recording-timeline-list" id="trackTimelineList">
+                  <!-- Populated via JS -->
+                </div>
+              </div>
+
+              <!-- Flight & Airport Assurance -->
+              <div class="track-card-glass">
+                <h4 class="card-subtitle-gold">FLIGHT MONITORING &amp; ASSURANCE</h4>
+                <div class="flight-monitor-box">
+                  <div class="f-row">
+                    <span>Flight Monitored:</span>
+                    <strong id="trackFlightCard">BA184</strong>
+                  </div>
+                  <div class="f-row">
+                    <span>Flight Status:</span>
+                    <span class="text-green font-semibold">On Schedule &bull; Gate Radar Live</span>
+                  </div>
+                  <div class="f-row">
+                    <span>Airport Wait Time:</span>
+                    <span>60 Mins Complimentary Included</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Track Any Other Booking Form -->
+              <div class="track-card-glass">
+                <h4 class="card-subtitle-gold">TRACK ANOTHER TRANSFER</h4>
+                <p class="text-xs text-muted mb-3">Confirm pickup &amp; drop-off or enter a booking reference to record and track another ongoing journey.</p>
+                <form id="formQuickTrack" onsubmit="App.handleConfirmRouteTrack(event)">
+                  <div class="form-group mb-2">
+                    <label class="form-label-sm">Pickup Location</label>
+                    <input type="text" class="form-input-sm" id="trkInputPickup" placeholder="e.g. Stroud, Cotswolds, GL5" required />
+                  </div>
+                  <div class="form-group mb-2">
+                    <label class="form-label-sm">Drop-Off Destination</label>
+                    <input type="text" class="form-input-sm" id="trkInputDropoff" placeholder="e.g. London Heathrow Terminal 5" required />
+                  </div>
+                  <div class="form-group mb-3">
+                    <label class="form-label-sm">Booking Ref (Optional)</label>
+                    <input type="text" class="form-input-sm" id="trkInputRef" placeholder="e.g. #JR-8821" />
+                  </div>
+                  <button type="submit" class="btn btn-gold btn-block btn-sm">
+                    Confirm &amp; Track Ongoing Ride
+                  </button>
+                </form>
+              </div>
+
+            </aside>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW: CHAUFFEUR DISPATCH STATUS CONSOLE        -->
+    <!-- ============================================== -->
+    <section id="viewDriverPortal" class="app-view">
+      <div class="driver-portal-wrap">
+        <div class="container py-4">
+          <div class="driver-console-card">
+            <div class="driver-header-flex">
+              <div class="driver-hero-title">
+                <span class="badge-status badge-confirmed" style="margin-bottom:8px; display:inline-block;">👔 CHAUFFEURS ON-DUTY CONSOLE</span>
+                <h1>Chauffeur Transit &amp; Journey Console</h1>
+                <p>Accept assigned journeys, update status from pickup to drop-off, and log trip milestones.</p>
+              </div>
+
+              <div style="display:flex; align-items:center; gap:12px;">
+                <span class="badge-status badge-completed" id="driverConnectionStatusBadge">🟢 Dispatch Synchronized</span>
+                <button type="button" class="btn btn-outline-white btn-sm" onclick="App.navigateTo('track')">
+                  View Customer Tracker
+                </button>
+              </div>
+            </div>
+
+            <!-- Active Trip Selector Bar -->
+            <div style="background:#111a2f; border-radius:14px; padding:18px; margin:20px 0; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+              <div>
+                <span style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase;">Active Assigned Journey</span>
+                <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
+                  <strong style="font-size:1.15rem; color:#ffffff;" id="driverCurrentTripTitle">#JR-8821: Stroud &rarr; Heathrow Terminal 5</strong>
+                  <span class="badge-status badge-confirmed" id="driverTripStatusBadge">Ready for Transit</span>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <select id="driverTripSelect" class="form-select-clean" title="Select Assigned Journey" aria-label="Select Assigned Journey" style="max-width:240px; background:#0f172a; color:#ffffff; border-color:rgba(255,255,255,0.15);" onchange="App.handleDriverSelectTrip(this.value)">
+                  <option value="JR-8821">#JR-8821 (Dave M. - Heathrow)</option>
+                  <option value="JR-7412">#JR-7412 (Sarah J. - Gatwick)</option>
+                </select>
+                <button type="button" class="btn btn-gold btn-sm" onclick="App.acceptAssignedTripFromDriver()">
+                  Accept Ride
+                </button>
+              </div>
+            </div>
+
+            <!-- 4 Stage Progress Trigger Buttons -->
+            <div class="driver-controls-grid">
+              <button type="button" class="btn-driver-ctrl btn-driver-start" id="btnDriverStart" onclick="App.advanceRide('en_route')">
+                <span class="ctrl-icon">🚗</span>
+                <span>CHAUFFEUR EN ROUTE</span>
+              </button>
+
+              <button type="button" class="btn-driver-ctrl btn-driver-pause" id="btnDriverPause" onclick="App.advanceRide('arrived')">
+                <span class="ctrl-icon">📍</span>
+                <span>ARRIVED AT PICKUP</span>
+              </button>
+
+              <button type="button" class="btn-driver-ctrl btn-driver-resume" id="btnDriverResume" onclick="App.advanceRide('in_progress')">
+                <span class="ctrl-icon">🛣️</span>
+                <span>START RIDE (PICKED UP)</span>
+              </button>
+
+              <button type="button" class="btn-driver-ctrl btn-driver-stop" id="btnDriverStop" onclick="App.advanceRide('dropped_off')">
+                <span class="ctrl-icon">🏁</span>
+                <span>COMPLETE DROP-OFF</span>
+              </button>
+            </div>
+
+            <!-- Journey Readout Grid -->
+            <div class="telemetry-readout-grid" style="margin-top:20px;">
+              <div class="telemetry-card">
+                <div class="telemetry-icon-box">📍</div>
+                <div>
+                  <div class="telemetry-label">PICKUP LOCATION</div>
+                  <div class="telemetry-val" style="font-size:0.95rem;">Stroud, Cotswolds, GL5</div>
+                </div>
+              </div>
+
+              <div class="telemetry-card">
+                <div class="telemetry-icon-box">🏁</div>
+                <div>
+                  <div class="telemetry-label">DROP-OFF DESTINATION</div>
+                  <div class="telemetry-val" style="font-size:0.95rem;">London Heathrow Terminal 5</div>
+                </div>
+              </div>
+
+              <div class="telemetry-card">
+                <div class="telemetry-icon-box">⏱️</div>
+                <div>
+                  <div class="telemetry-label">RECORDED RIDE DURATION</div>
+                  <div class="telemetry-val" id="driverCoordsReadout">Recording Active</div>
+                </div>
+              </div>
+
+              <div class="telemetry-card">
+                <div class="telemetry-icon-box">🛡️</div>
+                <div>
+                  <div class="telemetry-label">STATUS COMPLIANCE</div>
+                  <div class="telemetry-val" style="font-size:0.95rem;">Private Hire Vetted</div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -2136,7 +2740,7 @@
                 <a href="mailto:bookings@josruralcars.co.uk" class="quick-btn">
                   <span>✉️</span> Email Us
                 </a>
-                <a href="https://wa.me/441453888999" target="_blank" class="quick-btn">
+                <a href="https://wa.me/441453888999" target="_blank" rel="noopener noreferrer" class="quick-btn">
                   <span>💬</span> WhatsApp Us
                 </a>
                 <button type="button" class="quick-btn" onclick="App.navigateTo('select-vehicle')">
@@ -2229,7 +2833,7 @@
               </div>
 
               <div class="admin-header-actions">
-                <button type="button" class="btn btn-outline-white btn-sm" onclick="App.syncAdminWithSupabase()">
+                <button type="button" class="btn btn-outline-white btn-sm d-none" onclick="App.syncAdminWithSupabase()" style="display:none;">
                   <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                   <span>Sync Supabase</span>
                 </button>
@@ -2268,6 +2872,10 @@
               </button>
               <button type="button" class="admin-tab-btn" data-admin-tab="system" onclick="App.switchAdminTab('system', this)">
                 <span>⚙️ System Rates &amp; Settings</span>
+              </button>
+              <button type="button" class="admin-tab-btn d-none" data-admin-tab="live-map" onclick="App.switchAdminTab('live-map', this)" style="display:none;">
+                <span>🚗 Ongoing Rides &amp; Dispatch</span>
+                <span class="badge-status badge-confirmed" id="adminActiveDriversCountBadge">0</span>
               </button>
             </div>
           </div>
@@ -2317,7 +2925,16 @@
               <div>
                 <div class="admin-stat-val" id="adminKpiPending">0</div>
                 <div class="admin-stat-label">PENDING TRIPS</div>
-                <div class="admin-stat-trend" id="adminKpiDbStatus">Supabase Live</div>
+                <div class="admin-stat-trend" id="adminKpiDbStatus">Operations Active</div>
+              </div>
+            </div>
+
+            <div class="admin-stat-card">
+              <div class="admin-stat-icon green">🏁</div>
+              <div>
+                <div class="admin-stat-val" id="adminKpiCompletedToday">0</div>
+                <div class="admin-stat-label">DAILY COMPLETED</div>
+                <div class="admin-stat-trend" id="adminKpiCompletedRev">£0.00 Completed</div>
               </div>
             </div>
           </div>
@@ -2600,6 +3217,57 @@
               </div>
             </div>
           </div>
+
+          <!-- TAB PANE: ACTIVE ONGOING RIDES & DISPATCH MONITOR -->
+          <div class="admin-tab-pane" id="adminPaneLiveMap" style="display:none;">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div>
+                  <h3 class="admin-card-title">
+                    <span>🚗 Active Ongoing Journeys &amp; Dispatch Control</span>
+                  </h3>
+                  <p class="text-xs text-muted">Real-time status tracking for confirmed pickups en route, on board, and heading to drop-off.</p>
+                </div>
+
+                <div class="admin-search-wrap">
+                  <span class="badge-status badge-confirmed">
+                    <span class="status-pulse-dot green"></span> Live Recording Active
+                  </span>
+                  <button type="button" class="btn btn-gold btn-sm" onclick="App.refreshAdminFleetMap()">
+                    🔄 Refresh Active Rides
+                  </button>
+                </div>
+              </div>
+
+              <!-- Active Ongoing Rides Dashboard Grid -->
+              <div class="admin-ongoing-rides-wrap">
+                <div class="admin-table-wrap">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Trip Ref</th>
+                        <th>Passenger</th>
+                        <th>Pickup &rarr; Drop-off</th>
+                        <th>Chauffeur &amp; Vehicle</th>
+                        <th>Ride Stage</th>
+                        <th>Duration</th>
+                        <th>Quick Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminOngoingRidesTableBody">
+                      <!-- Rendered by JS -->
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Hidden stubs for backwards compatibility -->
+                <div id="adminTrackingMap" class="d-none"></div>
+                <div id="adminFleetActiveCounter" class="d-none">0 Online</div>
+                <div id="adminLiveDriversList" class="d-none"></div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
@@ -2636,7 +3304,7 @@
             <strong id="modalDropoffLoc">London Heathrow Terminal 5</strong>
           </div>
           <div class="receipt-row">
-            <span>Date & Time:</span>
+            <span>Date &amp; Time:</span>
             <strong id="modalDateTime">Sat, 24 Aug 2026 at 04:30 AM</strong>
           </div>
           <div class="receipt-row">
@@ -2652,6 +3320,7 @@
       </div>
 
       <div class="modal-footer">
+        <button class="btn btn-gold btn-block mb-2" onclick="App.trackTripFromModal()">🛰️ Track Chauffeur Live Now</button>
         <button class="btn btn-navy btn-block" onclick="App.goToDashboardAfterBooking()">Go to Customer Dashboard</button>
         <button class="btn btn-outline btn-block mt-2" onclick="App.closeSuccessModal()">Close</button>
       </div>
@@ -2749,41 +3418,55 @@
         <div class="receipt-box" style="margin-bottom: 20px;">
           <div class="receipt-row">
             <span>Route:</span>
-            <strong id="mTripRoute">Reading &rarr; Heathrow T5</strong>
+            <strong id="mTripRoute">Checking route...</strong>
           </div>
           <div class="receipt-row">
             <span>Schedule:</span>
-            <strong id="mTripTime">Mon, 14 Dec 2026 at 08:30 AM</strong>
+            <strong id="mTripTime">Scheduled</strong>
           </div>
           <div class="receipt-row">
-            <span>Chauffeur:</span>
-            <strong>Dave M. (Rating: 4.98 &starf;)</strong>
+            <span>Assigned Chauffeur:</span>
+            <strong id="mTripDriver">Pending Dispatch</strong>
           </div>
           <div class="receipt-row">
             <span>Vehicle:</span>
-            <strong>Mercedes-Benz E-Class &bull; Reg: LG74 WXN</strong>
+            <strong id="mTripVehicle">Executive Fleet</strong>
           </div>
           <div class="receipt-row">
-            <span>Flight Tracking:</span>
-            <span class="badge-status badge-confirmed">BA-184 &bull; On Time</span>
+            <span>Current Status:</span>
+            <span class="badge-status badge-confirmed" id="mTripStatus">Confirmed</span>
           </div>
         </div>
 
-        <div style="background: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 14px; margin-bottom: 20px;">
-          <h5 style="font-size: 0.82rem; font-weight: 800; color: var(--color-navy); margin-bottom: 8px; text-transform: uppercase;">Direct Driver Contact</h5>
-          <p style="font-size: 0.82rem; color: #475569; margin-bottom: 12px;">Your chauffeur will meet you inside terminal 5 arrivals opposite Costa Coffee.</p>
+        <form id="formManageTrip" onsubmit="App.handleManageTripSave(event)" style="margin-bottom: 20px;">
+          <input type="hidden" id="mTripRefHidden" />
+          <h5 style="font-size: 0.82rem; font-weight: 800; color: var(--color-navy); margin-bottom: 10px; text-transform: uppercase;">Amend Transfer Details</h5>
+          
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="mTripFlight" class="form-label">FLIGHT NUMBER FOR LIVE MONITORING</label>
+            <input type="text" id="mTripFlight" class="form-control form-control-sm" placeholder="e.g. BA184, VS11, LH2471" />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label for="mTripNotes" class="form-label">SPECIAL CHAUFFEUR REQUESTS &amp; DROP-OFF NOTES</label>
+            <textarea id="mTripNotes" class="form-control form-control-sm" rows="2" placeholder="e.g. Meet inside arrivals with nameboard; 2 child booster seats needed"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-navy btn-sm btn-block" id="btnSaveTripAmendments">💾 Save Journey Amendments</button>
+        </form>
+
+        <div style="background: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 14px;">
+          <h5 style="font-size: 0.82rem; font-weight: 800; color: var(--color-navy); margin-bottom: 8px; text-transform: uppercase;">24/7 Dispatch Control Contact</h5>
+          <p style="font-size: 0.82rem; color: #475569; margin-bottom: 12px;">Immediate assistance or flight schedule changes:</p>
           <div style="display: flex; gap: 10px;">
-            <a href="tel:+447700900123" class="btn btn-navy btn-sm" style="flex: 1; text-align: center;">📞 Call Driver</a>
-            <a href="sms:+447700900123" class="btn btn-outline btn-sm" style="flex: 1; text-align: center;">💬 SMS Driver</a>
+            <a href="tel:+441453888999" class="btn btn-navy btn-xs" style="flex: 1; text-align: center;">📞 Call Operations</a>
+            <a href="https://wa.me/441453888999" target="_blank" class="btn btn-outline btn-xs" style="flex: 1; text-align: center;">💬 WhatsApp Desk</a>
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <div class="modal-actions-row">
-          <button type="button" class="btn btn-outline" onclick="App.openLiveSupport()">Modify Journey</button>
-          <button type="button" class="btn btn-navy" onclick="App.closeManageTripModal()">Done</button>
-        </div>
+        <button type="button" class="btn btn-outline btn-block" onclick="App.closeManageTripModal()">Close</button>
       </div>
     </div>
   </div>
@@ -2831,110 +3514,177 @@
   </div>
 
   <!-- ============================================== -->
-  <!-- MODAL: PROFILE & PREFERENCES -->
+  <!-- MODAL: PASSENGER PROFILE & PREFERENCES (REAL)  -->
   <!-- ============================================== -->
   <div class="modal-backdrop" id="modalProfile">
     <div class="modal-card">
       <div class="modal-header-standard">
         <div>
           <h3 class="modal-title">Passenger Profile</h3>
-          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Your personal and transfer preferences</p>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Your verified credentials and transfer preferences</p>
         </div>
         <button type="button" class="modal-close-icon" onclick="App.closeProfileModal()" aria-label="Close modal">&times;</button>
       </div>
 
-      <div class="modal-body">
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
-          <div class="avatar-circle" style="width: 54px; height: 54px; font-size: 1.3rem;">JD</div>
-          <div>
-            <h4 style="font-size: 1.15rem; font-weight: 800; color: var(--color-navy); margin-bottom: 2px;">James Doe</h4>
-            <span class="badge-status badge-confirmed" style="background: #fef3c7; color: #b45309; font-size: 0.72rem;">👑 Gold VIP Chauffeur Tier</span>
+      <form id="formUserProfile" onsubmit="App.handleProfileSave(event)">
+        <div class="modal-body">
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+            <div class="avatar-circle" id="profAvatarCircle" style="width: 54px; height: 54px; font-size: 1.3rem;">JD</div>
+            <div>
+              <h4 style="font-size: 1.15rem; font-weight: 800; color: var(--color-navy); margin-bottom: 2px;" id="profDisplayName">Client Profile</h4>
+              <span class="badge-status badge-confirmed" id="profBadgeTier" style="background: #fef3c7; color: #b45309; font-size: 0.72rem;">👑 Gold VIP Chauffeur Tier</span>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="usrProfName" class="form-label">FULL NAME *</label>
+              <input type="text" id="usrProfName" class="form-control" required />
+            </div>
+            <div class="form-group">
+              <label for="usrProfEmail" class="form-label">EMAIL ADDRESS *</label>
+              <input type="email" id="usrProfEmail" class="form-control" required />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="usrProfPhone" class="form-label">MOBILE PHONE</label>
+              <input type="tel" id="usrProfPhone" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label for="usrProfAddress" class="form-label">HOME BASE / CITY</label>
+              <input type="text" id="usrProfAddress" class="form-control" placeholder="e.g. Stroud, Gloucestershire" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="usrProfNotes" class="form-label">TRANSFER PREFERENCES</label>
+            <textarea id="usrProfNotes" class="form-control" rows="2" placeholder="e.g. Quiet ride; bottled still water; terminal 5 departures drop-off."></textarea>
           </div>
         </div>
 
-        <div class="receipt-box">
-          <div class="receipt-row">
-            <span>Primary Email:</span>
-            <strong>james@example.com</strong>
-          </div>
-          <div class="receipt-row">
-            <span>Mobile Phone:</span>
-            <strong>+44 7700 900000</strong>
-          </div>
-          <div class="receipt-row">
-            <span>Home Base:</span>
-            <strong>Reading, Berkshire, UK</strong>
-          </div>
-          <div class="receipt-row">
-            <span>Preferred Fleet:</span>
-            <strong>Executive Sedan (Mercedes E-Class)</strong>
-          </div>
-          <div class="receipt-row">
-            <span>Transfer Preferences:</span>
-            <strong>Quiet Ride &bull; Bottled Still Water</strong>
+        <div class="modal-footer">
+          <div class="modal-actions-row">
+            <button type="submit" class="btn btn-navy" id="btnSaveProfile">💾 Save Changes</button>
+            <button type="button" class="btn btn-outline" onclick="App.closeProfileModal()">Cancel</button>
           </div>
         </div>
-      </div>
-
-      <div class="modal-footer">
-        <div class="modal-actions-row">
-          <button type="button" class="btn btn-navy" onclick="App.showToast('Profile preferences updated.'); App.closeProfileModal();">Save Changes</button>
-          <button type="button" class="btn btn-outline" onclick="App.closeProfileModal()">Close</button>
-        </div>
-      </div>
+      </form>
     </div>
   </div>
 
   <!-- ============================================== -->
-  <!-- MODAL: PAYMENTS & INVOICES -->
+  <!-- MODAL: PAYMENTS & INVOICES (REAL)              -->
   <!-- ============================================== -->
   <div class="modal-backdrop" id="modalPayments">
     <div class="modal-card">
       <div class="modal-header-standard">
         <div>
-          <h3 class="modal-title">Payment Methods &amp; Invoices</h3>
-          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Manage Stripe encrypted cards and tax receipts</p>
+          <h3 class="modal-title">Payment History &amp; Invoices</h3>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Transactions verified by Supabase Database</p>
         </div>
         <button type="button" class="modal-close-icon" onclick="App.closePaymentsModal()" aria-label="Close modal">&times;</button>
       </div>
 
       <div class="modal-body">
-        <h5 style="font-size: 0.8rem; font-weight: 800; color: var(--color-navy); margin-bottom: 10px; text-transform: uppercase;">Saved Payment Cards</h5>
+        <h5 style="font-size: 0.8rem; font-weight: 800; color: var(--color-navy); margin-bottom: 12px; text-transform: uppercase;">Recent Booking Transactions</h5>
         
-        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-md);">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.4rem;">💳</span>
-              <div>
-                <strong style="color: var(--color-navy); font-size: 0.88rem; display: block;">Visa ending in 4242</strong>
-                <span style="font-size: 0.72rem; color: #64748b;">Expires 12/28 &bull; Default</span>
-              </div>
-            </div>
-            <span class="badge-status badge-confirmed">Active</span>
-          </div>
-
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-md);">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.4rem;">💳</span>
-              <div>
-                <strong style="color: var(--color-navy); font-size: 0.88rem; display: block;">Mastercard ending in 8821</strong>
-                <span style="font-size: 0.72rem; color: #64748b;">Expires 09/27 &bull; Corporate</span>
-              </div>
-            </div>
-            <span class="badge-status badge-completed">Secondary</span>
+        <div id="paymentsListContainer" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+          <!-- Dynamically populated from Supabase payments table -->
+          <div style="text-align: center; padding: 24px; color: var(--color-text-muted);">
+            <span>⏳ Loading transactions...</span>
           </div>
         </div>
 
         <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: var(--radius-md); padding: 12px; font-size: 0.82rem; color: #065f46;">
-          🔒 All transactions are secured by 256-bit Stripe encryption. No raw card numbers are stored on Jo's Rural Cars servers.
+          🔒 All transactions are secured by 256-bit Stripe encryption. Official VAT invoices available for corporate tax accounting.
         </div>
       </div>
 
       <div class="modal-footer">
-        <div class="modal-actions-row">
-          <button type="button" class="btn btn-navy" onclick="App.showToast('Redirecting to secure Stripe billing portal...'); App.closePaymentsModal();">Add New Card</button>
-          <button type="button" class="btn btn-outline" onclick="App.closePaymentsModal()">Close</button>
+        <button type="button" class="btn btn-outline btn-block" onclick="App.closePaymentsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: AUTHENTICATION (LOGIN / REGISTER)       -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalAuth">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header-standard">
+        <div>
+          <h3 class="modal-title" id="authModalTitle">Passenger Portal</h3>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Access your live bookings, receipts &amp; VIP perks</p>
         </div>
+        <button type="button" class="modal-close-icon" onclick="App.closeAuthModal()" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="auth-tabs" style="display: flex; border-bottom: 1px solid var(--color-border); background: #f8fafc;">
+        <button type="button" class="auth-tab-btn active" id="tabBtnSignIn" onclick="App.switchAuthTab('signin')" style="flex: 1; padding: 12px; border: none; background: transparent; font-weight: 700; font-size: 0.88rem; cursor: pointer; color: var(--color-navy); border-bottom: 2px solid var(--color-navy);">Sign In</button>
+        <button type="button" class="auth-tab-btn" id="tabBtnSignUp" onclick="App.switchAuthTab('signup')" style="flex: 1; padding: 12px; border: none; background: transparent; font-weight: 600; font-size: 0.88rem; cursor: pointer; color: #64748b;">Create Account</button>
+      </div>
+
+      <!-- Sign In Form -->
+      <form id="formSignIn" onsubmit="App.handleSignIn(event)">
+        <div class="modal-body">
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label for="loginEmail" class="form-label">EMAIL ADDRESS *</label>
+            <input type="email" id="loginEmail" class="form-control" placeholder="client@example.com" required />
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label for="loginPassword" class="form-label">PASSWORD *</label>
+            <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required />
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 0.82rem;">
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" id="rememberMe" checked /> Remember me
+            </label>
+            <a href="javascript:void(0)" onclick="App.switchAuthTab('forgot')" style="color: var(--color-primary); font-weight: 600;">Forgot Password?</a>
+          </div>
+          <button type="submit" class="btn btn-navy btn-block" id="btnSubmitSignIn">Sign In</button>
+        </div>
+      </form>
+
+      <!-- Sign Up Form -->
+      <form id="formSignUp" onsubmit="App.handleSignUp(event)" style="display: none;">
+        <div class="modal-body">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="regFullName" class="form-label">FULL NAME *</label>
+            <input type="text" id="regFullName" class="form-control" placeholder="Lord / Lady / Dr. Name" required />
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="regEmail" class="form-label">EMAIL ADDRESS *</label>
+            <input type="email" id="regEmail" class="form-control" placeholder="name@domain.co.uk" required />
+          </div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="regPhone" class="form-label">MOBILE PHONE NUMBER *</label>
+            <input type="tel" id="regPhone" class="form-control" placeholder="+44 7700 900000" required />
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label for="regPassword" class="form-label">CREATE PASSWORD *</label>
+            <input type="password" id="regPassword" class="form-control" placeholder="Minimum 6 characters" minlength="6" required />
+          </div>
+          <button type="submit" class="btn btn-navy btn-block" id="btnSubmitSignUp">Register Account</button>
+        </div>
+      </form>
+
+      <!-- Forgot Password Form -->
+      <form id="formForgot" onsubmit="App.handleForgotPassword(event)" style="display: none;">
+        <div class="modal-body">
+          <p style="font-size: 0.85rem; color: #475569; margin-bottom: 16px;">Enter your email to receive an official password reset authorization link.</p>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label for="forgotEmail" class="form-label">EMAIL ADDRESS *</label>
+            <input type="email" id="forgotEmail" class="form-control" placeholder="your@email.com" required />
+          </div>
+          <button type="submit" class="btn btn-navy btn-block" id="btnSubmitForgot">Send Reset Email</button>
+          <button type="button" class="btn btn-outline btn-block mt-2" onclick="App.switchAuthTab('signin')">Back to Sign In</button>
+        </div>
+      </form>
+
+      <div class="modal-footer" style="background: #f8fafc; font-size: 0.78rem; text-align: center; color: var(--color-text-muted);">
+        🔒 Verified 256-bit encrypted authentication by Supabase Security.
       </div>
     </div>
   </div>

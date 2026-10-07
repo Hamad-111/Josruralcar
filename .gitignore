@@ -33,3 +33,6 @@ yarn-error.log*
 # Raw design mockups
 *.pdf
 80a8ca45-899a-468b-a5f0-b91c13d09798.png
+
+# Scratch test scripts
+scratch/

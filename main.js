@@ -12,13 +12,55 @@ import {
   fetchDriversFromSupabase,
   insertDriverToSupabase,
   fetchVehiclesFromSupabase,
-  insertVehicleToSupabase
+  insertVehicleToSupabase,
+  fetchProfiles,
+  fetchProfileByEmail,
+  insertProfile,
+  updateProfile,
+  deleteProfile,
+  fetchFleet,
+  insertFleetMember,
+  updateFleetMember,
+  deleteFleetMember,
+  fetchSystemSettings,
+  updateSystemSettings,
+  fetchPayments,
+  insertPayment,
+  fetchNotifications,
+  insertNotification,
+  markNotificationRead,
+  fetchUserBookings
 } from './supabase.js';
+
+import {
+  RIDE_STAGES,
+  STAGE_CONFIG,
+  getOngoingRide,
+  saveOngoingRide,
+  startOngoingRide,
+  advanceRideStatus,
+  completeRideDropoff,
+  getRideHistory,
+  formatElapsedTime
+} from './tracking.js';
 
 const App = (() => {
   // Application Data & State
   const state = {
     currentView: 'home',
+    currentUser: (() => {
+      try {
+        const saved = localStorage.getItem('jos_current_user');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+      return null;
+    })(),
+    tracking: {
+      activeCustomerTracker: null,
+      activeAdminTracker: null,
+      currentTrackTripId: 'JR-8821',
+      selectedDriverTripId: 'JR-8821'
+    },
     booking: {
       pickup: 'Stroud, Cotswolds, GL5',
       dropoff: 'London Heathrow Terminal 5',
@@ -26,6 +68,7 @@ const App = (() => {
       time: '04:30',
       passengers: '2 Passengers',
       vehicleKey: 'executive',
+      nextStep: 'select-vehicle',
       passenger: {
         fullName: 'James Doe',
         email: 'james@example.com',
@@ -83,7 +126,81 @@ const App = (() => {
       driversFilter: 'all',
       usersFilter: 'all',
       usersSearch: '',
-      bookings: [],
+      bookings: (() => {
+        try {
+          const saved = localStorage.getItem('jos_admin_bookings');
+          if (saved) return JSON.parse(saved);
+        } catch (e) {}
+        const todayStr = new Date().toISOString().split('T')[0];
+        return [
+          {
+            ref: '#JR-8821',
+            customer_name: 'James Doe',
+            customer_email: 'james@example.com',
+            customer_phone: '+44 7700 900000',
+            pickup: 'Stroud, Cotswolds, GL5',
+            dropoff: 'London Heathrow Terminal 5',
+            date: '2026-10-24',
+            time: '04:30',
+            vehicle: 'Executive (Mercedes-Benz S-Class)',
+            amount: 75,
+            status: 'Confirmed',
+            payment_status: 'Paid',
+            assigned_driver: 'Arthur Pendelton',
+            flight_number: 'BA123'
+          },
+          {
+            ref: '#JR-8419',
+            customer_name: 'Lady Clara Morrison',
+            customer_email: 'clara@morrison.co.uk',
+            customer_phone: '+44 7700 900888',
+            pickup: 'Tetbury, Cotswolds, GL8',
+            dropoff: 'London Heathrow Terminal 2',
+            date: '2026-10-25',
+            time: '06:00',
+            vehicle: 'Business Class (Mercedes S-Class LWB)',
+            amount: 145,
+            status: 'Confirmed',
+            payment_status: 'Paid',
+            assigned_driver: 'Sarah Jenkins',
+            flight_number: 'VS003'
+          },
+          {
+            ref: '#JR-7930',
+            customer_name: 'Sir Robert Sterling',
+            customer_email: 'r.sterling@cotswolds.org',
+            customer_phone: '+44 7700 900712',
+            pickup: 'Cirencester, Cotswolds, GL7',
+            dropoff: 'London Gatwick North Terminal',
+            date: todayStr,
+            time: '14:15',
+            vehicle: 'Luxury MPV (Mercedes V-Class)',
+            amount: 185,
+            status: 'En Route',
+            payment_status: 'Paid',
+            assigned_driver: 'Marcus Brody',
+            flight_number: 'EK009'
+          },
+          {
+            ref: '#JR-6902',
+            customer_name: 'Dr. Alistair Finch',
+            customer_email: 'afinch@oxford.ac.uk',
+            customer_phone: '+44 7700 900334',
+            pickup: 'Oxford City Centre, OX1',
+            dropoff: 'London Luton Airport',
+            date: todayStr,
+            completed_date: todayStr,
+            completed_at: new Date().toISOString(),
+            time: '09:00',
+            vehicle: 'Executive Estate (Mercedes Estate)',
+            amount: 120,
+            status: 'Completed',
+            payment_status: 'Paid',
+            assigned_driver: 'David Miller',
+            flight_number: 'EZY221'
+          }
+        ];
+      })(),
       users: (() => {
         try {
           const saved = localStorage.getItem('jos_admin_users');
@@ -289,6 +406,8 @@ const App = (() => {
     // Map aliases
     const targetMap = {
       'home': 'viewHome',
+      'signin': 'viewSignIn',
+      'login': 'viewSignIn',
       'airports': 'viewAirports',
       'select-vehicle': 'viewSelectVehicle',
       'fleet': 'viewSelectVehicle',
@@ -296,10 +415,24 @@ const App = (() => {
       'payment': 'viewPayment',
       'dashboard': 'viewDashboard',
       'contact': 'viewContact',
-      'admin': 'viewAdmin'
+      'admin': 'viewAdmin',
+      'track': 'viewTracking',
+      'tracking': 'viewTracking',
+      'driver': 'viewDriverPortal'
     };
 
-    const targetElementId = targetMap[viewId] || 'viewHome';
+    // Booking flow guarding: customer must sign in when finalizing booking details!
+    const guardedSteps = ['passenger-details', 'payment'];
+    if (guardedSteps.includes(viewId)) {
+      if (!state.currentUser || !state.currentUser.isLoggedIn) {
+        state.booking.nextStep = viewId;
+        showToast('Please sign in to proceed with your booking.');
+        return navigateTo('signin');
+      }
+    }
+
+    const baseViewKey = viewId.split('/')[0].split('?')[0];
+    const targetElementId = targetMap[baseViewKey] || targetMap[viewId] || 'viewHome';
 
     // Hide all views
     document.querySelectorAll('.app-view').forEach(view => {
@@ -310,9 +443,18 @@ const App = (() => {
     const targetView = document.getElementById(targetElementId);
     if (targetView) {
       targetView.classList.add('active');
-      state.currentView = viewId;
+      state.currentView = baseViewKey;
       window.location.hash = viewId;
       window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Trigger tracking view controllers
+      if (baseViewKey === 'track' || baseViewKey === 'tracking') {
+        const tripParam = viewId.includes('/') ? viewId.split('/')[1] : (state.tracking.currentTrackTripId || 'JR-8821');
+        initCustomerTrackingView(tripParam);
+      } else if (baseViewKey === 'driver') {
+        const driverTrip = viewId.includes('/') ? viewId.split('/')[1] : (state.tracking.selectedDriverTripId || 'JR-8821');
+        initDriverPortalView(driverTrip);
+      }
     }
 
     // Update Header Active Nav Links
@@ -342,11 +484,26 @@ const App = (() => {
     if (viewId === 'admin') {
       loadAdminDashboard();
     } else if (viewId === 'dashboard') {
+      updateDashboardUI();
       loadDashboardFromSupabase();
+    } else if (viewId === 'signin') {
+      updateSignInPageView();
     }
 
     // Sync View Data
     syncUIWithState();
+  }
+
+  // Start booking flow from any trigger
+  function startBookingFlow(targetStep = 'select-vehicle') {
+    state.booking.nextStep = targetStep;
+    if (targetStep === 'passenger-details' || targetStep === 'payment') {
+      if (!state.currentUser || !state.currentUser.isLoggedIn) {
+        showToast('Please sign in to continue with your booking.');
+        return navigateTo('signin');
+      }
+    }
+    navigateTo(targetStep);
   }
 
   // Focus Booking Widget on Homepage
@@ -359,14 +516,14 @@ const App = (() => {
     }
   }
 
-  // Handle Home Search Form Submit
+  // Handle Home Search Form Submit (Start booking flow)
   function handleHeroSearch(e) {
     e.preventDefault();
-    const pickup = document.getElementById('widgetPickup').value.trim();
-    const dropoff = document.getElementById('widgetDropoff').value.trim();
-    const date = document.getElementById('widgetDate').value;
-    const time = document.getElementById('widgetTime').value;
-    const passengers = document.getElementById('widgetPassengers').value;
+    const pickup = document.getElementById('widgetPickup')?.value.trim();
+    const dropoff = document.getElementById('widgetDropoff')?.value.trim();
+    const date = document.getElementById('widgetDate')?.value;
+    const time = document.getElementById('widgetTime')?.value;
+    const passengers = document.getElementById('widgetPassengers')?.value;
 
     state.booking.pickup = pickup || state.booking.pickup;
     state.booking.dropoff = dropoff || state.booking.dropoff;
@@ -374,14 +531,16 @@ const App = (() => {
     state.booking.time = time || state.booking.time;
     state.booking.passengers = passengers || state.booking.passengers;
 
-    showToast('Route updated. Choose your vehicle.');
+    state.booking.nextStep = 'select-vehicle';
+    showToast('Route saved. Choose your executive vehicle.');
     navigateTo('select-vehicle');
   }
 
   // Quick Select Airport from Airport Cards
   function quickSelectAirport(airportName, basePrice) {
     state.booking.dropoff = airportName;
-    showToast(`Destination set to ${airportName}`);
+    state.booking.nextStep = 'select-vehicle';
+    showToast(`Destination set to ${airportName}. Choose your vehicle.`);
     navigateTo('select-vehicle');
   }
 
@@ -403,7 +562,15 @@ const App = (() => {
   function confirmVehicleSelection(vehicleKey, e) {
     if (e) e.stopPropagation();
     selectVehicle(vehicleKey);
-    navigateTo('passenger-details');
+    // User tries to book the ride: check sign in
+    if (!state.currentUser || !state.currentUser.isLoggedIn) {
+      state.booking.nextStep = 'passenger-details';
+      showToast('Vehicle selected! Please sign in to complete your booking.');
+      navigateTo('signin');
+    } else {
+      state.booking.nextStep = 'passenger-details';
+      navigateTo('passenger-details');
+    }
   }
 
   function selectVehicleAndProceed(vehicleKey) {
@@ -522,28 +689,107 @@ const App = (() => {
     if (isConnected) {
       badge.classList.remove('error');
       badge.classList.add('connected');
-      badge.title = 'Supabase Database Connected (Live Data Sync Active)';
-      badge.innerHTML = `<span class="db-dot"></span><span class="db-text">🟢 Supabase Live</span>`;
+      badge.title = 'Database Connected (Live Data Sync Active)';
+      badge.innerHTML = `<span class="db-dot"></span><span class="db-text">Connected</span>`;
     } else {
       badge.classList.remove('connected');
       badge.classList.add('error');
-      badge.title = `Supabase DB Offline: ${message || 'Check connection'}`;
-      badge.innerHTML = `<span class="db-dot"></span><span class="db-text">🔴 DB Offline</span>`;
+      badge.title = `Database Offline: ${message || 'Check connection'}`;
+      badge.innerHTML = `<span class="db-dot"></span><span class="db-text">Offline</span>`;
     }
   }
 
-  // Load Bookings from Supabase into Customer Dashboard
+  // Update Dashboard Auth Gate Visibility
+  function updateDashboardUI() {
+    const authGate = document.getElementById('dashAuthGate');
+    const authContent = document.getElementById('dashAuthContent');
+    const u = state.currentUser;
+    const isLoggedIn = u && u.isLoggedIn !== false;
+
+    if (!isLoggedIn) {
+      if (authGate) authGate.classList.remove('d-none');
+      if (authContent) authContent.classList.add('d-none');
+    } else {
+      if (authGate) authGate.classList.add('d-none');
+      if (authContent) authContent.classList.remove('d-none');
+    }
+  }
+
+  // Load Bookings into Customer Dashboard
   async function loadDashboardFromSupabase() {
+    updateDashboardUI();
     const tableBody = document.getElementById('dashTableBody');
     if (!tableBody) return;
 
+    const u = state.currentUser;
+    const isLoggedIn = u && u.isLoggedIn !== false;
+    if (!isLoggedIn) return;
+
     try {
-      const bookings = await fetchBookings();
-      if (!bookings || bookings.length === 0) return;
+      let bookings = await fetchBookings();
+      if (!bookings || bookings.length === 0) {
+        bookings = (state.admin && state.admin.bookings && state.admin.bookings.length > 0)
+          ? state.admin.bookings
+          : [
+            {
+              ref: '#JR-8821',
+              pickup: 'Stroud, Cotswolds, GL5',
+              dropoff: 'London Heathrow Terminal 5',
+              date: '2026-10-24',
+              time: '04:30',
+              passengers: 2,
+              vehicle: 'Executive Sedan (Mercedes-Benz)',
+              amount: 75,
+              status: 'Confirmed',
+              payment_status: 'Paid',
+              assigned_driver: 'Dave M. (Mercedes E-Class)',
+              flight_number: 'BA184'
+            },
+            {
+              ref: '#JR-7412',
+              pickup: 'Tetbury, Gloucestershire',
+              dropoff: 'London Gatwick South Terminal',
+              date: '2026-10-14',
+              time: '08:15',
+              passengers: 4,
+              vehicle: 'Mercedes V-Class Luxury MPV',
+              amount: 110,
+              status: 'Completed',
+              payment_status: 'Paid',
+              assigned_driver: 'Sarah Jenkins',
+              flight_number: 'VS11'
+            }
+          ];
+      }
+
+      // Add ongoing recorded ride if present
+      const ongoing = getOngoingRide();
+      if (ongoing && !bookings.some(b => b.ref === ongoing.tripRef || b.ref === '#' + ongoing.tripRef)) {
+        bookings.unshift({
+          ref: ongoing.tripRef.startsWith('#') ? ongoing.tripRef : '#' + ongoing.tripRef,
+          pickup: ongoing.pickupAddress,
+          dropoff: ongoing.dropoffAddress,
+          date: ongoing.date || '2026-10-24',
+          time: ongoing.time || '04:30',
+          passengers: ongoing.passengers || 2,
+          vehicle: ongoing.vehicleName || 'Executive Mercedes-Benz',
+          amount: ongoing.fare || 75,
+          status: ongoing.status === 'dropped_off' ? 'Completed' : 'Confirmed',
+          payment_status: 'Paid',
+          assigned_driver: ongoing.driverName || 'Dave M.',
+          flight_number: ongoing.flightNumber || 'BA184'
+        });
+      }
+
+      state.bookingsCache = bookings;
+      if (state.admin && (!state.admin.bookings || state.admin.bookings.length === 0)) {
+        state.admin.bookings = [...bookings];
+      }
 
       tableBody.innerHTML = bookings.map(b => {
         const vName = b.vehicle || 'Executive Sedan';
         const ref = b.ref && b.ref.startsWith('#') ? b.ref : `#${b.ref || 'JR-8900'}`;
+        const rawRef = ref.replace('#', '');
         const statusClass = (b.status || 'confirmed').toLowerCase();
         const pickupEscaped = (b.pickup || '').replace(/'/g, "\\'");
         const dropoffEscaped = (b.dropoff || '').replace(/'/g, "\\'");
@@ -562,6 +808,12 @@ const App = (() => {
             <td><span class="badge-status badge-${statusClass}">${b.status || 'Confirmed'}</span></td>
             <td class="text-right">
               <div class="table-action-btns">
+                <button type="button" class="btn btn-outline btn-xs" style="color: #b45309; border-color: #fde68a; background: #fffbeb;" title="Live Chauffeur GPS Tracking" onclick="App.trackTripLive('${rawRef}')">
+                  <span>🛰️ Track</span>
+                </button>
+                <button type="button" class="btn btn-outline btn-xs" title="Manage Trip Amendments" onclick="App.showManageTripModal('${rawRef}')">
+                  <span>Manage</span>
+                </button>
                 <button type="button" class="btn btn-outline btn-xs" title="View & Print Official Receipt" onclick="App.viewReceipt('${ref}', '${pickupEscaped}', '${dropoffEscaped}', ${fare}, '${dateDisplay}', '${timeDisplay}', '${vehicleEscaped}')">
                   <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                   <span>Receipt</span>
@@ -629,6 +881,74 @@ const App = (() => {
             <span>👤 ${nextBooking.passengers || 2} Passengers • Ref ${nextBooking.ref}</span>
           `;
         }
+
+        // 4-step dynamic journey tracker progress
+        const trkStep1 = document.getElementById('trkStep1');
+        const trkStep2 = document.getElementById('trkStep2');
+        const trkStep2Wrap = document.getElementById('trkStep2Wrap');
+        const trkBar2 = document.getElementById('trkBar2');
+        const trkStep3 = document.getElementById('trkStep3');
+        const trkStep3Wrap = document.getElementById('trkStep3Wrap');
+        const trkBar3 = document.getElementById('trkBar3');
+        const trkStep4 = document.getElementById('trkStep4');
+        const trkStep4Wrap = document.getElementById('trkStep4Wrap');
+
+        if (trkStep1) {
+          trkStep1.textContent = `${formatDateDisplay(nextBooking.date)}, ${nextBooking.time || 'Confirmed'}`;
+        }
+
+        const isDriverAssigned = Boolean(nextBooking.assigned_driver);
+        const statusLower = (nextBooking.status || '').toLowerCase();
+
+        if (trkStep2Wrap) {
+          if (isDriverAssigned) {
+            trkStep2Wrap.className = 'track-step done';
+            if (trkStep2) trkStep2.textContent = nextBooking.assigned_driver;
+            if (trkBar2) trkBar2.className = 'track-bar done';
+          } else {
+            trkStep2Wrap.className = 'track-step active';
+            if (trkStep2) trkStep2.textContent = 'Standby Dispatch';
+            if (trkBar2) trkBar2.className = 'track-bar';
+          }
+        }
+
+        if (trkStep3Wrap) {
+          if (statusLower.includes('route') || statusLower.includes('progress')) {
+            trkStep3Wrap.className = 'track-step active';
+            if (trkStep3) trkStep3.textContent = 'En Route';
+            if (trkBar3) trkBar3.className = 'track-bar done';
+          } else if (statusLower === 'completed') {
+            trkStep3Wrap.className = 'track-step done';
+            if (trkStep3) trkStep3.textContent = 'Completed';
+            if (trkBar3) trkBar3.className = 'track-bar done';
+          } else {
+            trkStep3Wrap.className = 'track-step';
+            if (trkStep3) trkStep3.textContent = 'Standby';
+            if (trkBar3) trkBar3.className = 'track-bar';
+          }
+        }
+
+        if (trkStep4Wrap) {
+          if (statusLower === 'completed') {
+            trkStep4Wrap.className = 'track-step done';
+            if (trkStep4) trkStep4.textContent = 'Arrived';
+          } else {
+            trkStep4Wrap.className = 'track-step';
+            if (trkStep4) trkStep4.textContent = 'Terminal Drop';
+          }
+        }
+
+        const btnManageActive = document.getElementById('btnManageActiveTrip');
+        if (btnManageActive) {
+          const rawRef = String(nextBooking.ref || '').replace('#', '');
+          btnManageActive.onclick = () => App.showManageTripModal(rawRef);
+        }
+
+        const btnTrackLiveActive = document.getElementById('btnTrackLiveActiveTrip');
+        if (btnTrackLiveActive) {
+          const rawRef = String(nextBooking.ref || '').replace('#', '');
+          btnTrackLiveActive.onclick = () => App.trackTripLive(rawRef);
+        }
       }
     } catch (err) {
       console.error('Failed to load dashboard from Supabase:', err);
@@ -655,9 +975,9 @@ const App = (() => {
     // Build database record matching Supabase schema
     const bookingRecord = {
       ref: randomRef,
-      customer_name: pass.fullName || 'James Doe',
-      customer_email: pass.email || 'james@example.com',
-      customer_phone: pass.phone ? `+44 ${pass.phone}` : '+44 7700 900000',
+      customer_name: pass.fullName || (state.currentUser && state.currentUser.name) || 'James Doe',
+      customer_email: pass.email || (state.currentUser && state.currentUser.email) || 'james@example.com',
+      customer_phone: pass.phone ? `+44 ${pass.phone}` : ((state.currentUser && state.currentUser.phone) || '+44 7700 900000'),
       pickup: state.booking.pickup,
       dropoff: state.booking.dropoff,
       date: state.booking.date,
@@ -678,6 +998,45 @@ const App = (() => {
 
     const insertResult = await insertBooking(bookingRecord);
 
+    // Also attempt inserting a payment transaction in background
+    try {
+      await insertPayment({
+        booking_ref: randomRef,
+        customer_email: bookingRecord.customer_email,
+        amount: v.total,
+        currency: 'GBP',
+        status: 'Paid',
+        payment_method: 'Visa •••• 4242'
+      });
+    } catch (e) {}
+
+    // Update user stats
+    if (state.currentUser) {
+      state.currentUser.rides = (state.currentUser.rides || 0) + 1;
+      state.currentUser.spent = (state.currentUser.spent || 0) + v.total;
+      try {
+        localStorage.setItem('jos_current_user', JSON.stringify(state.currentUser));
+      } catch (e) {}
+    }
+
+    // Immediately record confirmed booking into Admin Panel
+    if (!state.admin.bookings) state.admin.bookings = [];
+    const existingIdx = state.admin.bookings.findIndex(b => b.ref === randomRef);
+    if (existingIdx >= 0) {
+      state.admin.bookings[existingIdx] = bookingRecord;
+    } else {
+      state.admin.bookings.unshift(bookingRecord);
+    }
+    saveAdminBookings();
+    updateAdminKpis();
+    renderAdminBookings();
+
+    // Start and record ongoing ride as soon as pickup and drop-off are confirmed from user!
+    const activeOngoingRide = startOngoingRide(bookingRecord);
+    state.ongoingRide = activeOngoingRide;
+    startOngoingRideTimer();
+    renderAdminOngoingRides();
+
     if (payBtn) {
       payBtn.disabled = false;
       payBtn.innerHTML = originalText;
@@ -685,7 +1044,7 @@ const App = (() => {
 
     // Populate Success Modal
     document.getElementById('modalBookingRef').textContent = randomRef;
-    document.getElementById('modalPassengerName').textContent = pass.fullName || 'James Doe';
+    document.getElementById('modalPassengerName').textContent = bookingRecord.customer_name;
     document.getElementById('modalPickupLoc').textContent = state.booking.pickup;
     document.getElementById('modalDropoffLoc').textContent = state.booking.dropoff;
     document.getElementById('modalDateTime').textContent = `${formatDateDisplay(state.booking.date)} at ${state.booking.time || '04:30'}`;
@@ -749,14 +1108,54 @@ const App = (() => {
       const hist = document.getElementById('dashHistoryCard');
       if (hist) hist.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else if (tabName === 'profile') {
-      const modal = document.getElementById('modalProfile');
-      if (modal) modal.classList.add('show');
+      openProfileModal();
     } else if (tabName === 'payments') {
-      const modal = document.getElementById('modalPayments');
-      if (modal) modal.classList.add('show');
+      openPaymentsModal();
     } else if (tabName === 'help') {
       openLiveSupport();
     }
+  }
+
+  /* ============================================================== */
+  /* PASSENGER PROFILE MANAGEMENT                                   */
+  /* ============================================================== */
+
+  function openProfileModal() {
+    const modal = document.getElementById('modalProfile');
+    if (!modal) return;
+
+    const u = state.currentUser;
+    if (!u || u.isLoggedIn === false) {
+      openAuthModal('signin');
+      return;
+    }
+
+    const elInitials = document.getElementById('profAvatarCircle');
+    const elName = document.getElementById('profDisplayName');
+    const elTier = document.getElementById('profBadgeTier');
+    const inpName = document.getElementById('usrProfName');
+    const inpEmail = document.getElementById('usrProfEmail');
+    const inpPhone = document.getElementById('usrProfPhone');
+    const inpAddress = document.getElementById('usrProfAddress');
+    const inpNotes = document.getElementById('usrProfNotes');
+
+    const initials = (u.name || 'Client')
+      .split(' ')
+      .map(n => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+
+    if (elInitials) elInitials.textContent = initials;
+    if (elName) elName.textContent = u.name;
+    if (elTier) elTier.textContent = `👑 ${u.tier || 'Gold VIP'} Chauffeur Tier`;
+    if (inpName) inpName.value = u.name || '';
+    if (inpEmail) inpEmail.value = u.email || '';
+    if (inpPhone) inpPhone.value = u.phone || '';
+    if (inpAddress) inpAddress.value = u.location || '';
+    if (inpNotes) inpNotes.value = u.notes || '';
+
+    modal.classList.add('show');
   }
 
   function closeProfileModal() {
@@ -764,10 +1163,179 @@ const App = (() => {
     if (modal) modal.classList.remove('show');
   }
 
+  async function handleProfileSave(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSaveProfile');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳ Saving profile...</span>';
+    }
+
+    const name = document.getElementById('usrProfName')?.value.trim() || state.currentUser.name;
+    const email = document.getElementById('usrProfEmail')?.value.trim() || state.currentUser.email;
+    const phone = document.getElementById('usrProfPhone')?.value.trim() || state.currentUser.phone;
+    const address = document.getElementById('usrProfAddress')?.value.trim() || '';
+    const notes = document.getElementById('usrProfNotes')?.value.trim() || '';
+
+    if (!state.currentUser) {
+      state.currentUser = { id: 'usr-' + Date.now(), isLoggedIn: true };
+    }
+    state.currentUser.name = name;
+    state.currentUser.email = email;
+    state.currentUser.phone = phone;
+    state.currentUser.location = address;
+    state.currentUser.notes = notes;
+
+    try {
+      localStorage.setItem('jos_current_user', JSON.stringify(state.currentUser));
+
+      if (state.admin && state.admin.users) {
+        const u = state.admin.users.find(x => x.id === state.currentUser.id || x.email === state.currentUser.email);
+        if (u) {
+          u.name = name;
+          u.email = email;
+          u.phone = phone;
+          u.location = address;
+          u.notes = notes;
+          saveAdminUsers();
+        }
+      }
+
+      // Sync to Supabase in background
+      try {
+        await updateProfile(state.currentUser.id, {
+          name,
+          email,
+          phone,
+          location: address,
+          notes
+        });
+      } catch (err) {}
+
+      updateUserUI();
+      showToast('Passenger profile & transfer preferences updated!');
+      closeProfileModal();
+    } catch (err) {
+      console.error('Error saving profile:', err);
+      showToast('Profile updated locally.');
+      closeProfileModal();
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+  }
+
+  /* ============================================================== */
+  /* PAYMENTS & INVOICES MODAL                                      */
+  /* ============================================================== */
+
+  async function openPaymentsModal() {
+    const modal = document.getElementById('modalPayments');
+    if (!modal) return;
+
+    modal.classList.add('show');
+    const container = document.getElementById('paymentsListContainer');
+    if (!container) return;
+
+    container.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--color-text-muted);"><span>⏳ Fetching payment transactions...</span></div>`;
+
+    try {
+      let payments = await fetchPayments();
+      if (!payments || payments.length === 0) {
+        const allBookings = state.admin.bookings && state.admin.bookings.length > 0 
+          ? state.admin.bookings 
+          : (state.bookingsCache || []);
+
+        if (allBookings.length > 0) {
+          payments = allBookings.map(b => ({
+            id: b.id || b.ref,
+            booking_ref: b.ref,
+            amount: b.amount || 75,
+            status: b.payment_status || 'Paid',
+            payment_method: b.payment_method || 'Visa ending in 4242',
+            created_at: b.created_at || b.date,
+            pickup: b.pickup,
+            dropoff: b.dropoff,
+            vehicle: b.vehicle,
+            date: b.date,
+            time: b.time
+          }));
+        } else {
+          payments = [
+            {
+              id: 'pay-1',
+              booking_ref: '#JR-8821',
+              amount: 75.00,
+              status: 'Paid',
+              payment_method: 'Visa •••• 4242',
+              created_at: '2026-10-21',
+              pickup: 'Stroud, Cotswolds, GL5',
+              dropoff: 'London Heathrow Terminal 5',
+              vehicle: 'Executive Chauffeur Sedan',
+              date: '2026-10-24',
+              time: '04:30'
+            },
+            {
+              id: 'pay-2',
+              booking_ref: '#JR-7412',
+              amount: 110.00,
+              status: 'Paid',
+              payment_method: 'Mastercard •••• 8821',
+              created_at: '2026-10-14',
+              pickup: 'Tetbury, Gloucestershire',
+              dropoff: 'London Gatwick South Terminal',
+              vehicle: 'Mercedes V-Class MPV',
+              date: '2026-10-14',
+              time: '08:15'
+            }
+          ];
+        }
+      }
+
+      container.innerHTML = payments.map(p => {
+        const amt = Number(p.amount) || 75;
+        const ref = p.booking_ref || '#JR-8821';
+        const method = p.payment_method || 'Stripe Encrypted Card';
+        const dateStr = p.created_at ? new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent';
+        const pickup = (p.pickup || 'Stroud, Cotswolds').replace(/'/g, "\\'");
+        const dropoff = (p.dropoff || 'Heathrow T5').replace(/'/g, "\\'");
+        const vehicle = (p.vehicle || 'Executive Sedan').replace(/'/g, "\\'");
+        const dateVal = p.date || dateStr;
+        const timeVal = p.time || '04:30 AM';
+
+        return `
+          <div class="payment-tx-card">
+            <div class="payment-tx-left">
+              <div class="payment-tx-icon">💳</div>
+              <div class="payment-tx-details">
+                <strong>${ref} &bull; £${amt.toFixed(2)}</strong>
+                <span>${method} &bull; ${dateStr}</span>
+              </div>
+            </div>
+            <div class="payment-tx-right">
+              <span class="badge-status badge-completed">${p.status || 'Paid'}</span>
+              <button type="button" class="btn btn-outline btn-xs" onclick="App.viewReceipt('${ref}', '${pickup}', '${dropoff}', ${amt}, '${dateVal}', '${timeVal}', '${vehicle}')" title="View VAT Invoice">🧾 Invoice</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (err) {
+      console.error('Error loading payments:', err);
+      container.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--color-danger);">Unable to load transactions.</div>`;
+    }
+  }
+
   function closePaymentsModal() {
     const modal = document.getElementById('modalPayments');
     if (modal) modal.classList.remove('show');
   }
+
+  /* ============================================================== */
+  /* RECEIPT & INVOICE VIEWER                                       */
+  /* ============================================================== */
 
   function viewReceipt(ref, pickup, dropoff, fare, date, time, vehicle) {
     const modal = document.getElementById('modalReceipt');
@@ -796,18 +1364,100 @@ const App = (() => {
     if (modal) modal.classList.remove('show');
   }
 
-  function showManageTripModal() {
+  /* ============================================================== */
+  /* LIVE TRIP AMENDMENT & MANAGE MODAL                             */
+  /* ============================================================== */
+
+  function showManageTripModal(bookingRef) {
     const modal = document.getElementById('modalManageTrip');
-    if (modal) {
-      modal.classList.add('show');
-    } else {
-      showToast('Assigned Driver: Dave M. (Mercedes E-Class, LG74 WXN) • +44 7700 900123');
+    if (!modal) return;
+
+    const allBookings = state.admin.bookings && state.admin.bookings.length > 0 
+      ? state.admin.bookings 
+      : (state.bookingsCache || []);
+    
+    let target = null;
+    if (bookingRef) {
+      const cleanRef = String(bookingRef).replace('#', '');
+      target = allBookings.find(b => String(b.ref).replace('#', '') === cleanRef);
     }
+    if (!target) {
+      target = allBookings.find(b => b.status !== 'Completed' && b.status !== 'Cancelled') || allBookings[0];
+    }
+
+    if (target) {
+      const elRoute = document.getElementById('mTripRoute');
+      const elTime = document.getElementById('mTripTime');
+      const elDriver = document.getElementById('mTripDriver');
+      const elVehicle = document.getElementById('mTripVehicle');
+      const elStatus = document.getElementById('mTripStatus');
+      const elHidden = document.getElementById('mTripRefHidden');
+      const elFlight = document.getElementById('mTripFlight');
+      const elNotes = document.getElementById('mTripNotes');
+
+      if (elRoute) elRoute.textContent = `${target.pickup} → ${target.dropoff}`;
+      if (elTime) elTime.textContent = `${formatDateDisplay(target.date)}, ${target.time || '04:30 AM'}`;
+      if (elDriver) elDriver.textContent = target.assigned_driver || 'Pending Dispatch Assignment';
+      if (elVehicle) elVehicle.textContent = target.vehicle || 'Executive Chauffeur Fleet';
+      if (elStatus) {
+        elStatus.textContent = target.status || 'Confirmed';
+        elStatus.className = `badge-status badge-${(target.status || 'confirmed').toLowerCase()}`;
+      }
+      if (elHidden) elHidden.value = target.ref || '';
+      if (elFlight) elFlight.value = target.flight_number || target.flight || '';
+      if (elNotes) elNotes.value = target.admin_notes || (Array.isArray(target.special_requests) ? target.special_requests.join(', ') : '') || '';
+    }
+
+    modal.classList.add('show');
   }
 
   function closeManageTripModal() {
     const modal = document.getElementById('modalManageTrip');
     if (modal) modal.classList.remove('show');
+  }
+
+  async function handleManageTripSave(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSaveTripAmendments');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳ Saving amendments...</span>';
+    }
+
+    const ref = document.getElementById('mTripRefHidden')?.value;
+    const flight = document.getElementById('mTripFlight')?.value.trim();
+    const notes = document.getElementById('mTripNotes')?.value.trim();
+
+    try {
+      if (ref) {
+        await updateBooking(ref, {
+          flight_number: flight,
+          admin_notes: notes
+        });
+      }
+
+      if (state.admin && state.admin.bookings) {
+        const local = state.admin.bookings.find(b => b.ref === ref || String(b.ref).replace('#', '') === String(ref).replace('#', ''));
+        if (local) {
+          local.flight_number = flight;
+          local.admin_notes = notes;
+        }
+      }
+
+      showToast('Journey amendments saved and dispatched to operations team!');
+      closeManageTripModal();
+      await loadDashboardFromSupabase();
+    } catch (err) {
+      console.error('Error saving trip amendments:', err);
+      showToast('Trip amendments saved locally.');
+      closeManageTripModal();
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
   }
 
   function openLiveSupport() {
@@ -822,6 +1472,516 @@ const App = (() => {
   function closeLiveSupportModal() {
     const modal = document.getElementById('modalLiveSupport');
     if (modal) modal.classList.remove('show');
+  }
+
+  /* ============================================================== */
+  /* PASSENGER AUTHENTICATION (SIGN IN, SIGN UP, SIGN OUT)          */
+  /* ============================================================== */
+
+  function openAuthModal(tab = 'signin') {
+    const modal = document.getElementById('modalAuth');
+    if (!modal) return;
+    switchAuthTab(tab);
+    modal.classList.add('show');
+  }
+
+  function closeAuthModal() {
+    const modal = document.getElementById('modalAuth');
+    if (modal) modal.classList.remove('show');
+  }
+
+  function switchAuthTab(tab) {
+    const tabSignIn = document.getElementById('tabBtnSignIn');
+    const tabSignUp = document.getElementById('tabBtnSignUp');
+    const formSignIn = document.getElementById('formSignIn');
+    const formSignUp = document.getElementById('formSignUp');
+    const formForgot = document.getElementById('formForgot');
+    const title = document.getElementById('authModalTitle');
+
+    if (tab === 'signin') {
+      if (tabSignIn) tabSignIn.classList.add('active');
+      if (tabSignUp) tabSignUp.classList.remove('active');
+      if (formSignIn) formSignIn.style.display = 'block';
+      if (formSignUp) formSignUp.style.display = 'none';
+      if (formForgot) formForgot.style.display = 'none';
+      if (title) title.textContent = 'Passenger Portal';
+    } else if (tab === 'signup') {
+      if (tabSignIn) tabSignIn.classList.remove('active');
+      if (tabSignUp) tabSignUp.classList.add('active');
+      if (formSignIn) formSignIn.style.display = 'none';
+      if (formSignUp) formSignUp.style.display = 'block';
+      if (formForgot) formForgot.style.display = 'none';
+      if (title) title.textContent = 'Create VIP Account';
+    } else if (tab === 'forgot') {
+      if (tabSignIn) tabSignIn.classList.remove('active');
+      if (tabSignUp) tabSignUp.classList.remove('active');
+      if (formSignIn) formSignIn.style.display = 'none';
+      if (formSignUp) formSignUp.style.display = 'none';
+      if (formForgot) formForgot.style.display = 'block';
+      if (title) title.textContent = 'Reset Password';
+    }
+  }
+
+  async function handleSignIn(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSubmitSignIn');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳ Verifying credentials...</span>';
+    }
+
+    const email = document.getElementById('loginEmail')?.value.trim() || '';
+    const password = document.getElementById('loginPassword')?.value || '';
+
+    try {
+      let user = state.admin.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (!user) {
+        const supProfile = await fetchProfileByEmail(email);
+        if (supProfile) {
+          user = {
+            id: supProfile.id || 'usr-' + Date.now(),
+            name: supProfile.name || email.split('@')[0],
+            email: supProfile.email || email,
+            phone: supProfile.phone || '+44 7700 900000',
+            tier: supProfile.tier || 'Gold VIP',
+            status: 'Active',
+            location: supProfile.location || 'Gloucestershire, UK',
+            notes: supProfile.notes || '',
+            rides: supProfile.rides || 1,
+            spent: supProfile.spent || 75
+          };
+        } else {
+          const generatedName = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          user = {
+            id: 'usr-' + Date.now(),
+            name: generatedName || 'Valued Passenger',
+            email,
+            phone: '+44 7700 900000',
+            tier: 'Gold VIP',
+            status: 'Active',
+            location: 'Gloucestershire, Cotswolds',
+            notes: 'Verified via passenger portal',
+            rides: 1,
+            spent: 75
+          };
+          state.admin.users.push(user);
+          saveAdminUsers();
+        }
+      }
+
+      user.isLoggedIn = true;
+      state.currentUser = user;
+      localStorage.setItem('jos_current_user', JSON.stringify(user));
+
+      updateUserUI();
+      closeAuthModal();
+      showToast(`Welcome back, ${user.name}! VIP session active.`);
+      loadDashboardFromSupabase();
+    } catch (err) {
+      console.error('Sign-in error:', err);
+      showToast('Error during sign-in. Please try again.');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+  }
+
+  async function handleSignUp(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSubmitSignUp');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳ Creating VIP account...</span>';
+    }
+
+    const fullName = document.getElementById('regFullName')?.value.trim();
+    const email = document.getElementById('regEmail')?.value.trim();
+    const phone = document.getElementById('regPhone')?.value.trim();
+
+    try {
+      const newUser = {
+        id: 'usr-' + Date.now(),
+        name: fullName,
+        email,
+        phone,
+        tier: 'Gold VIP',
+        status: 'Active',
+        location: 'Cotswolds / London',
+        notes: 'Registered online via passenger portal',
+        rides: 0,
+        spent: 0,
+        isLoggedIn: true
+      };
+
+      state.admin.users.push(newUser);
+      saveAdminUsers();
+
+      try {
+        await insertProfile({
+          name: fullName,
+          email,
+          phone,
+          tier: 'Gold VIP',
+          status: 'Active',
+          location: 'Cotswolds / London',
+          notes: 'Registered via web portal'
+        });
+      } catch (err) {}
+
+      state.currentUser = newUser;
+      localStorage.setItem('jos_current_user', JSON.stringify(newUser));
+
+      updateUserUI();
+      closeAuthModal();
+      showToast(`Welcome to Jo's Rural Cars, ${fullName}! Account created.`);
+      loadDashboardFromSupabase();
+    } catch (err) {
+      console.error('Sign-up error:', err);
+      showToast('Error during registration.');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+  }
+
+  function handleForgotPassword(e) {
+    e.preventDefault();
+    const email = document.getElementById('forgotEmail')?.value.trim();
+    showToast(`Password reset link dispatched to ${email || 'your email'}.`);
+    switchAuthTab('signin');
+  }
+
+  function handleSignOut() {
+    if (state.currentUser) {
+      state.currentUser.isLoggedIn = false;
+    }
+    state.currentUser = null;
+    localStorage.removeItem('jos_current_user');
+    updateUserUI();
+    updateSignInPageView();
+    showToast('You have been signed out.');
+    navigateTo('home');
+  }
+
+  function updateUserUI() {
+    const btnHeaderAuth = document.getElementById('btnHeaderAuth');
+    const headerUserBadge = document.getElementById('headerUserBadge');
+    const headerAvatar = document.getElementById('headerAvatar');
+    const headerUserName = document.getElementById('headerUserName');
+    const mobileAuthLink = document.getElementById('mobileAuthLink');
+    const welcomeTitle = document.querySelector('.dash-welcome-title');
+
+    const u = state.currentUser;
+    const isLoggedIn = u && u.isLoggedIn !== false;
+
+    if (isLoggedIn) {
+      const firstName = (u.name || 'Client').split(' ')[0];
+      const initials = (u.name || 'Client')
+        .split(' ')
+        .map(n => n[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase();
+
+      if (btnHeaderAuth) btnHeaderAuth.classList.add('d-none');
+      if (headerUserBadge) headerUserBadge.classList.remove('d-none');
+      if (headerAvatar) headerAvatar.textContent = initials;
+      if (headerUserName) headerUserName.textContent = firstName;
+      if (mobileAuthLink) {
+        mobileAuthLink.innerHTML = `👤 ${u.name} (Sign Out)`;
+        mobileAuthLink.onclick = () => App.handleSignOut();
+      }
+      if (welcomeTitle) welcomeTitle.textContent = `Welcome back, ${firstName}`;
+
+      // Pre-fill booking passenger details
+      const passName = document.getElementById('passName') || document.getElementById('passFullName');
+      const passEmail = document.getElementById('passEmail');
+      const passPhone = document.getElementById('passPhone');
+      if (passName && !passName.value) passName.value = u.name || '';
+      if (passEmail && !passEmail.value) passEmail.value = u.email || '';
+      if (passPhone && !passPhone.value) passPhone.value = (u.phone || '').replace('+44 ', '').replace('+44', '');
+    } else {
+      if (btnHeaderAuth) btnHeaderAuth.classList.remove('d-none');
+      if (headerUserBadge) headerUserBadge.classList.add('d-none');
+      if (mobileAuthLink) {
+        mobileAuthLink.innerHTML = `👤 Sign In / Register`;
+        mobileAuthLink.onclick = () => App.navigateTo('signin');
+      }
+      if (welcomeTitle) welcomeTitle.textContent = `Welcome, Passenger`;
+    }
+
+    updateDashboardUI();
+  }
+
+  // Update Sign In View components with journey & login state
+  function updateSignInPageView() {
+    const sPickup = document.getElementById('signinPickupDisplay');
+    const sDropoff = document.getElementById('signinDropoffDisplay');
+    const sDate = document.getElementById('signinDateDisplay');
+    const sTime = document.getElementById('signinTimeDisplay');
+    const sPass = document.getElementById('signinPassDisplay');
+    const sVeh = document.getElementById('signinVehicleDisplay');
+
+    if (sPickup) sPickup.textContent = state.booking.pickup || 'Stroud, Cotswolds, GL5';
+    if (sDropoff) sDropoff.textContent = state.booking.dropoff || 'London Heathrow Airport (LHR)';
+    if (sDate) sDate.textContent = `📅 ${formatDateDisplay(state.booking.date)}`;
+    if (sTime) sTime.textContent = `⏰ ${state.booking.time || '04:30 AM'}`;
+    if (sPass) sPass.textContent = `👥 ${state.booking.passengers || '2 Passengers'}`;
+    if (sVeh) {
+      const v = state.vehicles[state.booking.vehicleKey] || state.vehicles.executive;
+      sVeh.textContent = `🚗 ${v.name} (£${v.total.toFixed(2)})`;
+    }
+
+    const alreadyBox = document.getElementById('signinAlreadyLoggedInBanner');
+    const formsWrapper = document.getElementById('signinFormsWrapper');
+    const curAvatar = document.getElementById('signinCurrentAvatar');
+    const curName = document.getElementById('signinCurrentName');
+    const curEmail = document.getElementById('signinCurrentEmail');
+
+    const u = state.currentUser;
+    const isLoggedIn = u && u.isLoggedIn !== false;
+
+    if (isLoggedIn) {
+      if (alreadyBox) alreadyBox.classList.remove('d-none');
+      if (formsWrapper) formsWrapper.classList.add('d-none');
+      if (curName) curName.textContent = u.name || 'Valued Client';
+      if (curEmail) curEmail.textContent = `${u.email || ''} • ${u.tier || 'VIP'}`;
+      if (curAvatar) {
+        const inits = (u.name || 'Client').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+        curAvatar.textContent = inits;
+      }
+    } else {
+      if (alreadyBox) alreadyBox.classList.add('d-none');
+      if (formsWrapper) formsWrapper.classList.remove('d-none');
+    }
+  }
+
+  // Switch between Sign In and Sign Up tabs on Sign In page
+  function switchSignInPageTab(tab) {
+    const tabSignIn = document.getElementById('tabSignInPage');
+    const tabSignUp = document.getElementById('tabSignUpPage');
+    const formSignIn = document.getElementById('formSignInPage');
+    const formSignUp = document.getElementById('formSignUpPage');
+
+    if (tab === 'signin') {
+      tabSignIn?.classList.add('active');
+      tabSignUp?.classList.remove('active');
+      formSignIn?.classList.remove('d-none');
+      formSignUp?.classList.add('d-none');
+    } else {
+      tabSignIn?.classList.remove('active');
+      tabSignUp?.classList.add('active');
+      formSignIn?.classList.add('d-none');
+      formSignUp?.classList.remove('d-none');
+    }
+  }
+
+  // Handle Sign In Submit on Sign In page
+  async function handleSignInPageSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnPageSignIn');
+    const orig = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳ Signing in & unlocking next step...</span>';
+    }
+
+    const email = document.getElementById('pageSignInEmail')?.value.trim() || 'james@example.com';
+    const remember = document.getElementById('pageSignInRemember')?.checked;
+
+    try {
+      let user = state.admin.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (!user) {
+        const supProfile = await fetchProfileByEmail(email);
+        if (supProfile) {
+          user = {
+            id: supProfile.id || 'usr-' + Date.now(),
+            name: supProfile.name || email.split('@')[0],
+            email: supProfile.email || email,
+            phone: supProfile.phone || '+44 7700 900000',
+            tier: supProfile.tier || 'Gold VIP',
+            status: 'Active',
+            location: supProfile.location || 'Gloucestershire, UK',
+            notes: supProfile.notes || '',
+            rides: supProfile.rides || 1,
+            spent: supProfile.spent || 75
+          };
+        } else {
+          const generatedName = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          user = {
+            id: 'usr-' + Date.now(),
+            name: generatedName || 'Valued Passenger',
+            email,
+            phone: '+44 7700 900000',
+            tier: 'Gold VIP',
+            status: 'Active',
+            location: 'Gloucestershire, Cotswolds',
+            notes: 'Verified via customer booking portal',
+            rides: 1,
+            spent: 75
+          };
+          state.admin.users.push(user);
+          saveAdminUsers();
+        }
+      }
+
+      user.isLoggedIn = true;
+      state.currentUser = user;
+      if (remember !== false) {
+        localStorage.setItem('jos_current_user', JSON.stringify(user));
+      }
+
+      // Pre-fill passenger details with user info
+      state.booking.passenger.fullName = user.name || '';
+      state.booking.passenger.email = user.email || '';
+      state.booking.passenger.phone = (user.phone || '').replace('+44 ', '').replace('+44', '');
+
+      updateUserUI();
+      showToast(`Welcome back, ${user.name}! Continuing your booking...`);
+
+      // Next step appears!
+      const nextStep = state.booking.nextStep || (state.booking.vehicleKey ? 'passenger-details' : 'select-vehicle');
+      navigateTo(nextStep);
+    } catch (err) {
+      console.error('Sign-in error:', err);
+      showToast('Error during sign-in. Please try again.');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+    }
+  }
+
+  // Handle Sign Up Submit on Sign In page
+  async function handleSignUpPageSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnPageSignUp');
+    const orig = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳ Creating account & unlocking next step...</span>';
+    }
+
+    const name = document.getElementById('pageSignUpName')?.value.trim();
+    const email = document.getElementById('pageSignUpEmail')?.value.trim();
+    const phone = document.getElementById('pageSignUpPhone')?.value.trim();
+
+    try {
+      const newUser = {
+        id: 'usr-' + Date.now(),
+        name,
+        email,
+        phone: phone.startsWith('+44') ? phone : `+44 ${phone}`,
+        tier: 'Gold VIP',
+        status: 'Active',
+        location: 'Cotswolds / London',
+        notes: 'Registered online before booking',
+        rides: 0,
+        spent: 0,
+        isLoggedIn: true
+      };
+
+      state.admin.users.push(newUser);
+      saveAdminUsers();
+
+      try {
+        await insertProfile({
+          name,
+          email,
+          phone: newUser.phone,
+          tier: 'Gold VIP',
+          status: 'Active',
+          location: 'Cotswolds / London',
+          notes: 'Registered via web portal'
+        });
+      } catch (err) {}
+
+      state.currentUser = newUser;
+      localStorage.setItem('jos_current_user', JSON.stringify(newUser));
+
+      state.booking.passenger.fullName = name;
+      state.booking.passenger.email = email;
+      state.booking.passenger.phone = phone.replace('+44 ', '').replace('+44', '');
+
+      updateUserUI();
+      showToast(`Welcome, ${name}! Your VIP account is active. Continuing your booking...`);
+
+      // Next step appears!
+      const nextStep = state.booking.nextStep || (state.booking.vehicleKey ? 'passenger-details' : 'select-vehicle');
+      navigateTo(nextStep);
+    } catch (err) {
+      console.error('Sign-up error:', err);
+      showToast('Error creating account. Please try again.');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+    }
+  }
+
+  // 1-Click Fast Sign In
+  function quickSignInAs(emailOrType) {
+    if (emailOrType === 'guest') {
+      const guestUser = {
+        id: 'usr-guest-' + Date.now(),
+        name: 'Verified Guest',
+        email: 'guest.' + Math.floor(1000 + Math.random() * 9000) + '@josruralcars.co.uk',
+        phone: '+44 7700 900555',
+        tier: 'Standard',
+        status: 'Active',
+        location: 'United Kingdom',
+        notes: 'Verified express booking guest',
+        rides: 0,
+        spent: 0,
+        isLoggedIn: true
+      };
+      state.currentUser = guestUser;
+      localStorage.setItem('jos_current_user', JSON.stringify(guestUser));
+      state.booking.passenger.fullName = guestUser.name;
+      state.booking.passenger.email = guestUser.email;
+      state.booking.passenger.phone = '7700900555';
+      updateUserUI();
+      showToast('Signed in as Verified Guest! Continuing your booking...');
+      navigateTo(state.booking.nextStep || (state.booking.vehicleKey ? 'passenger-details' : 'select-vehicle'));
+      return;
+    }
+
+    const emailInp = document.getElementById('pageSignInEmail');
+    if (emailInp) emailInp.value = emailOrType;
+
+    const user = state.admin.users.find(u => u.email.toLowerCase() === emailOrType.toLowerCase()) || {
+      id: 'usr-demo',
+      name: emailOrType.split('@')[0],
+      email: emailOrType,
+      phone: '+44 7700 900000',
+      tier: 'Gold VIP',
+      isLoggedIn: true
+    };
+
+    user.isLoggedIn = true;
+    state.currentUser = user;
+    localStorage.setItem('jos_current_user', JSON.stringify(user));
+
+    state.booking.passenger.fullName = user.name;
+    state.booking.passenger.email = user.email;
+    state.booking.passenger.phone = (user.phone || '').replace('+44 ', '').replace('+44', '');
+
+    updateUserUI();
+    showToast(`Signed in as ${user.name}! Continuing your booking...`);
+    navigateTo(state.booking.nextStep || (state.booking.vehicleKey ? 'passenger-details' : 'select-vehicle'));
+  }
+
+  // Proceed to next booking step when already logged in
+  function proceedToNextBookingStep() {
+    navigateTo(state.booking.nextStep || (state.booking.vehicleKey ? 'passenger-details' : 'select-vehicle'));
   }
 
   function showSavedRoutes() {
@@ -990,6 +2150,14 @@ const App = (() => {
   // ADMIN & DISPATCH CONTROL CENTER METHODS
   // ==============================================================
 
+  function saveAdminBookings() {
+    try {
+      localStorage.setItem('jos_admin_bookings', JSON.stringify(state.admin.bookings));
+    } catch (e) {
+      console.warn('Could not save bookings to localStorage:', e);
+    }
+  }
+
   function saveAdminCars() {
     try {
       localStorage.setItem('jos_admin_cars', JSON.stringify(state.admin.cars));
@@ -1050,70 +2218,84 @@ const App = (() => {
       const fetched = await fetchBookings();
       if (fetched && fetched.length > 0) {
         state.admin.bookings = fetched;
+        saveAdminBookings();
       } else if (!state.admin.bookings || state.admin.bookings.length === 0) {
-        // Fallback default seed bookings if empty
-        state.admin.bookings = [
-          {
-            ref: '#JR-8821',
-            customer_name: 'James Doe',
-            customer_email: 'james@example.com',
-            customer_phone: '+44 7700 900000',
-            pickup: 'Stroud, Cotswolds, GL5',
-            dropoff: 'London Heathrow Terminal 5',
-            date: '2026-10-24',
-            time: '04:30',
-            vehicle: 'Executive (Mercedes-Benz S-Class)',
-            amount: 75,
-            status: 'Confirmed',
-            assigned_driver: 'Arthur Pendelton',
-            flight_number: 'BA123'
-          },
-          {
-            ref: '#JR-8419',
-            customer_name: 'Lady Clara Morrison',
-            customer_email: 'clara@morrison.co.uk',
-            customer_phone: '+44 7700 900888',
-            pickup: 'Tetbury, Cotswolds, GL8',
-            dropoff: 'London Heathrow Terminal 2',
-            date: '2026-10-25',
-            time: '06:00',
-            vehicle: 'Business Class (Mercedes S-Class LWB)',
-            amount: 145,
-            status: 'Confirmed',
-            assigned_driver: 'Sarah Jenkins',
-            flight_number: 'VS003'
-          },
-          {
-            ref: '#JR-7930',
-            customer_name: 'Sir Robert Sterling',
-            customer_email: 'r.sterling@cotswolds.org',
-            customer_phone: '+44 7700 900712',
-            pickup: 'Cirencester, Cotswolds, GL7',
-            dropoff: 'London Gatwick North Terminal',
-            date: '2026-10-23',
-            time: '14:15',
-            vehicle: 'Luxury MPV (Mercedes V-Class)',
-            amount: 185,
-            status: 'En Route',
-            assigned_driver: 'Marcus Brody',
-            flight_number: 'EK009'
-          },
-          {
-            ref: '#JR-6902',
-            customer_name: 'Dr. Alistair Finch',
-            customer_email: 'afinch@oxford.ac.uk',
-            customer_phone: '+44 7700 900334',
-            pickup: 'Oxford City Centre, OX1',
-            dropoff: 'London Luton Airport',
-            date: '2026-10-18',
-            time: '09:00',
-            vehicle: 'Executive Estate (Mercedes Estate)',
-            amount: 120,
-            status: 'Completed',
-            assigned_driver: 'David Miller',
-            flight_number: 'EZY221'
-          }
-        ];
+        try {
+          const saved = localStorage.getItem('jos_admin_bookings');
+          if (saved) state.admin.bookings = JSON.parse(saved);
+        } catch (e) {}
+        if (!state.admin.bookings || state.admin.bookings.length === 0) {
+          const todayStr = new Date().toISOString().split('T')[0];
+          state.admin.bookings = [
+            {
+              ref: '#JR-8821',
+              customer_name: 'James Doe',
+              customer_email: 'james@example.com',
+              customer_phone: '+44 7700 900000',
+              pickup: 'Stroud, Cotswolds, GL5',
+              dropoff: 'London Heathrow Terminal 5',
+              date: '2026-10-24',
+              time: '04:30',
+              vehicle: 'Executive (Mercedes-Benz S-Class)',
+              amount: 75,
+              status: 'Confirmed',
+              payment_status: 'Paid',
+              assigned_driver: 'Arthur Pendelton',
+              flight_number: 'BA123'
+            },
+            {
+              ref: '#JR-8419',
+              customer_name: 'Lady Clara Morrison',
+              customer_email: 'clara@morrison.co.uk',
+              customer_phone: '+44 7700 900888',
+              pickup: 'Tetbury, Cotswolds, GL8',
+              dropoff: 'London Heathrow Terminal 2',
+              date: '2026-10-25',
+              time: '06:00',
+              vehicle: 'Business Class (Mercedes S-Class LWB)',
+              amount: 145,
+              status: 'Confirmed',
+              payment_status: 'Paid',
+              assigned_driver: 'Sarah Jenkins',
+              flight_number: 'VS003'
+            },
+            {
+              ref: '#JR-7930',
+              customer_name: 'Sir Robert Sterling',
+              customer_email: 'r.sterling@cotswolds.org',
+              customer_phone: '+44 7700 900712',
+              pickup: 'Cirencester, Cotswolds, GL7',
+              dropoff: 'London Gatwick North Terminal',
+              date: todayStr,
+              time: '14:15',
+              vehicle: 'Luxury MPV (Mercedes V-Class)',
+              amount: 185,
+              status: 'En Route',
+              payment_status: 'Paid',
+              assigned_driver: 'Marcus Brody',
+              flight_number: 'EK009'
+            },
+            {
+              ref: '#JR-6902',
+              customer_name: 'Dr. Alistair Finch',
+              customer_email: 'afinch@oxford.ac.uk',
+              customer_phone: '+44 7700 900334',
+              pickup: 'Oxford City Centre, OX1',
+              dropoff: 'London Luton Airport',
+              date: todayStr,
+              completed_date: todayStr,
+              completed_at: new Date().toISOString(),
+              time: '09:00',
+              vehicle: 'Executive Estate (Mercedes Estate)',
+              amount: 120,
+              status: 'Completed',
+              payment_status: 'Paid',
+              assigned_driver: 'David Miller',
+              flight_number: 'EZY221'
+            }
+          ];
+          saveAdminBookings();
+        }
       }
 
       // Populate dropdowns in modals
@@ -1151,7 +2333,7 @@ const App = (() => {
     }
   }
 
-  // Update 5 KPI Metric Cards & Tab Badges
+  // Update 6 KPI Metric Cards & Tab Badges
   function updateAdminKpis() {
     const bookings = state.admin.bookings || [];
     const cars = state.admin.cars || [];
@@ -1165,6 +2347,16 @@ const App = (() => {
     const pendingTrips = bookings.filter(b => b.status === 'Confirmed' || b.status === 'En Route').length;
     const vipUsersCount = users.filter(u => u.tier === 'Gold VIP' || u.tier === 'Corporate').length;
 
+    // Daily Completed Rides calculation
+    const todayDateStr = new Date().toISOString().split('T')[0];
+    const completedToday = bookings.filter(b => {
+      if (b.status !== 'Completed') return false;
+      const cDate = b.completed_date || (b.completed_at ? b.completed_at.split('T')[0] : b.date);
+      return cDate === todayDateStr;
+    });
+    const todayCompletedCount = completedToday.length;
+    const todayCompletedRev = completedToday.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+
     const elTotal = document.getElementById('adminKpiTotalBookings');
     const elRev = document.getElementById('adminKpiRevenue');
     const elCars = document.getElementById('adminKpiActiveCars');
@@ -1172,6 +2364,8 @@ const App = (() => {
     const elPending = document.getElementById('adminKpiPending');
     const elUsers = document.getElementById('adminKpiTotalUsers');
     const elVip = document.getElementById('adminKpiVipUsers');
+    const elCompletedToday = document.getElementById('adminKpiCompletedToday');
+    const elCompletedRev = document.getElementById('adminKpiCompletedRev');
 
     if (elTotal) elTotal.textContent = totalBookings;
     if (elRev) elRev.textContent = `£${totalRev.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Revenue`;
@@ -1180,6 +2374,8 @@ const App = (() => {
     if (elPending) elPending.textContent = pendingTrips;
     if (elUsers) elUsers.textContent = users.length;
     if (elVip) elVip.textContent = `${vipUsersCount} VIP Tiers Active`;
+    if (elCompletedToday) elCompletedToday.textContent = todayCompletedCount;
+    if (elCompletedRev) elCompletedRev.textContent = `£${todayCompletedRev.toFixed(2)} Today`;
 
     // Badges in Sub-tab buttons
     const bCount = document.getElementById('adminBadgeBookingsCount');
@@ -1195,6 +2391,7 @@ const App = (() => {
 
   // Switch Sub-tabs (Live Bookings, Users, Drivers, Cars, System)
   function switchAdminTab(tabName, clickedBtn) {
+    if (tabName === 'live-map') tabName = 'bookings';
     state.admin.activeTab = tabName;
 
     // Update buttons in navbar
@@ -1213,11 +2410,16 @@ const App = (() => {
       'users': 'adminPaneUsers',
       'drivers': 'adminPaneDrivers',
       'cars': 'adminPaneCars',
-      'system': 'adminPaneSystem'
+      'system': 'adminPaneSystem',
+      'live-map': 'adminPaneLiveMap'
     };
     const targetPaneId = paneMap[tabName] || 'adminPaneBookings';
     const targetPane = document.getElementById(targetPaneId);
     if (targetPane) targetPane.classList.add('active');
+
+    if (tabName === 'live-map') {
+      initAdminFleetView();
+    }
   }
 
   // Render Bookings Dispatch Grid
@@ -1286,6 +2488,7 @@ const App = (() => {
           <td>
             <div style="font-size: 0.82rem; color: #334155;">${dateDisplay}</div>
             <span class="text-xs text-muted">⏰ ${timeDisplay}</span>
+            ${b.completed_at ? `<div class="text-xs" style="color: #15803d; font-weight: 600; margin-top: 2px;">✓ Completed Today</div>` : ''}
           </td>
           <td>
             <span class="text-xs font-semibold" style="color: var(--color-navy);">${b.vehicle || 'Executive Sedan'}</span>
@@ -1306,7 +2509,13 @@ const App = (() => {
             </select>
           </td>
           <td class="text-right">
-            <div class="table-action-btns" style="justify-content: flex-end;">
+            <div class="table-action-btns" style="justify-content: flex-end; gap: 4px;">
+              <button type="button" class="btn btn-outline btn-xs" style="color: #b45309; border-color: #fde68a; background: #fffbeb;" title="Live Chauffeur GPS Tracking" onclick="App.trackTripLive('${safeRef}')">🛰️ Track</button>
+              ${status !== 'Completed' && status !== 'Cancelled' ? `
+                <button type="button" class="btn btn-outline btn-xs" style="color: #15803d; border-color: #86efac; background: #f0fdf4; font-weight: 600;" title="Record Ride Completed" onclick="App.completeRideFromAdmin('${safeRef}')">
+                  ✓ Complete
+                </button>
+              ` : `<span class="badge-status badge-completed" style="font-size: 0.72rem; padding: 2px 6px;">✓ Completed</span>`}
               ${passPhone ? `<a href="tel:${passPhone}" class="btn btn-outline btn-xs" title="Call Passenger">📞 Call</a>` : ''}
               <button type="button" class="btn btn-outline btn-xs" style="color: #b91c1c; border-color: #fecaca;" title="Cancel Booking" onclick="App.deleteBookingFromAdmin('${safeRef}')">✕</button>
             </div>
@@ -1330,13 +2539,75 @@ const App = (() => {
     renderAdminBookings();
   }
 
+  // Record Daily Ride Completion in Admin Panel
+  async function completeRideFromAdmin(ref) {
+    const found = state.admin.bookings.find(b => b.ref === ref || `#${b.ref}` === ref);
+    if (!found) return;
+
+    const nowIso = new Date().toISOString();
+    const todayDateStr = nowIso.split('T')[0];
+
+    found.status = 'Completed';
+    found.completed_at = nowIso;
+    found.completed_date = todayDateStr;
+
+    // Update assigned chauffeur: increment completed rides and set duty status to Available
+    if (found.assigned_driver) {
+      const drv = state.admin.drivers.find(d => d.name === found.assigned_driver);
+      if (drv) {
+        drv.rides = (drv.rides || 0) + 1;
+        if (drv.status === 'On Trip') {
+          drv.status = 'On Duty';
+        }
+        saveAdminDrivers();
+      }
+    }
+
+    // Update vehicle: set back to Available if On Journey
+    if (found.vehicle) {
+      const car = state.admin.cars.find(c => found.vehicle.includes(c.plate) || (found.assigned_driver && c.driver === found.assigned_driver));
+      if (car && car.status === 'On Journey') {
+        car.status = 'Available';
+        saveAdminCars();
+      }
+    }
+
+    // Persist to localStorage
+    saveAdminBookings();
+
+    // Persist to Supabase
+    try {
+      await updateBooking(ref, {
+        status: 'Completed',
+        completed_at: nowIso,
+        completed_date: todayDateStr
+      });
+    } catch (e) {
+      console.warn('Failed to update completed ride in Supabase:', e);
+    }
+
+    // Refresh KPIs & Views
+    updateAdminKpis();
+    renderAdminBookings();
+    renderAdminDrivers();
+    renderAdminCars();
+    loadDashboardFromSupabase();
+
+    showToast(`Journey ${ref} successfully recorded as Completed for today.`);
+  }
+
   // Real-time Status Update via Admin
   async function updateBookingStatusFromAdmin(ref, newStatus) {
+    if (newStatus === 'Completed') {
+      return await completeRideFromAdmin(ref);
+    }
+
     // 1. Update in local state
     const found = state.admin.bookings.find(b => b.ref === ref || `#${b.ref}` === ref);
     if (found) {
       found.status = newStatus;
     }
+    saveAdminBookings();
 
     // 2. Persist to Supabase
     try {
@@ -1360,6 +2631,7 @@ const App = (() => {
     const found = state.admin.bookings.find(b => b.ref === ref || `#${b.ref}` === ref);
     if (found) {
       found.assigned_driver = driverName;
+      saveAdminBookings();
     }
 
     try {
@@ -1377,6 +2649,7 @@ const App = (() => {
     if (!confirm(`Are you sure you want to cancel and remove booking ${ref}?`)) return;
 
     state.admin.bookings = state.admin.bookings.filter(b => b.ref !== ref && `#${b.ref}` !== ref);
+    saveAdminBookings();
 
     try {
       await updateBooking(ref, { status: 'Cancelled', active: false });
@@ -1644,8 +2917,12 @@ const App = (() => {
               <span class="spec-pill">💷 &pound;${car.basePrice || 45} Base</span>
             </div>
 
-            <div style="font-size: 0.82rem; color: #475569; margin-bottom: 14px; background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-border);">
-              <strong>Chauffeur:</strong> <span>${car.driver || 'Unassigned (Pool Vehicle)'}</span>
+            <div style="font-size: 0.82rem; color: #475569; margin-bottom: 14px; background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <strong>Chauffeur:</strong>
+              <select class="admin-select-sm" onchange="App.changeCarDriver('${car.id}', this.value)" title="Assign Registered Chauffeur" style="font-size: 0.76rem; max-width: 170px;">
+                <option value="">Unassigned (Pool Vehicle)</option>
+                ${state.admin.drivers.map(d => `<option value="${d.name}" ${car.driver === d.name ? 'selected' : ''}>${d.name} (${d.badge})</option>`).join('')}
+              </select>
             </div>
 
             <div class="admin-car-actions">
@@ -1811,14 +3088,64 @@ const App = (() => {
     showToast(`Chauffeur ${drv.name} status updated to ${newStatus}.`);
   }
 
-  // Change Driver Vehicle pairing directly
+  // Change Driver Vehicle pairing directly (Bidirectional)
   function changeDriverCar(driverId, newCar) {
     const drv = state.admin.drivers.find(d => d.id === driverId);
     if (!drv) return;
+    const oldCar = drv.car;
     drv.car = newCar;
     saveAdminDrivers();
+
+    // If previous car had this driver, clear it if changed
+    if (oldCar && oldCar !== newCar) {
+      const prevCar = state.admin.cars.find(c => oldCar.includes(c.plate));
+      if (prevCar && prevCar.driver === drv.name) {
+        prevCar.driver = '';
+      }
+    }
+
+    // Link new car to this driver
+    if (newCar) {
+      const targetCar = state.admin.cars.find(c => newCar.includes(c.plate));
+      if (targetCar) {
+        targetCar.driver = drv.name;
+      }
+    }
+    saveAdminCars();
+
     renderAdminDrivers();
-    showToast(`Assigned ${newCar || 'Relief vehicle'} to ${drv.name}.`);
+    renderAdminCars();
+    showToast(newCar ? `Assigned vehicle ${newCar} to ${drv.name}.` : `Vehicle unassigned from ${drv.name}.`);
+  }
+
+  // Change Car Driver pairing directly (Bidirectional)
+  function changeCarDriver(carId, newDriverName) {
+    const car = state.admin.cars.find(c => c.id === carId);
+    if (!car) return;
+    const oldDriverName = car.driver;
+    car.driver = newDriverName;
+    saveAdminCars();
+
+    // If previous driver had this car, clear their assignment if changed
+    if (oldDriverName && oldDriverName !== newDriverName) {
+      const prevDriver = state.admin.drivers.find(d => d.name === oldDriverName);
+      if (prevDriver && prevDriver.car && prevDriver.car.includes(car.plate)) {
+        prevDriver.car = '';
+      }
+    }
+
+    // Link new driver to this car
+    if (newDriverName) {
+      const targetDriver = state.admin.drivers.find(d => d.name === newDriverName);
+      if (targetDriver) {
+        targetDriver.car = `${car.plate} (${car.category})`;
+      }
+    }
+    saveAdminDrivers();
+
+    renderAdminCars();
+    renderAdminDrivers();
+    showToast(newDriverName ? `Chauffeur ${newDriverName} assigned to ${car.plate}.` : `Chauffeur unassigned from ${car.plate}.`);
   }
 
   // Dispatch Trip specifically for this Driver
@@ -1915,6 +3242,15 @@ const App = (() => {
     state.admin.cars.push(newCar);
     saveAdminCars();
 
+    // If chauffeur was assigned at registration, bidirectionally link to driver
+    if (driver) {
+      const assignedDrv = state.admin.drivers.find(d => d.name === driver);
+      if (assignedDrv) {
+        assignedDrv.car = `${plate} (${category})`;
+        saveAdminDrivers();
+      }
+    }
+
     // Attempt Supabase insert in background
     try {
       await insertVehicleToSupabase({
@@ -1933,8 +3269,9 @@ const App = (() => {
     closeAddVehicleModal();
     updateAdminKpis();
     renderAdminCars();
+    renderAdminDrivers();
     populateAdminModalDropdowns();
-    showToast(`Vehicle ${plate} successfully added to fleet.`);
+    showToast(`Vehicle ${plate} registered and paired with ${driver || 'pool fleet'}.`);
   }
 
   // Handle Add Driver Form Submit
@@ -1962,6 +3299,15 @@ const App = (() => {
     state.admin.drivers.push(newDriver);
     saveAdminDrivers();
 
+    // If car was assigned at driver registration, bidirectionally link to vehicle
+    if (car) {
+      const assignedCar = state.admin.cars.find(c => car.includes(c.plate));
+      if (assignedCar) {
+        assignedCar.driver = name;
+        saveAdminCars();
+      }
+    }
+
     // Attempt Supabase insert in background
     try {
       await insertDriverToSupabase({
@@ -1979,8 +3325,9 @@ const App = (() => {
     closeAddDriverModal();
     updateAdminKpis();
     renderAdminDrivers();
+    renderAdminCars();
     populateAdminModalDropdowns();
-    showToast(`Chauffeur ${name} registered with badge ${badge}.`);
+    showToast(`Chauffeur ${name} registered and paired with ${car || 'pool'}.`);
   }
 
   // Handle Manual Dispatch Booking Form Submit
@@ -2026,8 +3373,9 @@ const App = (() => {
       console.warn('Failed to insert manual booking to Supabase:', e);
     }
 
-    // Add to local admin list at front
+    // Add to local admin list at front and persist
     state.admin.bookings.unshift(bookingRecord);
+    saveAdminBookings();
 
     closeManualBookingModal();
     updateAdminKpis();
@@ -2116,43 +3464,129 @@ const App = (() => {
 
   // Copy Supabase SQL Migration
   function copySupabaseSql() {
-    const sql = `-- Supabase SQL Schema for Jo's Rural Cars Admin & Dispatch
-CREATE TABLE IF NOT EXISTS public.drivers (
+    const sql = `-- Supabase SQL Schema for Jo's Rural Cars (Full Architecture)
+-- Run this in your Supabase SQL Editor: https://app.supabase.com
+
+-- 1. Bookings Table
+CREATE TABLE IF NOT EXISTS public.bookings (
   id BIGSERIAL PRIMARY KEY,
-  name TEXT NOT NULL,
-  phone TEXT NOT NULL,
-  email TEXT,
-  badge TEXT NOT NULL,
-  assigned_car TEXT,
-  status TEXT DEFAULT 'On Duty',
-  rating NUMERIC DEFAULT 5.0,
-  rides INT DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  ref TEXT NOT NULL UNIQUE,
+  customer_name TEXT NOT NULL,
+  customer_email TEXT NOT NULL,
+  customer_phone TEXT,
+  pickup TEXT NOT NULL,
+  dropoff TEXT NOT NULL,
+  date TEXT NOT NULL,
+  time TEXT NOT NULL,
+  passengers INT DEFAULT 2,
+  luggage INT DEFAULT 2,
+  vehicle TEXT NOT NULL,
+  amount NUMERIC DEFAULT 75,
+  status TEXT DEFAULT 'Confirmed',
+  payment_status TEXT DEFAULT 'Paid',
+  payment_method TEXT DEFAULT 'Stripe Encrypted Card',
+  assigned_driver TEXT,
+  flight_number TEXT,
+  special_requests JSONB DEFAULT '[]'::jsonb,
+  admin_notes TEXT,
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS public.vehicles (
-  id BIGSERIAL PRIMARY KEY,
+-- 2. Profiles & VIP Customers
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id TEXT PRIMARY KEY DEFAULT ('usr-' || floor(random() * 1000000)::text),
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  phone TEXT,
+  tier TEXT DEFAULT 'Gold VIP',
+  status TEXT DEFAULT 'Active',
+  location TEXT,
+  notes TEXT,
+  rides INT DEFAULT 0,
+  spent NUMERIC DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. Fleet & Chauffeurs
+CREATE TABLE IF NOT EXISTS public.fleet (
+  id TEXT PRIMARY KEY DEFAULT ('fleet-' || floor(random() * 1000000)::text),
   name TEXT NOT NULL,
   plate TEXT NOT NULL UNIQUE,
   category TEXT NOT NULL,
-  base_price NUMERIC DEFAULT 45,
   passengers INT DEFAULT 3,
   luggage INT DEFAULT 2,
+  base_price NUMERIC DEFAULT 45,
   driver_name TEXT,
   status TEXT DEFAULT 'Available',
   img TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 4. Payments & Transactions
+CREATE TABLE IF NOT EXISTS public.payments (
+  id TEXT PRIMARY KEY DEFAULT ('pay-' || floor(random() * 1000000)::text),
+  booking_ref TEXT NOT NULL,
+  customer_email TEXT,
+  amount NUMERIC NOT NULL,
+  currency TEXT DEFAULT 'GBP',
+  status TEXT DEFAULT 'Paid',
+  payment_method TEXT DEFAULT 'Stripe Encrypted Card',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS assigned_driver TEXT;
-ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS flight_number TEXT;
-ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS special_requests JSONB;
-ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS admin_notes TEXT;
+-- 5. System Settings & Rates
+CREATE TABLE IF NOT EXISTS public.system_settings (
+  id INT PRIMARY KEY DEFAULT 1,
+  base_flagfall NUMERIC DEFAULT 40,
+  per_mile_rate NUMERIC DEFAULT 2.40,
+  vat_rate NUMERIC DEFAULT 20,
+  emergency_banner BOOLEAN DEFAULT TRUE,
+  auto_dispatch BOOLEAN DEFAULT TRUE,
+  sms_updates BOOLEAN DEFAULT TRUE,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 6. Notifications
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id BIGSERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  type TEXT DEFAULT 'info',
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Row-Level Security (RLS) policies
+ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.fleet ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public Read All" ON public.bookings FOR SELECT USING (true);
+CREATE POLICY "Public Insert All" ON public.bookings FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public Update All" ON public.bookings FOR UPDATE USING (true);
+CREATE POLICY "Public Delete All" ON public.bookings FOR DELETE USING (true);
+
+CREATE POLICY "Public Read Profiles" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Public Insert Profiles" ON public.profiles FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public Update Profiles" ON public.profiles FOR UPDATE USING (true);
+
+CREATE POLICY "Public Read Fleet" ON public.fleet FOR SELECT USING (true);
+CREATE POLICY "Public Manage Fleet" ON public.fleet FOR ALL USING (true);
+
+CREATE POLICY "Public Read Payments" ON public.payments FOR SELECT USING (true);
+CREATE POLICY "Public Insert Payments" ON public.payments FOR INSERT WITH CHECK (true);
 `;
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(sql).then(() => {
-        showToast('Supabase SQL migration code copied to clipboard!');
+        showToast('Complete Supabase SQL migration code copied to clipboard!');
       }).catch(() => {
         showToast('SQL schema ready. See console log.');
         console.log(sql);
@@ -2163,8 +3597,473 @@ ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS admin_notes TEXT;
     }
   }
 
-  // Initialize App
+  /* ============================================================== */
+  /* NORMAL RIDE TRACKING & ONGOING JOURNEY RECORDER CONTROLLER     */
+  /* ============================================================== */
+
+  let ongoingRideTimerInterval = null;
+
+  // 1. Initialize Customer Normal Tracking View
+  function initCustomerTrackingView(tripId = 'JR-8821') {
+    const cleanRef = String(tripId || 'JR-8821').replace('#', '');
+    state.tracking.currentTrackTripId = cleanRef;
+
+    // Check for existing ongoing ride
+    let ride = getOngoingRide();
+
+    // If no ongoing ride or referencing a different trip, check existing bookings
+    if (!ride || (tripId && tripId !== 'JR-8821' && ride.ref.replace('#', '') !== cleanRef)) {
+      const allBookings = state.admin.bookings || state.bookingsCache || [];
+      const found = allBookings.find(b => String(b.ref || '').replace('#', '') === cleanRef);
+      if (found) {
+        ride = startOngoingRide(found);
+      } else {
+        // Fallback to currently confirmed booking in state or standard Cotswolds transfer
+        ride = startOngoingRide({
+          ref: `#${cleanRef}`,
+          pickup: state.booking.pickup || 'Stroud, Cotswolds, GL5',
+          dropoff: state.booking.dropoff || 'London Heathrow Terminal 5',
+          date: state.booking.date || new Date().toISOString().split('T')[0],
+          time: state.booking.time || '04:30',
+          amount: 75.00,
+          customer_name: (state.currentUser && state.currentUser.name) || 'James Doe',
+          assigned_driver: 'Dave M. (Mercedes E-Class)',
+          vehicle: 'Executive Mercedes-Benz E-Class',
+          vehicleReg: 'YS24 OKL',
+          flight_number: 'BA184'
+        });
+      }
+    }
+
+    state.ongoingRide = ride;
+
+    // Populate Header & References
+    const refDisplay = document.getElementById('trackTripRefDisplay');
+    const statusPill = document.getElementById('trackStatusPill');
+    const routeTitle = document.getElementById('trackRouteTitle');
+    const fareDisplay = document.getElementById('trackFareDisplay');
+
+    if (refDisplay) refDisplay.textContent = ride.ref.startsWith('#') ? ride.ref : `#${ride.ref}`;
+    if (routeTitle) routeTitle.innerHTML = `${ride.pickup} &rarr; ${ride.dropoff}`;
+    if (fareDisplay) fareDisplay.textContent = `£${parseFloat(ride.amount || 75).toFixed(2)}`;
+
+    // Populate Itinerary Stops
+    const pickupAddress = document.getElementById('trackPickupAddress');
+    const dropoffAddress = document.getElementById('trackDropoffAddress');
+    const pickupMeta = document.getElementById('trackPickupMeta');
+    const dropoffMeta = document.getElementById('trackDropoffMeta');
+
+    if (pickupAddress) pickupAddress.textContent = ride.pickup || 'Stroud, Cotswolds, GL5';
+    if (dropoffAddress) dropoffAddress.textContent = ride.dropoff || 'London Heathrow Terminal 5';
+    if (pickupMeta) pickupMeta.textContent = `Pickup Scheduled: ${formatDateDisplay(ride.date)} at ${ride.time || '04:30 AM'}`;
+    if (dropoffMeta) dropoffMeta.innerHTML = `Drop-off: ${ride.dropoff} &bull; Flight Telemetry Active`;
+
+    // Populate Chauffeur & Vehicle Info
+    const driverDisplay = document.getElementById('trackDriverName');
+    const vehicleDisplay = document.getElementById('trackVehicleModel');
+    const flightDisplay = document.getElementById('trackFlightCard');
+
+    if (driverDisplay) driverDisplay.textContent = ride.driverName || 'Dave M.';
+    if (vehicleDisplay) vehicleDisplay.textContent = `${ride.vehicle || 'Executive Mercedes-Benz E-Class'} • ${ride.vehicleReg || 'YS24 OKL'}`;
+    if (flightDisplay) flightDisplay.textContent = ride.flight_number || 'BA184';
+
+    // Update Status Pill
+    const stageConfig = STAGE_CONFIG[ride.status] || STAGE_CONFIG[RIDE_STAGES.CONFIRMED];
+    if (statusPill) {
+      statusPill.className = `live-status-pill ${stageConfig.badgeClass}`;
+      statusPill.innerHTML = `<span class="status-pulse-dot green"></span> ${stageConfig.pillText}`;
+    }
+
+    const stageTag = document.getElementById('trackCurrentStageTag');
+    if (stageTag) {
+      stageTag.textContent = `Stage ${stageConfig.stepIndex} of 5: ${stageConfig.title}`;
+    }
+
+    // Update 5-Stage Visual Stepper
+    updateTrackingStepperUI(stageConfig.stepIndex, ride.timeline || []);
+
+    // Update Vertical Progress Connector
+    const progressFill = document.getElementById('trackProgressFill');
+    if (progressFill) {
+      progressFill.style.height = `${stageConfig.percent}%`;
+    }
+
+    // Update Journey Recording Timeline
+    renderTrackingTimeline(ride.timeline || []);
+
+    // Update Drop-off Complete Card
+    const dropoffCard = document.getElementById('dropoffCompleteCard');
+    const dropoffSummary = document.getElementById('dropoffCompleteSummary');
+    if (dropoffCard) {
+      if (ride.status === RIDE_STAGES.DROPPED_OFF) {
+        dropoffCard.classList.remove('d-none');
+        if (dropoffSummary) {
+          dropoffSummary.textContent = `Passenger safely dropped off at ${ride.dropoff}. Total recorded journey duration: ${ride.totalDuration || '75 mins'}.`;
+        }
+      } else {
+        dropoffCard.classList.add('d-none');
+      }
+    }
+
+    // Start Live Journey Duration Timer
+    startOngoingRideTimer();
+  }
+
+  // Update Visual Progress Stepper Elements
+  function updateTrackingStepperUI(currentStepIndex, timeline = []) {
+    for (let i = 1; i <= 5; i++) {
+      const stepNode = document.getElementById(`stepNode${i}`);
+      const stepLine = document.getElementById(`stepLine${i}`);
+      const stepTime = document.getElementById(`stepTime${i}`);
+
+      if (stepNode) {
+        stepNode.classList.remove('done', 'active');
+        if (i < currentStepIndex) {
+          stepNode.classList.add('done');
+        } else if (i === currentStepIndex) {
+          if (currentStepIndex === 5) {
+            stepNode.classList.add('done');
+          } else {
+            stepNode.classList.add('active');
+          }
+        }
+      }
+
+      if (stepLine) {
+        stepLine.classList.remove('done');
+        if (i < currentStepIndex) {
+          stepLine.classList.add('done');
+        }
+      }
+
+      if (stepTime && timeline[i - 1]) {
+        stepTime.textContent = timeline[i - 1].timestamp || timeline[i - 1].time || 'Logged';
+      }
+    }
+  }
+
+  // Render Recorded Milestones Timeline
+  function renderTrackingTimeline(timeline = []) {
+    const listEl = document.getElementById('trackTimelineList');
+    if (!listEl) return;
+
+    if (!timeline.length) {
+      listEl.innerHTML = `<div class="timeline-empty-msg">No journey milestones recorded yet.</div>`;
+      return;
+    }
+
+    listEl.innerHTML = timeline.map((item, idx) => `
+      <div class="recording-timeline-item">
+        <div class="rtl-marker ${idx === timeline.length - 1 ? 'latest' : ''}"></div>
+        <div class="rtl-content">
+          <div class="rtl-header">
+            <strong>${escapeHtml(item.title || item.stage)}</strong>
+            <span class="rtl-time">${escapeHtml(item.timestamp || item.time || '')}</span>
+          </div>
+          <p class="rtl-note">${escapeHtml(item.note || item.desc || '')}</p>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Live Timer for Ongoing Ride Recording
+  function startOngoingRideTimer() {
+    if (ongoingRideTimerInterval) {
+      clearInterval(ongoingRideTimerInterval);
+      ongoingRideTimerInterval = null;
+    }
+
+    function tick() {
+      const ride = getOngoingRide();
+      const timerDisplay = document.getElementById('trackSpeedDisplay');
+      const timerBadge = document.getElementById('trackElapsedTimer');
+      const driverCoords = document.getElementById('driverCoordsReadout');
+
+      if (!ride || !ride.isOngoing || ride.status === RIDE_STAGES.DROPPED_OFF) {
+        if (timerDisplay) timerDisplay.textContent = ride ? (ride.totalDuration || '75 mins') : '00:00';
+        return;
+      }
+
+      const startMs = new Date(ride.startedAt || ride.createdAt).getTime();
+      const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+      const formatted = formatElapsedTime(elapsedSeconds);
+
+      if (timerDisplay) timerDisplay.textContent = formatted;
+      if (timerBadge) timerBadge.textContent = formatted;
+      if (driverCoords) driverCoords.textContent = `${formatted} (Recording Active)`;
+    }
+
+    tick();
+    ongoingRideTimerInterval = setInterval(tick, 1000);
+  }
+
+  // 2. Advance Ride Status & Record Milestones
+  function advanceRide(nextStage, customNote = '') {
+    const updatedRide = advanceRideStatus(nextStage, customNote);
+    state.ongoingRide = updatedRide;
+
+    if (nextStage === RIDE_STAGES.DROPPED_OFF) {
+      if (ongoingRideTimerInterval) {
+        clearInterval(ongoingRideTimerInterval);
+        ongoingRideTimerInterval = null;
+      }
+
+      showToast(`🏁 Drop-off Complete! Passenger safely arrived at destination.`);
+
+      // Sync completed booking in admin state
+      if (state.admin && state.admin.bookings && updatedRide) {
+        const found = state.admin.bookings.find(b => b.ref === updatedRide.ref);
+        if (found) {
+          found.status = 'Completed';
+          found.admin_notes = `Dropped off at ${new Date().toLocaleTimeString()} (Duration: ${updatedRide.totalDuration})`;
+          saveAdminBookings();
+          updateAdminKpis();
+          renderAdminBookings();
+        }
+      }
+    } else {
+      const meta = STAGE_CONFIG[nextStage] || {};
+      showToast(`Status updated: ${meta.title || nextStage}`);
+    }
+
+    // Refresh views
+    initCustomerTrackingView(state.tracking.currentTrackTripId);
+    renderAdminOngoingRides();
+    renderDashboardLiveJourney();
+  }
+
+  // 3. Confirm Route from Tracking Form
+  function handleConfirmRouteTrack(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const pickupInput = document.getElementById('trkInputPickup');
+    const dropoffInput = document.getElementById('trkInputDropoff');
+    const refInput = document.getElementById('trkInputRef');
+
+    const pickup = pickupInput ? pickupInput.value.trim() : '';
+    const dropoff = dropoffInput ? dropoffInput.value.trim() : '';
+    const ref = refInput && refInput.value.trim() ? refInput.value.trim() : `#JR-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    if (!pickup || !dropoff) {
+      showToast('Please enter both pickup location and drop-off destination.');
+      return;
+    }
+
+    const ride = startOngoingRide({
+      ref: ref,
+      pickup: pickup,
+      dropoff: dropoff,
+      amount: 75.00,
+      customer_name: (state.currentUser && state.currentUser.name) || 'James Doe',
+      assigned_driver: 'Dave M. (Mercedes E-Class)'
+    });
+
+    state.ongoingRide = ride;
+    state.tracking.currentTrackTripId = ride.ref.replace('#', '');
+
+    showToast(`✓ Pickup & Drop-off confirmed! Ongoing ride #${state.tracking.currentTrackTripId} is recording.`);
+    initCustomerTrackingView(state.tracking.currentTrackTripId);
+
+    if (pickupInput) pickupInput.value = '';
+    if (dropoffInput) dropoffInput.value = '';
+    if (refInput) refInput.value = '';
+  }
+
+  // 4. Open Receipt for Current Active/Completed Trip
+  function openReceiptForActiveTrip() {
+    const ride = state.ongoingRide || getOngoingRide();
+    const cleanRef = ride ? ride.ref : (state.tracking.currentTrackTripId || 'JR-8821');
+    viewReceipt(cleanRef);
+  }
+
+  // 5. Track Trip Live
+  function trackTripLive(ref) {
+    const cleanRef = String(ref || 'JR-8821').replace('#', '');
+    state.tracking.currentTrackTripId = cleanRef;
+    navigateTo(`track/${cleanRef}`);
+    initCustomerTrackingView(cleanRef);
+  }
+
+  function trackTripFromModal() {
+    const modalRef = document.getElementById('modalBookingRef');
+    const ref = (modalRef && modalRef.textContent) ? modalRef.textContent.replace('#', '') : 'JR-8821';
+    closeSuccessModal();
+    trackTripLive(ref);
+  }
+
+  function copyTrackingLink() {
+    const cleanRef = state.tracking.currentTrackTripId || 'JR-8821';
+    const trackingUrl = `${window.location.origin}${window.location.pathname}#track/${cleanRef}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(trackingUrl).then(() => {
+        showToast(`Tracking link for #${cleanRef} copied!`);
+      }).catch(() => {
+        prompt('Tracking URL:', trackingUrl);
+      });
+    } else {
+      prompt('Tracking URL:', trackingUrl);
+    }
+  }
+
+  // 6. Driver Portal View Controller
+  function initDriverPortalView(tripId = 'JR-8821') {
+    const cleanRef = String(tripId || 'JR-8821').replace('#', '');
+    state.tracking.selectedDriverTripId = cleanRef;
+
+    const ride = getOngoingRide();
+    const tripTitle = document.getElementById('driverCurrentTripTitle');
+    const statusBadge = document.getElementById('driverTripStatusBadge');
+
+    if (tripTitle) {
+      if (ride) {
+        tripTitle.textContent = `${ride.ref}: ${ride.pickup} → ${ride.dropoff}`;
+      } else {
+        tripTitle.textContent = `#${cleanRef}: Stroud, Cotswolds → London Heathrow T5`;
+      }
+    }
+
+    if (statusBadge && ride) {
+      const cfg = STAGE_CONFIG[ride.status] || STAGE_CONFIG[RIDE_STAGES.CONFIRMED];
+      statusBadge.textContent = cfg.pillText;
+      statusBadge.className = `badge-status ${cfg.badgeClass}`;
+    }
+  }
+
+  function driverStartTracking() { advanceRide(RIDE_STAGES.EN_ROUTE); }
+  function driverPauseTracking() { advanceRide(RIDE_STAGES.ARRIVED); }
+  function driverResumeTracking() { advanceRide(RIDE_STAGES.IN_PROGRESS); }
+  function driverStopTracking() { advanceRide(RIDE_STAGES.DROPPED_OFF); }
+
+  function handleDriverSelectTrip(tripId) {
+    state.tracking.selectedDriverTripId = tripId;
+    initDriverPortalView(tripId);
+    showToast(`Switched driver view to #${tripId}.`);
+  }
+
+  function acceptAssignedTripFromDriver() {
+    showToast(`Journey accepted. Chauffeur ready for dispatch.`);
+    advanceRide(RIDE_STAGES.EN_ROUTE);
+  }
+
+  // 7. Admin Ongoing Rides Dispatch Controller
+  function initAdminFleetView() {
+    renderAdminOngoingRides();
+  }
+
+  function focusAdminDriver(driverId) {
+    showToast(`Focusing assigned chauffeur ${driverId}.`);
+  }
+
+  function refreshAdminFleetMap() {
+    renderAdminOngoingRides();
+    showToast('Refreshed active ongoing dispatches.');
+  }
+
+  function renderAdminOngoingRides() {
+    const tableBody = document.getElementById('adminOngoingRidesTableBody');
+    const badgeCount = document.getElementById('adminActiveDriversCountBadge');
+    if (!tableBody) return;
+
+    // Gather active ride and pending/confirmed bookings
+    const ongoing = getOngoingRide();
+    const allBookings = state.admin.bookings || state.bookingsCache || [];
+    const activeList = [];
+
+    if (ongoing) {
+      activeList.push(ongoing);
+    }
+
+    allBookings.forEach(b => {
+      const ref = b.ref ? b.ref.replace('#', '') : '';
+      if (!activeList.some(item => item.ref.replace('#', '') === ref)) {
+        if (b.status !== 'Completed' && b.status !== 'Cancelled') {
+          activeList.push({
+            ref: b.ref,
+            customer_name: b.customer_name || 'Passenger',
+            pickup: b.pickup || 'Stroud, Cotswolds',
+            dropoff: b.dropoff || 'London Heathrow',
+            vehicle: b.vehicle || 'Mercedes-Benz E-Class',
+            driverName: b.assigned_driver || 'Dave M.',
+            status: b.status === 'Confirmed' ? RIDE_STAGES.CONFIRMED : RIDE_STAGES.EN_ROUTE,
+            isOngoing: true,
+            totalDuration: 'Active'
+          });
+        }
+      }
+    });
+
+    if (badgeCount) {
+      badgeCount.textContent = activeList.length;
+    }
+
+    if (!activeList.length) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="7" class="text-center py-4 text-muted">
+            No active rides in transit. When a customer confirms a booking, it will record here live until drop-off.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tableBody.innerHTML = activeList.map(r => {
+      const cfg = STAGE_CONFIG[r.status] || STAGE_CONFIG[RIDE_STAGES.CONFIRMED];
+      const safeRef = escapeHtml(r.ref || '#JR-8821');
+      const cleanRef = safeRef.replace('#', '');
+      return `
+        <tr>
+          <td><strong style="color:var(--color-gold); font-size:0.85rem;">${safeRef}</strong></td>
+          <td><strong>${escapeHtml(r.customer_name || 'Passenger')}</strong></td>
+          <td>
+            <div style="font-size:0.82rem;">${escapeHtml(r.pickup || 'Pickup')}</div>
+            <div style="font-size:0.75rem; color:#94a3b8;">&rarr; ${escapeHtml(r.dropoff || 'Drop-off')}</div>
+          </td>
+          <td>
+            <div style="font-size:0.82rem;">${escapeHtml(r.driverName || 'Dave M.')}</div>
+            <div style="font-size:0.72rem; color:#94a3b8;">${escapeHtml(r.vehicle || 'Mercedes E-Class')}</div>
+          </td>
+          <td>
+            <span class="badge-status ${cfg.badgeClass}" style="font-size:0.75rem;">
+              ${cfg.icon} ${cfg.pillText}
+            </span>
+          </td>
+          <td>
+            <span style="font-family:monospace; color:#38bdf8;">${r.totalDuration || 'Recording...'}</span>
+          </td>
+          <td>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button type="button" class="btn btn-outline btn-xs" onclick="App.trackTripLive('${cleanRef}')">
+                Track
+              </button>
+              <button type="button" class="btn btn-gold btn-xs" onclick="App.advanceRide('in_progress')">
+                Pick Up
+              </button>
+              <button type="button" class="btn btn-navy btn-xs" onclick="App.advanceRide('dropped_off')">
+                Drop Off
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function setupDriverTrackingListeners() {
+    window.addEventListener('ongoing_ride:updated', (e) => {
+      const ride = e.detail && e.detail.ride;
+      if (ride) {
+        state.ongoingRide = ride;
+      }
+    });
+    window.addEventListener('ongoing_ride:completed', () => {
+      state.ongoingRide = null;
+    });
+  }
+
+  // App Master Initializer
   function init() {
+    setupDriverTrackingListeners();
+
     // Set default date input to 3 days from now
     const today = new Date();
     today.setDate(today.getDate() + 3);
@@ -2225,13 +4124,17 @@ ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS admin_notes TEXT;
 
     // Hash routing listener
     window.addEventListener('hashchange', () => {
-      const hash = window.location.hash.replace('#', '') || 'home';
-      if (['home', 'airports', 'select-vehicle', 'fleet', 'passenger-details', 'payment', 'dashboard', 'contact', 'admin'].includes(hash)) {
-        navigateTo(hash);
-        if (hash === 'dashboard') {
+      const rawHash = window.location.hash.replace('#', '') || 'home';
+      const baseHash = rawHash.split('/')[0].split('?')[0];
+      const validViews = ['home', 'signin', 'airports', 'select-vehicle', 'fleet', 'passenger-details', 'payment', 'dashboard', 'contact', 'admin', 'track', 'driver'];
+      if (validViews.includes(baseHash)) {
+        navigateTo(rawHash);
+        if (baseHash === 'dashboard') {
           loadDashboardFromSupabase();
-        } else if (hash === 'admin') {
+        } else if (baseHash === 'admin') {
           loadAdminDashboard();
+        } else if (baseHash === 'signin') {
+          updateSignInPageView();
         }
       }
     });
@@ -2239,6 +4142,9 @@ ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS admin_notes TEXT;
     // Check initial hash
     const initialHash = window.location.hash.replace('#', '') || 'home';
     navigateTo(initialHash);
+
+    // Initialize authenticated user header & badges
+    updateUserUI();
 
     // Run Supabase health check and load real bookings
     initSupabase();
@@ -2254,6 +4160,7 @@ ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS admin_notes TEXT;
   // Public API
   return {
     navigateTo,
+    startBookingFlow,
     focusBookingWidget,
     handleHeroSearch,
     quickSelectAirport,
@@ -2270,12 +4177,16 @@ ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS admin_notes TEXT;
     rebookTrip,
     rebookLastTrip,
     showDashboardTab,
+    openProfileModal,
     closeProfileModal,
+    handleProfileSave,
+    openPaymentsModal,
     closePaymentsModal,
     viewReceipt,
     closeReceiptModal,
     showManageTripModal,
     closeManageTripModal,
+    handleManageTripSave,
     openLiveSupport,
     closeLiveSupportModal,
     showSavedRoutes,
@@ -2289,6 +4200,40 @@ ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS admin_notes TEXT;
     showToast,
     loadDashboardFromSupabase,
     checkSupabaseHealth,
+    // Passenger Auth & Sign In Page Public API
+    openAuthModal,
+    closeAuthModal,
+    switchAuthTab,
+    handleSignIn,
+    handleSignUp,
+    handleForgotPassword,
+    handleSignOut,
+    updateUserUI,
+    updateSignInPageView,
+    switchSignInPageTab,
+    handleSignInPageSubmit,
+    handleSignUpPageSubmit,
+    quickSignInAs,
+    proceedToNextBookingStep,
+    // Normal Ride Tracking & Journey Recorder Public API
+    initCustomerTrackingView,
+    advanceRide,
+    handleConfirmRouteTrack,
+    openReceiptForActiveTrip,
+    renderAdminOngoingRides,
+    copyTrackingLink,
+    trackTripLive,
+    trackTripFromModal,
+    initDriverPortalView,
+    driverStartTracking,
+    driverPauseTracking,
+    driverResumeTracking,
+    driverStopTracking,
+    handleDriverSelectTrip,
+    acceptAssignedTripFromDriver,
+    initAdminFleetView,
+    focusAdminDriver,
+    refreshAdminFleetMap,
     // Admin & Dispatch Public API
     loadAdminDashboard,
     updateAdminKpis,
@@ -2297,6 +4242,7 @@ ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS admin_notes TEXT;
     filterAdminBookings,
     searchAdminBookings,
     updateBookingStatusFromAdmin,
+    completeRideFromAdmin,
     assignDriverFromAdmin,
     deleteBookingFromAdmin,
     renderAdminUsers,
@@ -2318,6 +4264,7 @@ ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS admin_notes TEXT;
     toggleDriverDutyStatus,
     changeDriverStatus,
     changeDriverCar,
+    changeCarDriver,
     dispatchForDriver,
     deleteDriver,
     openAddVehicleModal,

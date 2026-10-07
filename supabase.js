@@ -47,9 +47,10 @@ export async function checkSupabaseHealth() {
   }
 }
 
-/**
- * Fetch all bookings from Supabase
- */
+/* ============================================================== */
+/* 1. BOOKINGS CRUD OPERATIONS                                    */
+/* ============================================================== */
+
 export async function fetchBookings() {
   try {
     const { data, error } = await supabase
@@ -58,19 +59,38 @@ export async function fetchBookings() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching bookings from Supabase:', error);
+      console.error('Error fetching bookings:', error);
       return null;
     }
     return data;
   } catch (err) {
-    console.error('Fetch exception:', err);
+    console.error('Fetch bookings exception:', err);
     return null;
   }
 }
 
-/**
- * Insert a new booking into Supabase
- */
+export async function fetchUserBookings(customerEmail, customerPhone) {
+  try {
+    let query = supabase.from('bookings').select('*');
+    if (customerEmail && customerPhone) {
+      query = query.or(`customer_email.eq.${customerEmail},customer_phone.eq.${customerPhone}`);
+    } else if (customerEmail) {
+      query = query.eq('customer_email', customerEmail);
+    } else if (customerPhone) {
+      query = query.eq('customer_phone', customerPhone);
+    }
+    const { data, error } = await query.order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching user bookings:', error);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.error('Fetch user bookings exception:', err);
+    return null;
+  }
+}
+
 export async function insertBooking(bookingRecord) {
   try {
     const { data, error } = await supabase
@@ -81,18 +101,15 @@ export async function insertBooking(bookingRecord) {
 
     if (error) {
       console.error('Error saving booking to Supabase:', error);
-      return { success: false, error };
+      return { success: false, error: error.message };
     }
     return { success: true, data };
   } catch (err) {
-    console.error('Insert exception:', err);
+    console.error('Insert booking exception:', err);
     return { success: false, error: err.message };
   }
 }
 
-/**
- * Update an existing booking in Supabase
- */
 export async function updateBooking(identifier, updates) {
   try {
     let query = supabase.from('bookings').update({ ...updates, updated_at: new Date().toISOString() });
@@ -104,8 +121,8 @@ export async function updateBooking(identifier, updates) {
 
     const { data, error } = await query.select();
     if (error) {
-      console.error('Error updating booking in Supabase:', error);
-      return { success: false, error };
+      console.error('Error updating booking:', error);
+      return { success: false, error: error.message };
     }
     return { success: true, data };
   } catch (err) {
@@ -114,9 +131,6 @@ export async function updateBooking(identifier, updates) {
   }
 }
 
-/**
- * Delete or deactivate booking in Supabase
- */
 export async function deleteBooking(identifier) {
   try {
     let query = supabase.from('bookings').delete();
@@ -128,8 +142,8 @@ export async function deleteBooking(identifier) {
 
     const { data, error } = await query;
     if (error) {
-      console.error('Error deleting booking in Supabase:', error);
-      return { success: false, error };
+      console.error('Error deleting booking:', error);
+      return { success: false, error: error.message };
     }
     return { success: true, data };
   } catch (err) {
@@ -138,48 +152,385 @@ export async function deleteBooking(identifier) {
   }
 }
 
-/**
- * Fetch drivers from Supabase if table exists
- */
+/* ============================================================== */
+/* 2. PROFILES & CUSTOMERS CRUD OPERATIONS                        */
+/* ============================================================== */
+
+export async function fetchProfiles() {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching profiles:', error);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.error('Fetch profiles exception:', err);
+    return null;
+  }
+}
+
+export async function fetchProfileByEmail(email) {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('email', email)
+      .limit(1)
+      .single();
+
+    if (error) return null;
+    return data;
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function insertProfile(profileRecord) {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert([profileRecord])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error inserting profile:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function updateProfile(id, updates) {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select();
+
+    if (error) {
+      console.error('Error updating profile:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function deleteProfile(id) {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting profile:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/* ============================================================== */
+/* 3. FLEET & CHAUFFEURS CRUD OPERATIONS                          */
+/* ============================================================== */
+
+export async function fetchFleet() {
+  try {
+    const { data, error } = await supabase
+      .from('fleet')
+      .select('*')
+      .order('name');
+
+    if (error) {
+      console.error('Error fetching fleet:', error);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.error('Fetch fleet exception:', err);
+    return null;
+  }
+}
+
+export async function insertFleetMember(fleetRecord) {
+  try {
+    const { data, error } = await supabase
+      .from('fleet')
+      .insert([fleetRecord])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error inserting fleet member:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function updateFleetMember(id, updates) {
+  try {
+    const { data, error } = await supabase
+      .from('fleet')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select();
+
+    if (error) {
+      console.error('Error updating fleet member:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function deleteFleetMember(id) {
+  try {
+    const { data, error } = await supabase
+      .from('fleet')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting fleet member:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/* ============================================================== */
+/* 4. SYSTEM SETTINGS & RATES                                     */
+/* ============================================================== */
+
+export async function fetchSystemSettings() {
+  try {
+    const { data, error } = await supabase
+      .from('system_settings')
+      .select('*')
+      .limit(1)
+      .single();
+
+    if (error) {
+      console.error('Error fetching system settings:', error);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function updateSystemSettings(updates) {
+  try {
+    const { data, error } = await supabase
+      .from('system_settings')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', 1)
+      .select();
+
+    if (error) {
+      console.error('Error updating system settings:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/* ============================================================== */
+/* 5. PAYMENTS & TRANSACTIONS CRUD                                */
+/* ============================================================== */
+
+export async function fetchPayments(bookingRef) {
+  try {
+    let query = supabase.from('payments').select('*');
+    if (bookingRef) {
+      query = query.eq('booking_ref', bookingRef);
+    }
+    const { data, error } = await query.order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching payments:', error);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function insertPayment(paymentRecord) {
+  try {
+    const { data, error } = await supabase
+      .from('payments')
+      .insert([paymentRecord])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error inserting payment:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/* ============================================================== */
+/* 6. NOTIFICATIONS & INQUIRIES                                   */
+/* ============================================================== */
+
+export async function fetchNotifications() {
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching notifications:', error);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function insertNotification(notificationRecord) {
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert([notificationRecord])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error inserting notification:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function markNotificationRead(id) {
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('id', id)
+      .select();
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/* ============================================================== */
+/* 7. LEGACY / COMPATIBILITY ALIASES                              */
+/* ============================================================== */
+
 export async function fetchDriversFromSupabase() {
   try {
-    const { data, error } = await supabase
-      .from('drivers')
-      .select('*')
-      .order('name');
-    if (error) return null;
-    return data;
-  } catch (err) {
-    return null;
-  }
+    const { data, error } = await supabase.from('drivers').select('*').order('name');
+    if (!error && data && data.length > 0) return data;
+  } catch (e) {}
+  return fetchFleet();
 }
 
-/**
- * Insert driver to Supabase if table exists
- */
 export async function insertDriverToSupabase(driverRecord) {
   try {
-    const { data, error } = await supabase
-      .from('drivers')
-      .insert([driverRecord])
-      .select()
-      .single();
-    if (error) return null;
-    return data;
-  } catch (err) {
-    return null;
-  }
+    const { data, error } = await supabase.from('drivers').insert([driverRecord]).select().single();
+    if (!error && data) return data;
+  } catch (e) {}
+  return insertFleetMember(driverRecord);
 }
 
-/**
- * Fetch vehicles from Supabase if table exists
- */
 export async function fetchVehiclesFromSupabase() {
   try {
+    const { data, error } = await supabase.from('vehicles').select('*').order('name');
+    if (!error && data && data.length > 0) return data;
+  } catch (e) {}
+  return fetchFleet();
+}
+
+export async function insertVehicleToSupabase(vehicleRecord) {
+  try {
+    const { data, error } = await supabase.from('vehicles').insert([vehicleRecord]).select().single();
+    if (!error && data) return data;
+  } catch (e) {}
+  return insertFleetMember(vehicleRecord);
+}
+
+/* ============================================================== */
+/* 8. DRIVER LIVE LOCATION & TRACKING CRUD                        */
+/* ============================================================== */
+
+export async function upsertDriverLocationToSupabase(locationRecord) {
+  try {
+    const payload = {
+      driver_id: String(locationRecord.driverId || locationRecord.driver_id || ''),
+      trip_id: String(locationRecord.tripId || locationRecord.trip_id || '').replace('#', ''),
+      latitude: parseFloat(locationRecord.latitude),
+      longitude: parseFloat(locationRecord.longitude),
+      accuracy: locationRecord.accuracy != null ? parseFloat(locationRecord.accuracy) : null,
+      heading: locationRecord.heading != null ? parseFloat(locationRecord.heading) : null,
+      speed: locationRecord.speed != null ? parseFloat(locationRecord.speed) : null,
+      tracking_status: locationRecord.trackingStatus || locationRecord.tracking_status || 'live',
+      timestamp: locationRecord.timestamp || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
     const { data, error } = await supabase
-      .from('vehicles')
+      .from('driver_locations')
+      .upsert([payload], { onConflict: 'trip_id' })
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function fetchDriverLocationFromSupabase(tripId) {
+  try {
+    const cleanTripId = String(tripId).replace('#', '');
+    const { data, error } = await supabase
+      .from('driver_locations')
       .select('*')
-      .order('name');
+      .eq('trip_id', cleanTripId)
+      .limit(1)
+      .single();
+
     if (error) return null;
     return data;
   } catch (err) {
@@ -187,19 +538,46 @@ export async function fetchVehiclesFromSupabase() {
   }
 }
 
-/**
- * Insert vehicle to Supabase if table exists
- */
-export async function insertVehicleToSupabase(vehicleRecord) {
+export async function fetchAllActiveDriverLocationsFromSupabase() {
   try {
     const { data, error } = await supabase
-      .from('vehicles')
-      .insert([vehicleRecord])
-      .select()
-      .single();
+      .from('driver_locations')
+      .select('*')
+      .in('tracking_status', ['live', 'paused'])
+      .order('updated_at', { ascending: false });
+
     if (error) return null;
     return data;
   } catch (err) {
     return null;
+  }
+}
+
+export function subscribeToTripLocationRealtime(tripId, onUpdate) {
+  try {
+    const cleanTripId = String(tripId).replace('#', '');
+    const channel = supabase
+      .channel(`tracking_${cleanTripId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'driver_locations',
+          filter: `trip_id=eq.${cleanTripId}`
+        },
+        (payload) => {
+          if (onUpdate && payload.new) {
+            onUpdate(payload.new);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  } catch (err) {
+    return () => {};
   }
 }
