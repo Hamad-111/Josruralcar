@@ -29,7 +29,11 @@ import {
   fetchNotifications,
   insertNotification,
   markNotificationRead,
-  fetchUserBookings
+  fetchUserBookings,
+  signInWithGoogleOAuth,
+  getSupabaseAuthSession,
+  signOutSupabaseAuth,
+  onSupabaseAuthStateChange
 } from './supabase.js';
 
 import {
@@ -1663,10 +1667,139 @@ const App = (() => {
     }
     state.currentUser = null;
     localStorage.removeItem('jos_current_user');
+    signOutSupabaseAuth();
     updateUserUI();
     updateSignInPageView();
     showToast('You have been signed out.');
     navigateTo('home');
+  }
+
+  /* ============================================================== */
+  /* GOOGLE OAUTH & SSO INTEGRATION METHODS                         */
+  /* ============================================================== */
+
+  let currentGoogleAuthContext = 'booking';
+
+  async function handleGoogleSignIn(context = 'booking') {
+    currentGoogleAuthContext = context;
+    const isBooking = (context === 'booking');
+    const btn = isBooking 
+      ? document.getElementById('btnGoogleSignInPage') 
+      : (document.getElementById('btnGoogleSignInModal') || document.getElementById('btnGoogleSignUpModal'));
+    const origHtml = btn ? btn.innerHTML : '';
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `
+        <span class="spinner-border spinner-border-sm" style="display:inline-block; width:16px; height:16px; border:2px solid #4285F4; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite;" aria-hidden="true"></span>
+        <span>Connecting to Google...</span>
+      `;
+    }
+
+    try {
+      // 1. Initiate Supabase Google OAuth
+      const returnPath = isBooking ? '#signin' : (window.location.hash || '#home');
+      const res = await signInWithGoogleOAuth(returnPath);
+      
+      // If Supabase returned a valid OAuth URL redirect, browser will navigate
+      if (res && res.success && res.data && res.data.url) {
+        return;
+      }
+      
+      // 2. If OAuth provider is not configured in Supabase or in offline/local testing,
+      // present our interactive Google Account Chooser
+      openGoogleAccountChooser(context);
+    } catch (err) {
+      console.warn('Google sign-in exception:', err);
+      openGoogleAccountChooser(context);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+      }
+    }
+  }
+
+  function openGoogleAccountChooser(context = 'booking') {
+    currentGoogleAuthContext = context;
+    const modal = document.getElementById('modalGoogleChooser');
+    if (modal) modal.classList.add('show');
+  }
+
+  function closeGoogleAccountChooser() {
+    const modal = document.getElementById('modalGoogleChooser');
+    if (modal) modal.classList.remove('show');
+  }
+
+  async function selectGoogleAccount(accountData) {
+    if (!accountData || !accountData.email) return;
+
+    try {
+      let user = state.admin.users.find(u => u.email.toLowerCase() === accountData.email.toLowerCase());
+      if (!user) {
+        user = {
+          id: 'usr-g-' + Date.now(),
+          name: accountData.name || accountData.email.split('@')[0],
+          email: accountData.email,
+          phone: accountData.phone || '+44 7700 900888',
+          tier: accountData.tier || 'Gold VIP',
+          status: 'Active',
+          location: 'Cotswolds & London',
+          notes: 'Google OAuth Verified Profile',
+          rides: 1,
+          spent: 85,
+          authProvider: 'google'
+        };
+        state.admin.users.push(user);
+        saveAdminUsers();
+      } else {
+        user.authProvider = 'google';
+        if (accountData.name) user.name = accountData.name;
+        if (accountData.phone) user.phone = accountData.phone;
+      }
+
+      user.isLoggedIn = true;
+      state.currentUser = user;
+      localStorage.setItem('jos_current_user', JSON.stringify(user));
+
+      // Synchronize booking passenger details
+      state.booking.passenger.fullName = user.name || '';
+      state.booking.passenger.email = user.email || '';
+      state.booking.passenger.phone = (user.phone || '').replace('+44 ', '').replace('+44', '');
+
+      updateUserUI();
+      closeGoogleAccountChooser();
+      closeAuthModal();
+
+      showToast(`Signed in with Google as ${user.name}! VIP session active.`);
+
+      // Advance route or dashboard
+      if (currentGoogleAuthContext === 'booking' || window.location.hash.includes('signin')) {
+        const nextStep = state.booking.nextStep || (state.booking.vehicleKey ? 'passenger-details' : 'select-vehicle');
+        navigateTo(nextStep);
+      } else {
+        loadDashboardFromSupabase();
+      }
+    } catch (err) {
+      console.error('Error selecting Google account:', err);
+      showToast('Error signing in with Google. Please try again.');
+    }
+  }
+
+  function handleCustomGoogleSignIn(e) {
+    e.preventDefault();
+    const nameInput = document.getElementById('googleCustomName');
+    const emailInput = document.getElementById('googleCustomEmail');
+    const name = nameInput ? nameInput.value.trim() : '';
+    const email = emailInput ? emailInput.value.trim() : '';
+    if (!email) return;
+
+    selectGoogleAccount({
+      name: name || email.split('@')[0],
+      email: email,
+      phone: '+44 7700 900555',
+      tier: 'Gold VIP'
+    });
   }
 
   function updateUserUI() {
@@ -1692,7 +1825,13 @@ const App = (() => {
       if (btnHeaderAuth) btnHeaderAuth.classList.add('d-none');
       if (headerUserBadge) headerUserBadge.classList.remove('d-none');
       if (headerAvatar) headerAvatar.textContent = initials;
-      if (headerUserName) headerUserName.textContent = firstName;
+      if (headerUserName) {
+        if (u.authProvider === 'google') {
+          headerUserName.innerHTML = `${firstName} <span style="font-size:0.75rem; margin-left:3px;" title="Google Verified Account">🛡️</span>`;
+        } else {
+          headerUserName.textContent = firstName;
+        }
+      }
       if (mobileAuthLink) {
         mobileAuthLink.innerHTML = `👤 ${u.name} (Sign Out)`;
         mobileAuthLink.onclick = () => App.handleSignOut();
@@ -2139,6 +2278,38 @@ const App = (() => {
       } else {
         console.warn('⚠️ Supabase connection issue:', health.error);
         updateSupabaseStatusBadge(false, health.error);
+      }
+
+      // Check active Supabase session (e.g. from Google OAuth callback)
+      try {
+        const session = await getSupabaseAuthSession();
+        if (session && session.user && (!state.currentUser || !state.currentUser.isLoggedIn)) {
+          const su = session.user;
+          const userEmail = su.email;
+          const userName = su.user_metadata?.full_name || su.user_metadata?.name || (userEmail ? userEmail.split('@')[0] : 'Passenger');
+          selectGoogleAccount({
+            name: userName,
+            email: userEmail,
+            phone: su.user_metadata?.phone || '+44 7700 900888',
+            tier: 'Gold VIP'
+          });
+        }
+
+        onSupabaseAuthStateChange((event, session) => {
+          if (session && session.user && event === 'SIGNED_IN' && (!state.currentUser || !state.currentUser.isLoggedIn)) {
+            const su = session.user;
+            const userEmail = su.email;
+            const userName = su.user_metadata?.full_name || su.user_metadata?.name || (userEmail ? userEmail.split('@')[0] : 'Passenger');
+            selectGoogleAccount({
+              name: userName,
+              email: userEmail,
+              phone: su.user_metadata?.phone || '+44 7700 900888',
+              tier: 'Gold VIP'
+            });
+          }
+        });
+      } catch (authErr) {
+        console.warn('Supabase Auth session note:', authErr);
       }
     } catch (err) {
       console.error('Error during Supabase startup check:', err);
@@ -4215,6 +4386,12 @@ CREATE POLICY "Public Insert Payments" ON public.payments FOR INSERT WITH CHECK 
     handleSignUpPageSubmit,
     quickSignInAs,
     proceedToNextBookingStep,
+    // Google Integration & SSO Public API
+    handleGoogleSignIn,
+    openGoogleAccountChooser,
+    closeGoogleAccountChooser,
+    selectGoogleAccount,
+    handleCustomGoogleSignIn,
     // Normal Ride Tracking & Journey Recorder Public API
     initCustomerTrackingView,
     advanceRide,

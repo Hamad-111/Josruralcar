@@ -581,3 +581,81 @@ export function subscribeToTripLocationRealtime(tripId, onUpdate) {
     return () => {};
   }
 }
+
+/* ============================================================== */
+/* 8. GOOGLE OAUTH & SUPABASE AUTH INTEGRATION                    */
+/* ============================================================== */
+
+/**
+ * Sign in using Google OAuth via Supabase
+ */
+export async function signInWithGoogleOAuth(redirectPath = '') {
+  try {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
+    const redirectUrl = origin + (redirectPath ? (redirectPath.startsWith('/') ? redirectPath : '/' + redirectPath) : currentPath);
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account'
+        }
+      }
+    });
+
+    if (error) {
+      console.warn('Supabase Google OAuth warning:', error.message);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (err) {
+    console.warn('Supabase Google OAuth exception:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Get active Supabase session
+ */
+export async function getSupabaseAuthSession() {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) return null;
+    return data.session;
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Sign out from Supabase Auth
+ */
+export async function signOutSupabaseAuth() {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.warn('Supabase sign-out error:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * Listen for Supabase Auth state changes
+ */
+export function onSupabaseAuthStateChange(callback) {
+  try {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (callback) callback(event, session);
+    });
+    return subscription;
+  } catch (err) {
+    return null;
+  }
+}
