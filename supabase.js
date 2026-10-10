@@ -587,10 +587,43 @@ export function subscribeToTripLocationRealtime(tripId, onUpdate) {
 /* ============================================================== */
 
 /**
+ * Check if Google OAuth provider is actively enabled in Supabase project dashboard
+ */
+export async function isGoogleOAuthEnabledOnSupabase() {
+  try {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+    const settingsUrl = `${supabaseUrl}/auth/v1/settings`;
+    const res = await fetch(settingsUrl, {
+      method: 'GET',
+      headers: {
+        'apikey': supabaseAnonKey,
+        'Origin': origin
+      }
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return Boolean(data?.external?.google);
+  } catch (err) {
+    console.warn('Could not inspect Supabase auth settings:', err);
+    return false;
+  }
+}
+
+/**
  * Sign in using Google OAuth via Supabase
  */
 export async function signInWithGoogleOAuth(redirectPath = '') {
   try {
+    const isEnabled = await isGoogleOAuthEnabledOnSupabase();
+    if (!isEnabled) {
+      console.warn('Google provider is not enabled in Supabase project dashboard. Fallback to interactive Google sign-in.');
+      return {
+        success: false,
+        providerNotEnabled: true,
+        error: 'Unsupported provider: provider is not enabled'
+      };
+    }
+
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
     const redirectUrl = origin + (redirectPath ? (redirectPath.startsWith('/') ? redirectPath : '/' + redirectPath) : currentPath);

@@ -30,6 +30,7 @@ import {
   insertNotification,
   markNotificationRead,
   fetchUserBookings,
+  isGoogleOAuthEnabledOnSupabase,
   signInWithGoogleOAuth,
   getSupabaseAuthSession,
   signOutSupabaseAuth,
@@ -1706,12 +1707,13 @@ const App = (() => {
         return;
       }
       
-      // 2. If OAuth provider is not configured in Supabase or in offline/local testing,
-      // present our interactive Google Account Chooser
-      openGoogleAccountChooser(context);
+      // 2. If provider is not enabled in Supabase or in offline/local testing,
+      // present our interactive Google Account Chooser with helpful notice
+      const showSetupNotice = Boolean(res && res.providerNotEnabled);
+      openGoogleAccountChooser(context, showSetupNotice);
     } catch (err) {
       console.warn('Google sign-in exception:', err);
-      openGoogleAccountChooser(context);
+      openGoogleAccountChooser(context, true);
     } finally {
       if (btn) {
         btn.disabled = false;
@@ -1720,10 +1722,21 @@ const App = (() => {
     }
   }
 
-  function openGoogleAccountChooser(context = 'booking') {
+  function openGoogleAccountChooser(context = 'booking', showSetupNotice = false) {
     currentGoogleAuthContext = context;
     const modal = document.getElementById('modalGoogleChooser');
+    const notice = document.getElementById('googleSetupNotice');
+    if (notice) {
+      notice.style.display = showSetupNotice ? 'block' : 'none';
+    }
     if (modal) modal.classList.add('show');
+  }
+
+  function toggleGoogleSetupInstructions() {
+    const el = document.getElementById('googleSetupInstructions');
+    if (el) {
+      el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+    }
   }
 
   function closeGoogleAccountChooser() {
@@ -4392,6 +4405,7 @@ CREATE POLICY "Public Insert Payments" ON public.payments FOR INSERT WITH CHECK 
     closeGoogleAccountChooser,
     selectGoogleAccount,
     handleCustomGoogleSignIn,
+    toggleGoogleSetupInstructions,
     // Normal Ride Tracking & Journey Recorder Public API
     initCustomerTrackingView,
     advanceRide,
