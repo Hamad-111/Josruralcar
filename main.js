@@ -1698,9 +1698,13 @@ const App = (() => {
     }
 
     try {
-      // 1. Initiate Supabase Google OAuth
-      const returnPath = isBooking ? '#signin' : (window.location.hash || '#home');
-      const res = await signInWithGoogleOAuth(returnPath);
+      // 1. Store intended destination in sessionStorage for post-redirect arrival
+      try {
+        sessionStorage.setItem('jos_auth_redirect', isBooking ? 'select-vehicle' : 'home');
+      } catch (e) {}
+
+      // 2. Initiate Supabase Google OAuth with clean origin/pathname (no hash fragment)
+      const res = await signInWithGoogleOAuth(window.location.pathname || '/');
       
       // If Supabase returned a valid OAuth URL redirect, browser will navigate
       if (res && res.success && res.data && res.data.url) {
@@ -4323,8 +4327,19 @@ CREATE POLICY "Public Insert Payments" ON public.payments FOR INSERT WITH CHECK 
       }
     });
 
-    // Check initial hash
-    const initialHash = window.location.hash.replace('#', '') || 'home';
+    // Check initial hash (ignoring OAuth access token fragments)
+    let initialHash = window.location.hash.replace('#', '') || 'home';
+    if (initialHash.includes('access_token=') || initialHash.includes('error=')) {
+      const redirectTarget = sessionStorage.getItem('jos_auth_redirect') || 'select-vehicle';
+      sessionStorage.removeItem('jos_auth_redirect');
+      initialHash = redirectTarget;
+      // Clean URL hash so user does not see raw token in address bar
+      setTimeout(() => {
+        if (window.location.hash.includes('access_token=')) {
+          window.history.replaceState(null, null, window.location.pathname + '#' + redirectTarget);
+        }
+      }, 400);
+    }
     navigateTo(initialHash);
 
     // Initialize authenticated user header & badges

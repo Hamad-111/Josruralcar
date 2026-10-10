@@ -626,7 +626,10 @@ export async function signInWithGoogleOAuth(redirectPath = '') {
 
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
-    const redirectUrl = origin + (redirectPath ? (redirectPath.startsWith('/') ? redirectPath : '/' + redirectPath) : currentPath);
+    // OAuth 2.0 RFC 6749 requires redirect_uri to have no fragment '#'
+    const cleanPath = (redirectPath || '').split('#')[0].split('?')[0];
+    const path = cleanPath ? (cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath) : currentPath;
+    const redirectUrl = origin + (path || '/');
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
