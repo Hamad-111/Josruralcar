@@ -3447,24 +3447,31 @@ a {
     gap: 10px;
   }
   .brand-img {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
   }
   .brand-title {
-    font-size: 1.12rem;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
   }
   .brand-sub {
-    font-size: 0.64rem;
+    font-size: 0.60rem;
   }
-  .main-nav, .header-actions .phone-link {
-    display: none;
+  .main-nav, 
+  .header-actions .phone-link,
+  #headerUserBadge,
+  #btnHeaderAuth,
+  #btnHeaderAdminPortal {
+    display: none !important;
   }
   .header-actions {
-    gap: 10px;
+    gap: 8px;
+    align-items: center;
   }
   .supabase-status-pill {
     padding: 4px 8px;
-    font-size: 0.72rem;
+    font-size: 0.70rem;
+    white-space: nowrap;
   }
   .mobile-menu-btn {
     display: flex;
@@ -3636,21 +3643,48 @@ a {
   }
 
   /* Booking Views (Fleet select, Passenger, Payment) */
+  .flow-stepper,
   .booking-progress-header {
-    padding: 12px 14px;
-    margin-bottom: 20px;
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 10px 12px;
+    margin-bottom: 22px;
+    box-sizing: border-box;
   }
-  .step-circle {
-    width: 28px;
-    height: 28px;
-    font-size: 0.8rem;
+  .flow-stepper .step-indicator,
+  .booking-progress-header .step-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
   }
-  .step-text {
-    font-size: 0.8rem;
+  .flow-stepper .step-text,
+  .booking-progress-header .step-text {
+    display: none !important;
   }
-  .step-line {
-    min-width: 12px;
+  .flow-stepper .step-line,
+  .booking-progress-header .step-line {
+    flex: 1;
+    min-width: 14px;
+    height: 2px;
     margin: 0 4px;
+    background: #cbd5e1;
+  }
+  .flow-stepper .step-line.active,
+  .booking-progress-header .step-line.active {
+    background: var(--gradient-gold);
+  }
+  .flow-stepper .step-circle,
+  .booking-progress-header .step-circle {
+    width: 32px;
+    height: 32px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    flex-shrink: 0;
   }
   .booking-layout {
     grid-template-columns: 1fr;
@@ -3878,6 +3912,14 @@ a {
   .emergency-inner .btn {
     width: 100%;
   }
+  .ready-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+  .ready-actions .btn {
+    width: 100%;
+  }
 
   /* Footer & Overlays */
   .footer-grid {
@@ -3936,10 +3978,13 @@ a {
    EXTRA COMPACT SCREENS (<= 540px)
    ========================================================================== */
 
-@media (max-width: 540px) {
+@media (max-width: 640px) {
   #btnBookNowHeader {
-    display: none;
+    display: none !important;
   }
+}
+
+@media (max-width: 540px) {
   .supabase-status-pill {
     padding: 3px 7px;
     font-size: 0.66rem;
@@ -3962,13 +4007,17 @@ a {
   .airports-guarantees-grid {
     grid-template-columns: 1fr;
   }
-  .step-text {
-    font-size: 0.72rem;
-  }
-  .step-circle {
-    width: 26px;
-    height: 26px;
-    font-size: 0.76rem;
+  /* Prevent iOS zoom on form controls */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="date"],
+  input[type="time"],
+  input[type="number"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }
 
@@ -5964,65 +6013,10 @@ input:checked + .switch-slider:before {
 }
 
 @media (max-width: 768px) {
-  /* Floating Side Dock for Mobile */
+  /* Hide Floating Side Docks on Mobile to prevent overlapping interactive forms & action buttons */
   .booking-side-dock,
   .admin-side-dock {
-    top: auto;
-    bottom: max(16px, env(safe-area-inset-bottom, 16px));
-    right: 12px;
-    transform: none;
-    z-index: 10000;
-  }
-
-  .booking-side-dock.active-on-dashboard,
-  .admin-side-dock.active-on-admin {
-    opacity: 0.35;
-    pointer-events: none;
-    transform: scale(0.92);
-    transition: all 0.3s ease;
-  }
-
-  .booking-side-dock-btn,
-  .admin-side-dock-btn {
-    border-radius: var(--radius-full);
-    border: 1px solid rgba(245, 158, 11, 0.75);
-    padding: 8px 14px;
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
-    background: linear-gradient(135deg, #091124 0%, #1e3a8a 100%);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-  }
-
-  .booking-side-dock-btn:active,
-  .admin-side-dock-btn:active {
-    transform: scale(0.96);
-  }
-
-  .booking-dock-text,
-  .admin-dock-text {
-    writing-mode: horizontal-tb;
-    transform: none;
-    margin: 0;
-    font-size: 0.74rem;
-    letter-spacing: 0.06em;
-  }
-
-  .booking-dock-badge,
-  .admin-dock-badge {
-    font-size: 0.6rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-  }
-
-  .booking-dock-pulse,
-  .admin-dock-pulse {
-    position: static;
-    margin-left: 2px;
-    width: 6px;
-    height: 6px;
+    display: none !important;
   }
 
   /* Admin Hero Banner Mobile */
@@ -6242,16 +6236,6 @@ input:checked + .switch-slider:before {
 
 /* Extra-Compact Mobile Screens (<= 440px) */
 @media (max-width: 440px) {
-  .booking-side-dock-btn,
-  .admin-side-dock-btn {
-    padding: 7px 12px;
-    gap: 6px;
-  }
-
-  .booking-dock-text,
-  .admin-dock-text {
-    font-size: 0.7rem;
-  }
 
   .admin-header-actions {
     grid-template-columns: 1fr;
@@ -9545,6 +9529,31 @@ input:checked + .switch-slider:before {
   .route-live-summary-pill {
     margin-left: 0;
     width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .fleet-route-details-bar {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+  .route-meta-item {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 110px;
+  }
+  .route-meta-item:nth-child(3) {
+    flex: 1 1 100%;
+  }
+  .route-quick-chips {
+    gap: 5px;
+  }
+  .route-chip-btn {
+    font-size: 0.74rem;
+    padding: 4px 9px;
+  }
+  .btn-route-swap {
+    font-size: 0.74rem;
+    padding: 5px 10px;
   }
 }
 
