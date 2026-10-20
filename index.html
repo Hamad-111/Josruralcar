@@ -7,7 +7,7 @@
   <meta name="description" content="Reliable, fixed-price premium airport transfers across Berkshire, Oxfordshire, the Cotswolds and all major UK airports. Flight monitoring, executive Mercedes fleet, and professional drivers." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css" />
   <link rel="icon" type="image/png" href="./assets/images/logo.png" />
 </head>
@@ -36,13 +36,13 @@
           <span class="db-dot"></span>
           <span class="db-text">Connecting to DB...</span>
         </span>
-        <button type="button" class="btn btn-outline btn-sm" id="btnHeaderAuth" onclick="App.navigateTo('signin')">Sign In</button>
+        <button type="button" class="btn btn-outline btn-sm" id="btnHeaderAuth" onclick="App.openSignInPage()">Sign In</button>
+        <button type="button" class="btn btn-gold btn-sm d-none" id="btnHeaderAdminPortal" onclick="App.navigateTo('admin')" title="Access Dispatch Control Center">🛡️ Dispatch Center</button>
         <div class="header-user-badge d-none" id="headerUserBadge">
           <button type="button" class="user-badge-btn" onclick="App.openProfileModal()" title="View Passenger Profile">
             <span class="avatar-xs" id="headerAvatar">JD</span>
             <span class="user-name-text" id="headerUserName">Client</span>
           </button>
-          <button type="button" class="btn-signout-mini" onclick="App.handleSignOut()" title="Sign Out">⎋</button>
         </div>
         <a href="tel:+441453888999" class="phone-link" title="Call Us 24/7">
           <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
@@ -66,7 +66,7 @@
       <a href="#select-vehicle" class="mobile-link" data-page="select-vehicle">Fleet &amp; Vehicles</a>
       <a href="#dashboard" class="mobile-link" data-page="dashboard">📅 My Bookings</a>
       <a href="#contact" class="mobile-link" data-page="contact">Contact Us</a>
-      <button type="button" class="mobile-link text-left" id="mobileAuthLink" onclick="App.navigateTo('signin')">👤 Sign In / Register</button>
+      <button type="button" class="mobile-link text-left" id="mobileAuthLink" onclick="App.openSignInPage()">👤 Sign In / Register</button>
       <button class="btn btn-navy full-width" onclick="App.startBookingFlow('select-vehicle')">Book Your Ride</button>
     </div>
   </header>
@@ -1021,109 +1021,239 @@
     </section>
 
     <!-- ============================================== -->
-    <!-- VIEW: CUSTOMER SIGN IN (STEP BEFORE BOOKING)   -->
     <!-- ============================================== -->
-    <section id="viewSignIn" class="app-view">
-      <div class="container view-container">
-        <!-- Booking Flow Stepper Bar -->
-        <div class="flow-stepper">
-          <div class="step-indicator done">
-            <div class="step-circle">✓</div>
-            <span class="step-text">1. Select Vehicle</span>
-          </div>
-          <div class="step-line done"></div>
-          <div class="step-indicator active" id="stepperStepVehicles">
-            <div class="step-circle">2</div>
-            <span class="step-text">2. Customer Sign In</span>
-          </div>
-          <div class="step-line"></div>
-          <div class="step-indicator" style="opacity: 0.7;">
-            <div class="step-circle">3</div>
-            <span class="step-text">3. Passenger Details</span>
-          </div>
-          <div class="step-line"></div>
-          <div class="step-indicator" style="opacity: 0.5;">
-            <div class="step-circle">4</div>
-            <span class="step-text">4. Payment</span>
-          </div>
-        </div>
+    <!-- VIEW: SIMPLE & ATTRACTIVE SIGN IN PAGE         -->
+    <!-- ============================================== -->
+    <section id="viewSignIn" class="app-view signin-view-section">
+      <!-- Ambient Luxury Background Glows -->
+      <div class="signin-bg-decor" aria-hidden="true">
+        <div class="signin-glow-orb signin-glow-top"></div>
+        <div class="signin-glow-orb signin-glow-bottom"></div>
+      </div>
 
-        <!-- Pending Journey Banner -->
-        <div class="signin-journey-banner">
-          <div class="sjb-left">
-            <span class="sjb-badge">📍 Selected Route for Booking</span>
-            <div class="sjb-route">
-              <strong id="signinPickupDisplay">Stroud, Cotswolds, GL5</strong>
-              <span class="sjb-arrow">&rarr;</span>
-              <strong id="signinDropoffDisplay">London Heathrow Airport (LHR)</strong>
-            </div>
-            <div class="sjb-meta">
-              <span id="signinDateDisplay">📅 Sat, 24 Oct 2026</span>
-              <span id="signinTimeDisplay">⏰ 04:30 AM</span>
-              <span id="signinPassDisplay">👥 2 Passengers</span>
-              <span id="signinVehicleDisplay">🚗 Executive Mercedes (£75.00)</span>
-            </div>
-          </div>
-          <button type="button" class="btn btn-outline btn-sm sjb-edit-btn" onclick="App.navigateTo('select-vehicle')">
-            ✏️ Change Vehicle
+      <div class="container signin-container">
+        <!-- Return Navigation Bar -->
+        <div class="signin-top-nav">
+          <button type="button" class="btn-signin-back" onclick="App.navigateTo('home')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <span>Back to Home</span>
           </button>
+          <div class="signin-security-badge">
+            <span class="security-dot"></span>
+            <span>256-Bit SSL Encrypted Portal</span>
+          </div>
         </div>
 
-        <!-- Sign In Layout Grid -->
-        <div class="signin-booking-grid">
-          <!-- Main Authentication Card -->
-          <div class="signin-auth-card">
-            <!-- If already signed in message -->
-            <div id="signinAlreadyLoggedInBanner" class="signin-already-box d-none">
-              <div class="signin-already-header">
-                <span class="avatar-sm" id="signinCurrentAvatar">JD</span>
-                <div>
-                  <h3 style="margin: 0; font-size: 1.05rem; color: var(--color-navy);">Signed In as <span id="signinCurrentName">James Doe</span></h3>
-                  <p class="text-xs text-muted" style="margin: 2px 0 0 0;" id="signinCurrentEmail">james@example.com &bull; Gold VIP</p>
-                </div>
-                <span class="badge-status badge-confirmed" style="margin-left: auto;">Active Session</span>
+        <!-- Optional Booking Flow Context Banner (Shown only during active booking flow) -->
+        <div id="signinBookingContext" class="signin-booking-context-banner" style="display: none;">
+          <div class="flow-stepper compact-stepper" id="signinStepperBar" style="display: none;">
+            <div class="step-indicator done">
+              <div class="step-circle">✓</div>
+              <span class="step-text">1. Vehicle</span>
+            </div>
+            <div class="step-line done"></div>
+            <div class="step-indicator active" id="stepperStepVehicles">
+              <div class="step-circle">2</div>
+              <span class="step-text">2. Sign In</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step-indicator" style="opacity: 0.7;">
+              <div class="step-circle">3</div>
+              <span class="step-text">3. Details</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step-indicator" style="opacity: 0.5;">
+              <div class="step-circle">4</div>
+              <span class="step-text">4. Payment</span>
+            </div>
+          </div>
+
+          <div class="signin-journey-banner" id="signinJourneyBanner" style="display: none;">
+            <div class="sjb-left">
+              <span class="sjb-badge">📍 Transfer in Progress</span>
+              <div class="sjb-route">
+                <strong id="signinPickupDisplay">Stroud, Cotswolds, GL5</strong>
+                <span class="sjb-arrow">&rarr;</span>
+                <strong id="signinDropoffDisplay">London Heathrow Airport (LHR)</strong>
               </div>
-              <p style="font-size: 0.88rem; color: #475569; margin: 16px 0;">
-                Your account is verified and ready. Proceed to the next step to finalize passenger details and payment.
+              <div class="sjb-meta">
+                <span id="signinDateDisplay">📅 Sat, 24 Oct 2026</span>
+                <span id="signinTimeDisplay">⏰ 04:30 AM</span>
+                <span id="signinPassDisplay">👥 2 Passengers</span>
+                <span id="signinVehicleDisplay">🚗 Executive Mercedes (£75.00)</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm sjb-edit-btn" onclick="App.navigateTo('select-vehicle')">
+              ✏️ Change Vehicle
+            </button>
+          </div>
+        </div>
+
+        <!-- Main Auth Card -->
+        <div class="signin-card-wrapper">
+          <div class="signin-card">
+            <!-- Brand Crest & Header -->
+            <div class="signin-brand-header">
+              <div class="signin-brand-logo-ring">
+                <img src="./assets/images/logo.png" alt="Jo's Rural Cars" class="signin-brand-logo" />
+              </div>
+              <div class="signin-brand-titles">
+                <span class="signin-brand-kicker">JO'S RURAL CARS</span>
+                <h1 class="signin-main-heading" id="signinCardTitle">Sign In</h1>
+                <p class="signin-main-sub" id="signinCardSubtitle">Access your bookings, flight tracking, and executive chauffeur transfers.</p>
+              </div>
+            </div>
+
+            <!-- If Already Logged In Session -->
+            <div id="signinAlreadyLoggedInBanner" class="signin-active-session-card d-none">
+              <div class="active-session-header">
+                <div class="avatar-lg" id="signinCurrentAvatar">JD</div>
+                <div class="active-session-info">
+                  <span class="badge-status badge-gold" id="signinCurrentRoleBadge">Active Session</span>
+                  <h2 class="active-session-name" id="signinCurrentName">James Doe</h2>
+                  <p class="active-session-email" id="signinCurrentEmail">james@example.com</p>
+                </div>
+              </div>
+              <p class="active-session-desc" id="signinCurrentDesc">
+                You are currently signed in. Manage your chauffeur transfers, track upcoming flights, or continue booking.
               </p>
-              <div style="display: flex; gap: 12px;">
-                <button type="button" class="btn btn-navy" style="flex: 1;" onclick="App.proceedToNextBookingStep()">
-                  Proceed to Passenger Details &rarr;
+              <div class="active-session-actions">
+                <button type="button" class="btn btn-navy btn-session-action" id="btnSignInProceed" onclick="App.proceedToNextBookingStep()">
+                  📅 View My Bookings &rarr;
                 </button>
-                <button type="button" class="btn btn-outline" onclick="App.handleSignOut()">
-                  Switch Account
+                <button type="button" class="btn btn-gold btn-session-action d-none" id="btnSignInAdminDispatch" onclick="App.navigateTo('admin')">
+                  🛡️ Open Dispatch Control Center &rarr;
+                </button>
+                <button type="button" class="btn btn-outline btn-session-action" onclick="App.navigateTo('home')">
+                  🚗 Book New Transfer
                 </button>
               </div>
             </div>
 
             <!-- Auth Forms Wrapper (shown when logged out) -->
-            <div id="signinFormsWrapper">
-              <div class="signin-auth-header">
-                <h2 class="view-title" style="font-size: 1.5rem; margin-bottom: 4px;">Sign In to Book Your Ride</h2>
-                <p class="view-subtitle" style="font-size: 0.88rem;">
-                  Sign in or create an account to confirm your chauffeur transfer. Your profile details and booking will be synchronized automatically.
-                </p>
-              </div>
-
-              <!-- Auth Mode Tabs -->
-              <div class="auth-tabs" style="border-radius: var(--radius-md) var(--radius-md) 0 0; margin-bottom: 20px;">
-                <button type="button" class="auth-tab-btn active" id="tabSignInPage" onclick="App.switchSignInPageTab('signin')">
-                  Sign In to VIP Account
+            <div id="signinFormsWrapper" class="signin-forms-container">
+              <!-- Segmented Tabs (Sign In / Register) -->
+              <div class="signin-segment-tabs">
+                <button type="button" class="signin-tab-pill active" id="tabSignInPage" onclick="App.switchSignInPageTab('signin')">
+                  Sign In
                 </button>
-                <button type="button" class="auth-tab-btn" id="tabSignUpPage" onclick="App.switchSignInPageTab('signup')">
-                  New Customer? Register
+                <button type="button" class="signin-tab-pill" id="tabSignUpPage" onclick="App.switchSignInPageTab('signup')">
+                  Create Account
                 </button>
               </div>
 
-              <!-- 1-Click Demo Profiles for Rapid Testing -->
-              <div class="signin-quick-demo-row">
-                <span class="text-xs text-muted" style="font-weight: 600;">⚡ 1-Click Fast Sign In:</span>
+              <!-- Google One-Click Auth Button -->
+              <div class="signin-google-container">
+                <button type="button" class="btn-google-auth-premium" id="btnGoogleSignInPage" onclick="App.handleGoogleSignIn('booking')">
+                  <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.35 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.93 6.72-4.93z"/>
+                  </svg>
+                  <span id="googleAuthText">Continue with Google</span>
+                </button>
+              </div>
+
+              <div class="signin-or-divider">
+                <span>or continue with email</span>
+              </div>
+
+              <!-- Form 1: Sign In -->
+              <form id="formSignInPage" class="signin-interactive-form" onsubmit="App.handleSignInPageSubmit(event)">
+                <div class="form-group-floating">
+                  <label for="pageSignInEmail" class="floating-label">Email Address</label>
+                  <div class="input-with-icon">
+                    <svg class="input-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    <input type="email" id="pageSignInEmail" class="form-input-premium" placeholder="name@example.com" required value="james@example.com" autocomplete="email" />
+                  </div>
+                </div>
+
+                <div class="form-group-floating">
+                  <div class="floating-label-row">
+                    <label for="pageSignInPassword" class="floating-label">Password</label>
+                    <a href="javascript:void(0)" onclick="App.openAuthModal('forgot')" class="signin-forgot-link">Forgot password?</a>
+                  </div>
+                  <div class="input-with-icon">
+                    <svg class="input-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <input type="password" id="pageSignInPassword" class="form-input-premium" placeholder="••••••••" required value="password123" autocomplete="current-password" />
+                    <button type="button" class="btn-toggle-password" onclick="App.togglePasswordVisibility('pageSignInPassword', this)" title="Show/hide password" aria-label="Toggle password visibility">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="signin-options-row">
+                  <label class="custom-checkbox-label">
+                    <input type="checkbox" id="pageSignInRemember" checked />
+                    <span class="checkbox-text">Keep me signed in</span>
+                  </label>
+                </div>
+
+                <button type="submit" class="btn btn-navy btn-auth-submit" id="btnPageSignIn">
+                  <span>Sign In to Your Account</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
+              </form>
+
+              <!-- Form 2: Sign Up (Register) -->
+              <form id="formSignUpPage" class="signin-interactive-form d-none" onsubmit="App.handleSignUpPageSubmit(event)">
+                <div class="form-group-floating">
+                  <label for="pageSignUpName" class="floating-label">Full Name</label>
+                  <div class="input-with-icon">
+                    <svg class="input-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <input type="text" id="pageSignUpName" class="form-input-premium" placeholder="e.g. Eleanor Vance" required autocomplete="name" />
+                  </div>
+                </div>
+
+                <div class="form-group-floating">
+                  <label for="pageSignUpEmail" class="floating-label">Email Address</label>
+                  <div class="input-with-icon">
+                    <svg class="input-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    <input type="email" id="pageSignUpEmail" class="form-input-premium" placeholder="eleanor@example.com" required autocomplete="email" />
+                  </div>
+                </div>
+
+                <div class="form-group-floating">
+                  <label for="pageSignUpPhone" class="floating-label">UK Mobile Phone</label>
+                  <div class="input-with-icon">
+                    <svg class="input-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    <input type="tel" id="pageSignUpPhone" class="form-input-premium" placeholder="07700 900555" required autocomplete="tel" />
+                  </div>
+                </div>
+
+                <div class="form-group-floating">
+                  <label for="pageSignUpPassword" class="floating-label">Create Password</label>
+                  <div class="input-with-icon">
+                    <svg class="input-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <input type="password" id="pageSignUpPassword" class="form-input-premium" placeholder="Minimum 6 characters" minlength="6" required autocomplete="new-password" />
+                    <button type="button" class="btn-toggle-password" onclick="App.togglePasswordVisibility('pageSignUpPassword', this)" title="Show/hide password" aria-label="Toggle password visibility">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-navy btn-auth-submit" id="btnPageSignUp">
+                  <span>Create Account</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
+              </form>
+
+              <!-- Quick Demo Access Section -->
+              <div class="signin-quick-demo-wrapper">
+                <div class="quick-demo-header">
+                  <span class="quick-demo-icon">⚡</span>
+                  <span class="quick-demo-title">1-Click Fast Test Accounts:</span>
+                </div>
                 <div class="quick-login-chips">
+                  <button type="button" class="quick-chip-btn quick-chip-admin" onclick="App.quickSignInAs('admin@josruralcars.co.uk')">
+                    🛡️ Admin (Marcus)
+                  </button>
                   <button type="button" class="quick-chip-btn" onclick="App.quickSignInAs('james@example.com')">
-                    👑 James Doe (VIP)
+                    👤 James Doe (Client)
                   </button>
                   <button type="button" class="quick-chip-btn" onclick="App.quickSignInAs('clara@morrison.co.uk')">
-                    💼 Lady Clara (Corporate)
+                    💼 Lady Clara
                   </button>
                   <button type="button" class="quick-chip-btn" onclick="App.quickSignInAs('guest')">
                     ⚡ Instant Guest
@@ -1131,112 +1261,13 @@
                 </div>
               </div>
 
-              <!-- Google Integration Button -->
-              <div class="google-auth-wrapper">
-                <button type="button" class="btn-google-auth" id="btnGoogleSignInPage" onclick="App.handleGoogleSignIn('booking')">
-                  <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.35 24 12 24z"/>
-                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.93 6.72-4.93z"/>
-                  </svg>
-                  <span>Continue with Google</span>
-                </button>
-                <div class="auth-divider">
-                  <span>or continue with email</span>
-                </div>
-              </div>
-
-              <!-- Form: Sign In -->
-              <form id="formSignInPage" onsubmit="App.handleSignInPageSubmit(event)">
-                <div class="form-group" style="margin-bottom: 16px;">
-                  <label for="pageSignInEmail" class="form-label">EMAIL ADDRESS *</label>
-                  <input type="email" id="pageSignInEmail" class="form-control" placeholder="name@example.com" required value="james@example.com" />
-                </div>
-                <div class="form-group" style="margin-bottom: 16px;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <label for="pageSignInPassword" class="form-label" style="margin: 0;">PASSWORD *</label>
-                    <a href="javascript:void(0)" onclick="App.openAuthModal('forgot')" class="text-xs" style="color: var(--color-primary); text-decoration: none;">Forgot password?</a>
-                  </div>
-                  <input type="password" id="pageSignInPassword" class="form-control" placeholder="••••••••" required value="password123" />
-                </div>
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-                  <label style="display: flex; align-items: center; gap: 8px; font-size: 0.84rem; color: #475569; cursor: pointer;">
-                    <input type="checkbox" id="pageSignInRemember" checked /> Remember my session
-                  </label>
-                </div>
-                <button type="submit" class="btn btn-navy full-width" id="btnPageSignIn" style="padding: 14px; font-size: 1rem;">
-                  Sign In &amp; Continue to Vehicle Selection &rarr;
-                </button>
-              </form>
-
-              <!-- Form: Sign Up (Register) -->
-              <form id="formSignUpPage" class="d-none" onsubmit="App.handleSignUpPageSubmit(event)">
-                <div class="form-group" style="margin-bottom: 14px;">
-                  <label for="pageSignUpName" class="form-label">FULL NAME *</label>
-                  <input type="text" id="pageSignUpName" class="form-control" placeholder="e.g. Eleanor Vance" required />
-                </div>
-                <div class="form-row-2" style="margin-bottom: 14px;">
-                  <div class="form-group">
-                    <label for="pageSignUpEmail" class="form-label">EMAIL ADDRESS *</label>
-                    <input type="email" id="pageSignUpEmail" class="form-control" placeholder="eleanor@example.com" required />
-                  </div>
-                  <div class="form-group">
-                    <label for="pageSignUpPhone" class="form-label">UK CONTACT MOBILE *</label>
-                    <input type="tel" id="pageSignUpPhone" class="form-control" placeholder="07700 900555" required />
-                  </div>
-                </div>
-                <div class="form-group" style="margin-bottom: 20px;">
-                  <label for="pageSignUpPassword" class="form-label">CREATE PASSWORD *</label>
-                  <input type="password" id="pageSignUpPassword" class="form-control" placeholder="Min. 8 characters" minlength="6" required />
-                </div>
-                <button type="submit" class="btn btn-navy full-width" id="btnPageSignUp" style="padding: 14px; font-size: 1rem;">
-                  Create VIP Account &amp; Unlock Next Step &rarr;
-                </button>
-              </form>
-            </div>
-          </div>
-
-          <!-- Right Column: Booking Guarantee & VIP Perks -->
-          <div class="signin-perks-col">
-            <div class="signin-perks-card">
-              <h3 class="perks-card-title">Why Jo's Rural Cars?</h3>
-              <p class="text-xs text-muted" style="margin-bottom: 16px;">Direct booking protection &amp; VIP private hire standards across Gloucestershire, Cotswolds, and London airports.</p>
-              
-              <div class="perk-item">
-                <span class="perk-icon">🛡️</span>
-                <div>
-                  <strong>Guaranteed Chauffeur Hold</strong>
-                  <p class="text-xs text-muted">Your booking is locked in our dispatch center with a vetted driver and Mercedes vehicle.</p>
-                </div>
-              </div>
-
-              <div class="perk-item">
-                <span class="perk-icon">✈️</span>
-                <div>
-                  <strong>Real-Time Flight Radar Monitoring</strong>
-                  <p class="text-xs text-muted">We track your flight arrival live. Automatic complimentary 60-minute wait time post-touchdown.</p>
-                </div>
-              </div>
-
-              <div class="perk-item">
-                <span class="perk-icon">📱</span>
-                <div>
-                  <strong>Driver SMS &amp; WhatsApp Notifications</strong>
-                  <p class="text-xs text-muted">Receive driver photo badge, direct mobile number, and vehicle registration 2 hours before pickup.</p>
-                </div>
-              </div>
-
-              <div class="perk-item">
-                <span class="perk-icon">🧾</span>
-                <div>
-                  <strong>Instant VAT Receipts &amp; Travel History</strong>
-                  <p class="text-xs text-muted">Access, download, and re-book previous transfers directly from your VIP passenger dashboard.</p>
-                </div>
-              </div>
-
-              <div class="perk-footer-note">
-                <span>🔒 256-bit Encrypted SSL &bull; Licensed Private Hire Operator</span>
+              <!-- Trust / Security Footer Note -->
+              <div class="signin-security-footer">
+                <span>🔒 256-Bit SSL Encrypted</span>
+                <span class="security-sep">•</span>
+                <span>🛡️ Licensed UK Operator</span>
+                <span class="security-sep">•</span>
+                <span>✈️ 24/7 Airport Support</span>
               </div>
             </div>
           </div>
@@ -1283,6 +1314,155 @@
               <span class="badge-count" id="vehicleCountBadge">4 Vehicles Available</span>
             </div>
 
+            <!-- STEP 1: PASSENGER SETS PICKUP & DROP-OFF LOCATIONS -->
+            <div class="fleet-route-card" id="fleetRouteBox">
+              <!-- Route Header -->
+              <div class="fleet-route-header">
+                <div class="fleet-header-left">
+                  <div class="fleet-step-tag">
+                    <span class="step-num-pill">STEP 1</span>
+                    <h2 class="step-tag-title">Enter Journey Route</h2>
+                  </div>
+                  <p class="fleet-step-desc">Enter your pickup and destination to calculate fixed chauffeur rates &amp; dispatch to nearby drivers.</p>
+                </div>
+                <div class="fleet-live-pulse-badge">
+                  <span class="status-dot-pulse"></span>
+                  <span>Chauffeurs Ready in Gloucestershire &amp; Cotswolds</span>
+                </div>
+              </div>
+
+              <!-- Main Connected Route Container -->
+              <div class="fleet-connected-route-container">
+                <!-- Visual Route Track -->
+                <div class="route-track-indicator" aria-hidden="true">
+                  <span class="route-pin-dot pickup-pin" title="Pickup Location"></span>
+                  <div class="route-track-line"></div>
+                  <span class="route-pin-dot dropoff-pin" title="Drop-off Destination"></span>
+                </div>
+
+                <!-- Input Fields Column -->
+                <div class="route-inputs-stack">
+                  <!-- Row 1: Pickup Location -->
+                  <div class="route-input-group" id="pickupInputGroup">
+                    <label for="fleetPickupInput" class="route-input-label">
+                      <span class="label-primary">Pickup Location</span>
+                      <span class="label-hint">UK address, hotel, or postcode</span>
+                    </label>
+                    <div class="route-field-wrapper">
+                      <span class="route-field-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 12 8 12s8-6.6 8-12a8 8 0 0 0-8-8z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                      </span>
+                      <input type="text" id="fleetPickupInput" class="form-control fleet-modern-input" placeholder="Where should the chauffeur pick you up? (e.g. Stroud, GL5)" value="Stroud, Cotswolds, GL5" autocomplete="off" oninput="App.onFleetRouteInputChanged()" onfocus="App.openRouteSuggestions('pickup')" required />
+                      <button type="button" class="btn-input-clear" id="btnFleetClearPickup" onclick="App.clearFleetInput('fleetPickupInput')" title="Clear pickup location">&times;</button>
+                      <!-- Autocomplete Dropdown for Pickup -->
+                      <div class="route-suggestions-dropdown" id="fleetPickupSuggestions" style="display: none;">
+                        <div class="suggestions-header">Popular Pickups in Cotswolds &amp; Nearby</div>
+                        <div class="suggestions-list" id="fleetPickupSuggestionsList">
+                          <!-- Populated dynamically by JS -->
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Quick Pickup Suggestions Chips -->
+                    <div class="route-quick-chips">
+                      <span class="quick-chip-label">Popular Pickups:</span>
+                      <button type="button" class="route-chip-btn" onclick="App.setFleetPickupLocation('Stroud, Cotswolds, GL5')">📍 Stroud</button>
+                      <button type="button" class="route-chip-btn" onclick="App.setFleetPickupLocation('Cirencester, Cotswolds, GL7')">📍 Cirencester</button>
+                      <button type="button" class="route-chip-btn" onclick="App.setFleetPickupLocation('Cheltenham Spa, GL50')">📍 Cheltenham</button>
+                      <button type="button" class="route-chip-btn" onclick="App.setFleetPickupLocation('Oxford City Centre, OX1')">📍 Oxford</button>
+                      <button type="button" class="route-chip-btn" onclick="App.setFleetPickupLocation('Tetbury & Highgrove, GL8')">📍 Tetbury</button>
+                      <button type="button" class="route-chip-btn" onclick="App.setFleetPickupLocation('Bath City Centre, BA1')">📍 Bath</button>
+                    </div>
+                  </div>
+
+                  <!-- Inline Route Swap Divider -->
+                  <div class="route-swap-divider">
+                    <div class="divider-line"></div>
+                    <button type="button" class="btn-route-swap" id="btnFleetSwapRoute" onclick="App.swapFleetRouteLocations()" title="Swap Pickup and Drop-off locations">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"/></svg>
+                      <span class="swap-text">Swap Pickup &amp; Destination</span>
+                    </button>
+                    <div class="divider-line"></div>
+                  </div>
+
+                  <!-- Row 2: Drop-off Location -->
+                  <div class="route-input-group" id="dropoffInputGroup">
+                    <label for="fleetDropoffInput" class="route-input-label">
+                      <span class="label-primary">Drop-off Destination</span>
+                      <span class="label-hint">Airport terminal, hotel, or city</span>
+                    </label>
+                    <div class="route-field-wrapper">
+                      <span class="route-field-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 19 21 12 17 5 21 12 2"></polygon></svg>
+                      </span>
+                      <input type="text" id="fleetDropoffInput" class="form-control fleet-modern-input" placeholder="Where are you heading? (e.g. London Heathrow T5, Gatwick, etc.)" value="London Heathrow Terminal 5" autocomplete="off" oninput="App.onFleetRouteInputChanged()" onfocus="App.openRouteSuggestions('dropoff')" required />
+                      <button type="button" class="btn-input-clear" id="btnFleetClearDropoff" onclick="App.clearFleetInput('fleetDropoffInput')" title="Clear destination">&times;</button>
+                      <!-- Autocomplete Dropdown for Drop-off -->
+                      <div class="route-suggestions-dropdown" id="fleetDropoffSuggestions" style="display: none;">
+                        <div class="suggestions-header">Major UK Airports &amp; Key Cities</div>
+                        <div class="suggestions-list" id="fleetDropoffSuggestionsList">
+                          <!-- Populated dynamically by JS -->
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Quick Airport Chips -->
+                    <div class="route-quick-chips">
+                      <span class="quick-chip-label">Quick Airports:</span>
+                      <button type="button" class="route-chip-btn chip-airport" onclick="App.setFleetDropoffAirport('London Heathrow Terminal 5 (LHR)')">✈️ Heathrow T5</button>
+                      <button type="button" class="route-chip-btn chip-airport" onclick="App.setFleetDropoffAirport('London Heathrow Terminal 2 & 3 (LHR)')">✈️ Heathrow T2/3</button>
+                      <button type="button" class="route-chip-btn chip-airport" onclick="App.setFleetDropoffAirport('London Gatwick South Terminal (LGW)')">✈️ Gatwick</button>
+                      <button type="button" class="route-chip-btn chip-airport" onclick="App.setFleetDropoffAirport('Birmingham Airport (BHX)')">✈️ Birmingham</button>
+                      <button type="button" class="route-chip-btn chip-airport" onclick="App.setFleetDropoffAirport('London Luton Airport (LTN)')">✈️ Luton</button>
+                      <button type="button" class="route-chip-btn chip-airport" onclick="App.setFleetDropoffAirport('London Stansted Airport (STN)')">✈️ Stansted</button>
+                      <button type="button" class="route-chip-btn chip-airport" onclick="App.setFleetDropoffAirport('Bristol Airport (BRS)')">✈️ Bristol</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Route Meta Controls & Live Estimate Strip -->
+              <div class="fleet-route-details-bar">
+                <div class="route-meta-item">
+                  <label for="fleetDateInput" class="meta-label">📅 Date</label>
+                  <input type="date" id="fleetDateInput" class="form-control form-control-sm meta-input" onchange="App.onFleetRouteInputChanged()" />
+                </div>
+                <div class="route-meta-item">
+                  <label for="fleetTimeInput" class="meta-label">⏰ Pickup Time</label>
+                  <input type="time" id="fleetTimeInput" class="form-control form-control-sm meta-input" value="04:30" onchange="App.onFleetRouteInputChanged()" />
+                </div>
+                <div class="route-meta-item">
+                  <label for="fleetPassengersInput" class="meta-label">👥 Passengers</label>
+                  <select id="fleetPassengersInput" class="form-control form-control-sm meta-input" onchange="App.onFleetRouteInputChanged()">
+                    <option value="1 Passenger">1 Passenger</option>
+                    <option value="2 Passengers" selected>2 Passengers</option>
+                    <option value="3 Passengers">3 Passengers</option>
+                    <option value="4 Passengers">4 Passengers</option>
+                    <option value="5-8 Passengers">5-8 Passengers (MPV)</option>
+                  </select>
+                </div>
+                <!-- Dynamic Route Distance & Drive Time Pill -->
+                <div class="route-live-summary-pill" id="fleetRouteEstimateBox">
+                  <div class="summary-pill-icon">🛣️</div>
+                  <div class="summary-pill-text">
+                    <strong id="fleetRouteEstText">Route: Stroud &rarr; Heathrow T5 (92 mi &bull; ~1h 45m)</strong>
+                    <span class="summary-pill-sub" id="fleetRouteSubText">Fixed rate chauffeur quote &bull; Instant driver dispatch</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 2: SELECT VEHICLE & DISPATCH TO DRIVERS -->
+            <div class="fleet-step2-header">
+              <div class="step2-badge-row">
+                <span class="step-num-pill step2-pill">STEP 2</span>
+                <h2 class="step2-title">Select Vehicle &amp; Dispatch to Nearby Chauffeurs</h2>
+              </div>
+              <p class="step2-desc">
+                Choose your vehicle class below. Nearby verified chauffeurs will receive an instant notification with your route details. Once accepted, you will move forward to passenger details with your confirmed driver.
+              </p>
+            </div>
+
             <div class="vehicle-select-list">
               <!-- Vehicle 1: Sedan -->
               <div class="vehicle-card-row" id="cardSedan" onclick="App.selectVehicle('sedan')">
@@ -1304,7 +1484,10 @@
                     <span>❄️ AC</span>
                     <span>⏱️ 15m Free Wait</span>
                   </div>
-                  <button class="btn btn-navy vcard-action-btn" onclick="App.confirmVehicleSelection('sedan', event)">Choose Sedan</button>
+                  <button type="button" class="btn btn-navy vcard-action-btn" onclick="App.requestFleetChauffeur('sedan', event)">
+                    <span>Choose Sedan &amp; Notify Driver</span>
+                    <span class="btn-arrow">&rarr;</span>
+                  </button>
                 </div>
               </div>
 
@@ -1319,18 +1502,21 @@
                     <h3 class="vcard-name">Executive</h3>
                     <div class="vcard-price-block">
                       <span class="vcard-price-label">FROM</span>
-                      <span class="vcard-price-value">£75</span>
+                      <span class="vcard-price-value" id="cardExecutivePrice">£75</span>
                     </div>
                   </div>
-                  <p class="vcard-tagline">First-class travel experience with extra legroom.</p>
+                  <p class="vcard-tagline">First-class travel experience with extra legroom &amp; onboard WiFi.</p>
                   <div class="vcard-specs">
                     <span>👤 3 Max</span>
                     <span>🧳 2 Large</span>
                     <span>✈️ Flight Monitoring</span>
-                    <span>👋 Meet & Greet</span>
+                    <span>👋 Meet &amp; Greet</span>
                     <span>📶 Free WiFi</span>
                   </div>
-                  <button class="btn btn-primary vcard-action-btn" onclick="App.confirmVehicleSelection('executive', event)">Choose Executive</button>
+                  <button type="button" class="btn btn-primary vcard-action-btn" onclick="App.requestFleetChauffeur('executive', event)">
+                    <span>Choose Executive &amp; Notify Driver</span>
+                    <span class="btn-arrow">&rarr;</span>
+                  </button>
                 </div>
               </div>
 
@@ -1344,7 +1530,7 @@
                     <h3 class="vcard-name">Estate</h3>
                     <div class="vcard-price-block">
                       <span class="vcard-price-label">FROM</span>
-                      <span class="vcard-price-value">£55</span>
+                      <span class="vcard-price-value" id="cardEstatePrice">£55</span>
                     </div>
                   </div>
                   <p class="vcard-tagline">Perfect for families with extra luggage requirements.</p>
@@ -1354,7 +1540,10 @@
                     <span>👶 Child Seat Avail.</span>
                     <span>❄️ Dual Climate</span>
                   </div>
-                  <button class="btn btn-navy vcard-action-btn" onclick="App.confirmVehicleSelection('estate', event)">Choose Estate</button>
+                  <button type="button" class="btn btn-navy vcard-action-btn" onclick="App.requestFleetChauffeur('estate', event)">
+                    <span>Choose Estate &amp; Notify Driver</span>
+                    <span class="btn-arrow">&rarr;</span>
+                  </button>
                 </div>
               </div>
 
@@ -1368,7 +1557,7 @@
                     <h3 class="vcard-name">Luxury MPV</h3>
                     <div class="vcard-price-block">
                       <span class="vcard-price-label">FROM</span>
-                      <span class="vcard-price-value">£95</span>
+                      <span class="vcard-price-value" id="cardMpvPrice">£95</span>
                     </div>
                   </div>
                   <p class="vcard-tagline">Spacious group travel without compromising on style.</p>
@@ -1378,9 +1567,25 @@
                     <span>🛋️ Captain Chairs</span>
                     <span>⚡ USB Chargers</span>
                   </div>
-                  <button class="btn btn-navy vcard-action-btn" onclick="App.confirmVehicleSelection('mpv', event)">Choose Luxury MPV</button>
+                  <button type="button" class="btn btn-navy vcard-action-btn" onclick="App.requestFleetChauffeur('mpv', event)">
+                    <span>Choose MPV &amp; Notify Driver</span>
+                    <span class="btn-arrow">&rarr;</span>
+                  </button>
                 </div>
               </div>
+            </div>
+
+            <!-- Prominent Fleet Dispatch Action Card -->
+            <div class="fleet-dispatch-action-card">
+              <div class="fda-info">
+                <div class="fda-badge">⚡ INSTANT DISPATCH BROADCAST</div>
+                <h4>Ready to dispatch your route to Gloucestershire chauffeurs?</h4>
+                <p>Route: <strong id="fdaRouteSummary">Stroud, Cotswolds, GL5 &rarr; London Heathrow Terminal 5</strong></p>
+              </div>
+              <button type="button" class="btn btn-gold btn-xl font-bold fda-btn" id="btnFleetDispatchSelected" onclick="App.requestFleetChauffeur()">
+                <span>📲 Notify Fleet Drivers &amp; Request Ride</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="btn-arrow" style="width:20px; height:20px;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </button>
             </div>
           </div>
 
@@ -1515,6 +1720,27 @@
               <p class="view-subtitle">Please provide passenger information for booking confirmation and driver coordination.</p>
             </div>
 
+            <!-- ALLOCATED CHAUFFEUR CONFIRMATION BANNER -->
+            <div class="allocated-chauffeur-banner" id="passAllocatedDriverBanner">
+              <div class="acb-icon-ring">
+                <span class="acb-emoji">👔</span>
+              </div>
+              <div class="acb-content">
+                <div class="acb-header-row">
+                  <span class="acb-badge-accepted">✓ CHAUFFEUR ACCEPTED &amp; ALLOCATED</span>
+                  <span class="acb-rating" id="passAllocatedRating">★ 4.98 (520+ Transfers)</span>
+                </div>
+                <div class="acb-driver-title">
+                  Chauffeur: <strong id="passAllocatedDriverName">Dave M.</strong>
+                  &bull; <span id="passAllocatedVehicle">Executive Mercedes-Benz E-Class</span>
+                  &bull; Reg: <strong id="passAllocatedReg">YS24 OKL</strong>
+                </div>
+                <div class="acb-driver-status">
+                  <span>📍 Accepted notification &bull; On standby for your journey</span>
+                </div>
+              </div>
+            </div>
+
             <form id="passengerDetailsForm" onsubmit="App.handlePassengerSubmit(event)">
               <!-- Contact Information Group -->
               <div class="form-card-box">
@@ -1618,6 +1844,18 @@
                   <strong id="passVehicleName">Executive Class</strong>
                   <span>Mercedes-Benz E-Class or similar</span>
                   <div class="mini-car-specs">👤 3 &nbsp;•&nbsp; 🧳 2</div>
+                </div>
+              </div>
+
+              <!-- Allocated Driver Strip in Sidebar -->
+              <div class="sidebar-driver-strip" id="sidebarDriverStrip">
+                <div class="sds-label">ALLOCATED CHAUFFEUR</div>
+                <div class="sds-row">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="sds-icon">👔</span>
+                    <strong class="sds-name" id="sidebarDriverName">Dave M.</strong>
+                  </div>
+                  <span class="badge-status badge-completed sds-badge">Accepted ✓</span>
                 </div>
               </div>
 
@@ -1963,6 +2201,11 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
               <span>Help Center</span>
             </button>
+            <div class="dash-nav-divider"></div>
+            <button type="button" class="dash-nav-item dash-nav-logout" id="btnClientSidebarLogout" onclick="App.handleSignOut()" title="Log out of passenger account">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              <span>Log Out</span>
+            </button>
           </nav>
 
           <!-- Rural Support Box -->
@@ -1991,7 +2234,7 @@
           <div id="dashAuthGate" class="dash-auth-gate-card d-none">
             <div class="dash-auth-gate-inner">
               <span class="auth-gate-badge">
-                <span class="status-pulse-dot gold"></span> VIP PASSENGER PORTAL
+                <span class="status-pulse-dot gold"></span> PASSENGER PORTAL
               </span>
               <h2 class="auth-gate-title">Sign In to Access Your Dashboard</h2>
               <p class="auth-gate-desc">
@@ -2123,8 +2366,8 @@
             <div class="dash-stat-box">
               <span class="stat-icon-wrap">👑</span>
               <div class="stat-details">
-                <span class="stat-value text-gold" id="dashStatTier">VIP</span>
-                <span class="stat-name">LEVEL</span>
+                <span class="stat-value text-gold" id="dashStatTier">Active</span>
+                <span class="stat-name">STATUS</span>
               </div>
             </div>
 
@@ -2253,36 +2496,43 @@
     <!-- ============================================== -->
     <!-- VIEW: NORMAL RIDE TRACKING & JOURNEY RECORDER  -->
     <!-- ============================================== -->
+    <!-- ============================================== -->
+    <!-- VIEW: NORMAL RIDE TRACKING & JOURNEY RECORDER  -->
+    <!-- ============================================== -->
     <section id="viewTracking" class="app-view">
       <div class="tracking-view-wrap">
         
-        <!-- Header Banner -->
+        <!-- Clean, High-Contrast Header Bar -->
         <div class="tracking-header-bar">
           <div class="container">
             <div class="tracking-header-flex">
               <div class="tracking-title-wrap">
-                <button type="button" class="btn btn-outline-white btn-sm" onclick="App.navigateTo('dashboard')">
+                <button type="button" class="btn btn-outline-navy btn-sm" onclick="App.navigateTo('dashboard')">
                   &larr; Back to Dashboard
                 </button>
-                <div>
-                  <div style="display:flex; align-items:center; gap:10px;">
+                <div class="tracking-title-content">
+                  <div class="tracking-status-row">
                     <span class="live-status-pill" id="trackStatusPill">
                       <span class="status-pulse-dot green"></span> Booking Confirmed
                     </span>
-                    <span class="badge-status badge-confirmed" id="trackTripRefDisplay">#JR-8821</span>
+                    <span class="badge-status badge-confirmed" id="trackTripRefDisplay">#JR-2757</span>
+                    <span class="tracking-live-gps-tag">
+                      <span class="gps-pulse-beacon"></span> Live GPS Active
+                    </span>
                   </div>
-                  <h1 style="margin-top:4px;">Chauffeur Journey &amp; Ride Tracking</h1>
+                  <h1 class="tracking-main-heading">Chauffeur Journey &amp; Ride Tracking</h1>
                 </div>
               </div>
 
               <div class="tracking-header-actions">
-                <div id="trackLastUpdatedTime" class="map-glass-badge">
-                  <span>⏱️ Journey Elapsed: <strong id="trackSpeedDisplay" style="color:#38bdf8;">00:00</strong></span>
+                <div id="trackLastUpdatedTime" class="tracking-elapsed-pill">
+                  <span class="elapsed-icon">⏱️</span>
+                  <span>Trip Elapsed: <strong id="trackSpeedDisplay">00:00</strong></span>
                 </div>
-                <button type="button" class="btn btn-outline-white btn-sm" onclick="App.copyTrackingLink()" title="Copy tracking link">
+                <button type="button" class="btn btn-outline-navy btn-sm" onclick="App.copyTrackingLink()" title="Copy tracking link">
                   🔗 Share Tracking
                 </button>
-                <button type="button" class="btn btn-gold btn-sm" id="btnTrackManage" onclick="App.showManageTripModal()">
+                <button type="button" class="btn btn-navy btn-sm" id="btnTrackManage" onclick="App.showManageTripModal()">
                   Manage Booking
                 </button>
               </div>
@@ -2294,19 +2544,138 @@
           <!-- Main Tracking Grid -->
           <div class="tracking-normal-grid">
             
-            <!-- Left Column: Confirmed Journey Card, Stepper, Controls & Drop-off -->
+            <!-- Left Column: Live Map, Confirmed Journey Card, Stepper, Controls & Drop-off -->
             <div class="tracking-main-card">
-              
-              <!-- 1. Confirmed Route Overview Card -->
+
+              <!-- NEW & PROMINENT: LIVE DYNAMIC GPS LOCATION TRACKING MAP -->
+              <div class="live-map-card" id="liveJourneyMapCard">
+                <div class="map-card-header">
+                  <div class="map-card-title-group">
+                    <div class="map-badge-live">
+                      <span class="radar-dot"></span> LIVE GPS TELEMETRY
+                    </div>
+                    <h3 class="map-title">Real-Time Chauffeur &amp; Passenger Tracking</h3>
+                  </div>
+                  <div class="map-actions-group">
+                    <button type="button" class="btn-map-sim" id="btnAutoSimulateTrip" onclick="App.toggleTripSimulation()">
+                      <span id="simBtnIcon">▶️</span> <span id="simBtnText">Auto-Simulate Live Drive</span>
+                    </button>
+                    <button type="button" class="btn-map-center" onclick="App.recenterTrackingMap()" title="Recenter on Chauffeur">
+                      🎯 Recenter
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Interactive SVG / Vector Road Tracking Canvas -->
+                <div class="map-canvas-container" id="trackingMapContainer">
+                  <!-- Vector Map Background: Roads, County Borders, Landmarks -->
+                  <svg class="map-svg-viewport" viewBox="0 0 800 360" id="trackingSvgMap" preserveAspectRatio="xMidYMid meet">
+                    <!-- Map Gradients & Filters -->
+                    <defs>
+                      <linearGradient id="roadGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#10b981" />
+                        <stop offset="40%" stop-color="#3b82f6" />
+                        <stop offset="100%" stop-color="#f59e0b" />
+                      </linearGradient>
+                      <filter id="glowGreen" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#10b981" flood-opacity="0.6"/>
+                      </filter>
+                      <filter id="glowCar" x="-30%" y="-30%" width="160%" height="160%">
+                        <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#1e3a8a" flood-opacity="0.4"/>
+                      </filter>
+                    </defs>
+
+                    <!-- Land & Region Patches -->
+                    <rect width="800" height="360" fill="#fbf8f1" rx="14" />
+                    <!-- River Thames & Green Spaces -->
+                    <path d="M-10,240 Q160,200 320,220 T600,180 T810,190" fill="none" stroke="#e0f2fe" stroke-width="18" stroke-linecap="round" opacity="0.8"/>
+                    <path d="M-10,240 Q160,200 320,220 T600,180 T810,190" fill="none" stroke="#bae6fd" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+
+                    <!-- Secondary Highway Network (A40, M5, A419, M25 Ring) -->
+                    <path d="M 60,30 L 160,110 L 220,290" fill="none" stroke="#ebdcc3" stroke-width="7" stroke-linecap="round"/>
+                    <path d="M 220,130 L 400,110 L 680,140" fill="none" stroke="#ebdcc3" stroke-width="7" stroke-linecap="round"/>
+                    <path d="M 680,60 Q 750,180 680,310" fill="none" stroke="#ebdcc3" stroke-width="8" stroke-linecap="round"/>
+
+                    <!-- Primary Tracked Route Path (From Driver Depot -> Passenger Pickup -> Motorway -> Airport) -->
+                    <path id="routeDottedTrack" d="M 80,180 Q 140,140 240,150 T 480,210 Q 620,220 720,160" fill="none" stroke="#cbd5e1" stroke-width="8" stroke-linecap="round" />
+                    <path id="routePathLine" d="M 80,180 Q 140,140 240,150 T 480,210 Q 620,220 720,160" fill="none" stroke="url(#roadGradient)" stroke-width="5" stroke-linecap="round" stroke-dasharray="8 4" class="anim-route-dash" />
+
+                    <!-- Map Labels & Geographic Waypoints -->
+                    <text x="80" y="212" fill="#64748b" font-size="11" font-weight="700" text-anchor="middle">Chauffeur Depot</text>
+                    <text x="240" y="115" fill="#065f46" font-size="12" font-weight="800" text-anchor="middle" id="svgPickupLabel">📍 Pickup: Stroud / Cirencester</text>
+                    <text x="480" y="245" fill="#1e40af" font-size="11" font-weight="700" text-anchor="middle">M4 / M25 Corridor</text>
+                    <text x="720" y="125" fill="#991b1b" font-size="12" font-weight="800" text-anchor="middle" id="svgDropoffLabel">🏁 Airport: Gatwick / Heathrow</text>
+
+                    <!-- Stop 1: Chauffeur Depot Origin Pin -->
+                    <circle cx="80" cy="180" r="7" fill="#64748b" stroke="#ffffff" stroke-width="2.5" />
+
+                    <!-- Stop 2: Passenger Location Beacon (Pickup) -->
+                    <g id="svgPassengerMarkerGroup" transform="translate(240, 150)">
+                      <circle cx="0" cy="0" r="22" fill="#10b981" opacity="0.25" class="passenger-radar-wave" />
+                      <circle cx="0" cy="0" r="14" fill="#10b981" opacity="0.4" />
+                      <circle cx="0" cy="0" r="8" fill="#10b981" stroke="#ffffff" stroke-width="3" filter="url(#glowGreen)" />
+                    </g>
+
+                    <!-- Stop 3: Airport Destination Marker -->
+                    <g id="svgDestinationMarkerGroup" transform="translate(720, 160)">
+                      <circle cx="0" cy="0" r="18" fill="#ef4444" opacity="0.2" class="passenger-radar-wave" />
+                      <circle cx="0" cy="0" r="9" fill="#ef4444" stroke="#ffffff" stroke-width="3" />
+                    </g>
+
+                    <!-- Live Animated Chauffeur Car Marker -->
+                    <g id="svgCarMarkerGroup" transform="translate(80, 180)">
+                      <!-- Car Radar Pulse -->
+                      <circle cx="0" cy="0" r="18" fill="#deb13b" opacity="0.25" class="passenger-radar-wave" />
+                      <!-- Car Bubble -->
+                      <rect x="-18" y="-14" width="36" height="28" rx="8" fill="#0f172a" stroke="#deb13b" stroke-width="2" filter="url(#glowCar)"/>
+                      <text x="0" y="4" font-size="15" text-anchor="middle" dominant-baseline="central">🚘</text>
+                      <!-- Live Driver Tooltip Tag -->
+                      <g transform="translate(0, -22)">
+                        <rect x="-60" y="-12" width="120" height="20" rx="6" fill="#0b132b" stroke="#deb13b" stroke-width="1.2"/>
+                        <text x="0" y="2" fill="#ffffff" font-size="9.5" font-weight="700" text-anchor="middle" dominant-baseline="central" id="svgCarDriverTag">Dave M. (Mercedes E-Class)</text>
+                      </g>
+                    </g>
+                  </svg>
+
+                  <!-- Live Float Overlay: Telemetry Strip on Map -->
+                  <div class="map-telemetry-overlay">
+                    <div class="telem-item passenger-telem">
+                      <span class="telem-icon">👤</span>
+                      <div class="telem-text">
+                        <span class="telem-lbl">Passenger Location (Pickup)</span>
+                        <strong id="liveMapPassengerLocation">Cirencester, Cotswolds, GL7</strong>
+                      </div>
+                    </div>
+                    <div class="telem-divider"></div>
+                    <div class="telem-item driver-telem">
+                      <span class="telem-icon">🚘</span>
+                      <div class="telem-text">
+                        <span class="telem-lbl">Chauffeur GPS Telemetry</span>
+                        <strong id="liveMapDriverLocation">Dave M. • Standby (15 mins away)</strong>
+                      </div>
+                    </div>
+                    <div class="telem-divider"></div>
+                    <div class="telem-item eta-telem">
+                      <span class="telem-icon">⚡</span>
+                      <div class="telem-text">
+                        <span class="telem-lbl">Live Driving Speed / Status</span>
+                        <strong id="liveMapSpeedStatus">Standby • GPS Signal Active</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 1. Confirmed Route Overview Card (Clean, High-Contrast White) -->
               <div class="confirmed-route-card">
                 <div class="route-header-flex">
                   <div>
                     <span class="label-accent">CONFIRMED ITINERARY</span>
-                    <h2 class="confirmed-route-title" id="trackRouteTitle">Stroud, Cotswolds &rarr; London Heathrow Terminal 5</h2>
+                    <h2 class="confirmed-route-title" id="trackRouteTitle">Cirencester, Cotswolds, GL7 &rarr; London Gatwick South Terminal (LGW)</h2>
                   </div>
                   <div class="confirmed-fare-box">
-                    <span class="fare-label">Fixed Fare</span>
-                    <span class="fare-val" id="trackFareDisplay">£75.00</span>
+                    <span class="fare-label">Guaranteed Fixed Fare</span>
+                    <span class="fare-val" id="trackFareDisplay">£45.00</span>
                   </div>
                 </div>
 
@@ -2314,9 +2683,9 @@
                   <div class="confirmed-stop pickup">
                     <div class="stop-icon-circle">📍</div>
                     <div class="stop-content">
-                      <span class="stop-badge">PICKUP CONFIRMED</span>
-                      <h4 id="trackPickupAddress">Stroud, Cotswolds, GL5</h4>
-                      <p class="stop-sub" id="trackPickupMeta">Pickup Scheduled: Today at 04:30 AM</p>
+                      <span class="stop-badge">PICKUP LOCATION</span>
+                      <h4 id="trackPickupAddress">Cirencester, Cotswolds, GL7</h4>
+                      <p class="stop-sub" id="trackPickupMeta">Pickup Scheduled: Today at 04:30 AM • Meet &amp; Greet Included</p>
                     </div>
                   </div>
 
@@ -2327,27 +2696,27 @@
                   <div class="confirmed-stop dropoff">
                     <div class="stop-icon-circle">🏁</div>
                     <div class="stop-content">
-                      <span class="stop-badge">DROP-OFF CONFIRMED</span>
-                      <h4 id="trackDropoffAddress">London Heathrow Terminal 5</h4>
-                      <p class="stop-sub" id="trackDropoffMeta">Estimated Drop-off: ~06:15 AM &bull; Flights Monitored</p>
+                      <span class="stop-badge">DESTINATION DROP-OFF</span>
+                      <h4 id="trackDropoffAddress">London Gatwick South Terminal (LGW)</h4>
+                      <p class="stop-sub" id="trackDropoffMeta">Estimated Drop-off: ~06:40 AM &bull; Flights Telemetry Monitored</p>
                     </div>
                   </div>
                 </div>
 
                 <div class="route-quick-badges">
-                  <span class="rq-badge">🛣️ Remaining: <strong id="trackDistRemaining">~88 Miles</strong> (<span id="trackEtaRemaining">~ETA 06:15 AM</span>)</span>
-                  <span class="rq-badge">✈️ Terminal 5 Drop-Off</span>
+                  <span class="rq-badge">🛣️ Remaining: <strong id="trackDistRemaining">~88 Miles</strong> (<span id="trackEtaRemaining">~ETA 06:40 AM</span>)</span>
+                  <span class="rq-badge">✈️ Terminal Drop-Off Guaranteed</span>
                   <span class="rq-badge">💼 2 Bags &bull; 2 Passengers</span>
-                  <span class="rq-badge">🛡️ Fixed Price Guaranteed</span>
+                  <span class="rq-badge">🛡️ Fixed Price (No Surge)</span>
                 </div>
               </div>
 
-              <!-- 2. Normal 5-Stage Visual Progress Stepper -->
+              <!-- 2. Normal 5-Stage Visual Progress Stepper (Clean, Light & Clear) -->
               <div class="journey-stepper-card">
                 <div class="stepper-card-header">
                   <div>
-                    <h3 class="stepper-title">Journey Stage &amp; Status</h3>
-                    <p class="text-xs text-muted">The ongoing ride is recorded live from pickup confirmation until passenger drop-off.</p>
+                    <h3 class="stepper-title">Journey Stage &amp; Progress</h3>
+                    <p class="text-xs text-muted">Tracking your chauffeur live from initial dispatch until drop-off completion.</p>
                   </div>
                   <span class="stepper-stage-tag" id="trackCurrentStageTag">Stage 1 of 5: Confirmed</span>
                 </div>
@@ -2387,7 +2756,7 @@
                   <div class="normal-step" id="stepNode4">
                     <div class="step-num">🛣️</div>
                     <div class="step-info">
-                      <strong>In Progress</strong>
+                      <strong>In Transit</strong>
                       <span id="stepTime4">Pending</span>
                     </div>
                   </div>
@@ -2408,8 +2777,8 @@
               <div class="ride-action-controls-card">
                 <div class="controls-card-header">
                   <div>
-                    <h4 class="controls-title">Chauffeur &amp; Journey Dispatch Controls</h4>
-                    <p class="text-xs text-muted">Update journey milestones in real time. The ongoing ride is recorded until drop-off.</p>
+                    <h4 class="controls-title">Quick Journey Milestone Simulation</h4>
+                    <p class="text-xs text-muted">Click any milestone below to update the live journey stage and view chauffeur tracking on the map.</p>
                   </div>
                 </div>
 
@@ -2417,32 +2786,32 @@
                   <button type="button" class="btn-stage-action" id="btnStageEnRoute" onclick="App.advanceRide('en_route')">
                     <span class="btn-stage-icon">🚗</span>
                     <div class="btn-stage-text">
-                      <strong>Chauffeur En Route</strong>
-                      <small>Heading to pickup location</small>
+                      <strong>1. Chauffeur En Route</strong>
+                      <small>Heading to passenger pickup</small>
                     </div>
                   </button>
 
                   <button type="button" class="btn-stage-action" id="btnStageArrived" onclick="App.advanceRide('arrived')">
                     <span class="btn-stage-icon">📍</span>
                     <div class="btn-stage-text">
-                      <strong>Arrived at Pickup</strong>
-                      <small>Waiting for passenger</small>
+                      <strong>2. Arrived at Pickup</strong>
+                      <small>Chauffeur waiting outside</small>
                     </div>
                   </button>
 
                   <button type="button" class="btn-stage-action" id="btnStageInProgress" onclick="App.advanceRide('in_progress')">
                     <span class="btn-stage-icon">🛣️</span>
                     <div class="btn-stage-text">
-                      <strong>Start Journey (Picked Up)</strong>
-                      <small>En route to drop-off</small>
+                      <strong>3. Start Highway Trip</strong>
+                      <small>Passenger aboard, en route to airport</small>
                     </div>
                   </button>
 
                   <button type="button" class="btn-stage-action btn-stage-dropoff" id="btnStageDropoff" onclick="App.advanceRide('dropped_off')">
                     <span class="btn-stage-icon">🏁</span>
                     <div class="btn-stage-text">
-                      <strong>Complete Drop-off</strong>
-                      <small>Passenger safely dropped off</small>
+                      <strong>4. Complete Drop-off</strong>
+                      <small>Safely arrived at terminal</small>
                     </div>
                   </button>
                 </div>
@@ -2454,17 +2823,17 @@
                   <div class="complete-icon">🎉</div>
                   <div>
                     <h3 class="complete-title">Journey Completed &amp; Dropped Off!</h3>
-                    <p class="complete-sub" id="dropoffCompleteSummary">Passenger safely dropped off at London Heathrow Terminal 5. Total trip duration: 1h 14m.</p>
+                    <p class="complete-sub" id="dropoffCompleteSummary">Passenger safely dropped off at destination. Total trip duration: 1h 14m.</p>
                   </div>
                 </div>
                 <div class="complete-actions">
                   <button type="button" class="btn btn-gold" onclick="App.openReceiptForActiveTrip()">
                     📄 View Official Receipt
                   </button>
-                  <button type="button" class="btn btn-outline-white" onclick="App.navigateTo('dashboard')">
+                  <button type="button" class="btn btn-navy" onclick="App.navigateTo('dashboard')">
                     Back to Bookings
                   </button>
-                  <button type="button" class="btn btn-navy" onclick="App.navigateTo('select-vehicle')">
+                  <button type="button" class="btn btn-primary" onclick="App.navigateTo('select-vehicle')">
                     Book Return Transfer
                   </button>
                 </div>
@@ -2475,8 +2844,8 @@
             <!-- Right Column: Chauffeur Details, Flight Radar, Recording Log & Track Lookup -->
             <aside class="tracking-sidebar">
               
-              <!-- Chauffeur Profile Card -->
-              <div class="track-card-glass">
+              <!-- Chauffeur Profile Card (Clean Light Luxury Card) -->
+              <div class="track-card-glass chauffeur-card">
                 <div class="chauffeur-header-row">
                   <div class="chauffeur-avatar-badge">
                     <span id="trackDriverAvatar">👔</span>
@@ -2493,7 +2862,7 @@
                   <a href="tel:+441453888999" class="btn btn-navy btn-sm" id="trackDriverPhoneLink">
                     📞 Call Chauffeur
                   </a>
-                  <a href="https://wa.me/441453888999" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+                  <a href="https://wa.me/441453888999" target="_blank" rel="noopener noreferrer" class="btn btn-outline-navy btn-sm">
                     💬 WhatsApp
                   </a>
                 </div>
@@ -2501,7 +2870,7 @@
 
               <!-- Ongoing Ride Recording Log -->
               <div class="track-card-glass">
-                <h4 class="card-subtitle-gold">JOURNEY RECORDING LOG</h4>
+                <h4 class="card-subtitle-navy">JOURNEY RECORDING LOG</h4>
                 <div class="recording-timeline-list" id="trackTimelineList">
                   <!-- Populated via JS -->
                 </div>
@@ -2509,11 +2878,11 @@
 
               <!-- Flight & Airport Assurance -->
               <div class="track-card-glass">
-                <h4 class="card-subtitle-gold">FLIGHT MONITORING &amp; ASSURANCE</h4>
+                <h4 class="card-subtitle-navy">FLIGHT MONITORING &amp; ASSURANCE</h4>
                 <div class="flight-monitor-box">
                   <div class="f-row">
                     <span>Flight Monitored:</span>
-                    <strong id="trackFlightCard">BA184</strong>
+                    <strong id="trackFlightCard">BA123</strong>
                   </div>
                   <div class="f-row">
                     <span>Flight Status:</span>
@@ -2528,22 +2897,22 @@
 
               <!-- Quick Track Any Other Booking Form -->
               <div class="track-card-glass">
-                <h4 class="card-subtitle-gold">TRACK ANOTHER TRANSFER</h4>
-                <p class="text-xs text-muted mb-3">Confirm pickup &amp; drop-off or enter a booking reference to record and track another ongoing journey.</p>
+                <h4 class="card-subtitle-navy">TRACK ANOTHER TRANSFER</h4>
+                <p class="text-xs text-muted mb-3">Enter pickup &amp; drop-off or a booking reference to record and track another ongoing journey.</p>
                 <form id="formQuickTrack" onsubmit="App.handleConfirmRouteTrack(event)">
                   <div class="form-group mb-2">
                     <label class="form-label-sm">Pickup Location</label>
-                    <input type="text" class="form-input-sm" id="trkInputPickup" placeholder="e.g. Stroud, Cotswolds, GL5" required />
+                    <input type="text" class="form-control form-control-sm" id="trkInputPickup" placeholder="e.g. Stroud, Cotswolds, GL5" required />
                   </div>
                   <div class="form-group mb-2">
                     <label class="form-label-sm">Drop-Off Destination</label>
-                    <input type="text" class="form-input-sm" id="trkInputDropoff" placeholder="e.g. London Heathrow Terminal 5" required />
+                    <input type="text" class="form-control form-control-sm" id="trkInputDropoff" placeholder="e.g. London Heathrow Terminal 5" required />
                   </div>
                   <div class="form-group mb-3">
                     <label class="form-label-sm">Booking Ref (Optional)</label>
-                    <input type="text" class="form-input-sm" id="trkInputRef" placeholder="e.g. #JR-8821" />
+                    <input type="text" class="form-control form-control-sm" id="trkInputRef" placeholder="e.g. #JR-2757" />
                   </div>
-                  <button type="submit" class="btn btn-gold btn-block btn-sm">
+                  <button type="submit" class="btn btn-navy btn-block btn-sm">
                     Confirm &amp; Track Ongoing Ride
                   </button>
                 </form>
@@ -2574,6 +2943,27 @@
                 <span class="badge-status badge-completed" id="driverConnectionStatusBadge">🟢 Dispatch Synchronized</span>
                 <button type="button" class="btn btn-outline-white btn-sm" onclick="App.navigateTo('track')">
                   View Customer Tracker
+                </button>
+              </div>
+            </div>
+
+            <!-- Incoming Unaccepted Ride Dispatch Notification Banner for Driver -->
+            <div class="driver-incoming-dispatch-box" id="driverIncomingDispatchBox" style="display: none;">
+              <div class="did-left">
+                <div class="did-badge">
+                  <span class="status-dot-pulse"></span>
+                  URGENT DISPATCH &bull; AWAITING ACCEPTANCE
+                </div>
+                <h3 class="did-title" id="didTripRoute">Stroud, Cotswolds &rarr; London Heathrow T5</h3>
+                <div class="did-meta">
+                  <span id="didVehicleClass">🚗 Executive Mercedes</span>
+                  <span id="didFareAmount">💷 Fare: £75.00</span>
+                  <span id="didPassengerName">👤 Passenger: Client</span>
+                </div>
+              </div>
+              <div class="did-right">
+                <button type="button" class="btn btn-gold btn-lg did-accept-btn" onclick="App.acceptDriverDispatch('Dave M.')">
+                  ✓ Accept Notification &amp; Claim Journey
                 </button>
               </div>
             </div>
@@ -2833,457 +3223,661 @@
     <!-- ============================================== -->
     <!-- VIEW 7: ADMIN & DISPATCH CONTROL CENTER -->
     <!-- ============================================== -->
-    <section id="viewAdmin" class="app-view">
-      <div class="admin-view-wrap">
-        <!-- Admin Command Bar Hero -->
-        <div class="admin-hero-banner">
-          <div class="container">
-            <div class="admin-header-flex">
-              <div>
-                <span class="admin-title-badge">
-                  <span class="status-dot-pulse"></span>
-                  OPERATIONS DESK &bull; 24/7 DISPATCH
-                </span>
-                <h1 class="admin-title">Dispatch Control Center</h1>
-                <p class="admin-subtitle">Live bookings oversight, chauffeur assignment, fleet vehicle management &amp; pricing control.</p>
-              </div>
-
-              <div class="admin-header-actions">
-                <button type="button" class="btn btn-outline-white btn-sm d-none" onclick="App.syncAdminWithSupabase()" style="display:none;">
-                  <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                  <span>Sync Supabase</span>
-                </button>
-                <button type="button" class="btn btn-outline-white btn-sm" onclick="App.openAddUserModal()">
-                  <span>👥 + Add User</span>
-                </button>
-                <button type="button" class="btn btn-outline-white btn-sm" onclick="App.openAddDriverModal()">
-                  <span>👔 + Add Driver</span>
-                </button>
-                <button type="button" class="btn btn-outline-white btn-sm" onclick="App.openAddVehicleModal()">
-                  <span>🚗 + Add Car</span>
-                </button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="App.openManualBookingModal()">
-                  <span>➕ New Dispatch</span>
-                </button>
-              </div>
+    <section id="viewAdmin" class="app-view adm-portal-view">
+      <div class="adm-layout">
+        <!-- 1. LEFT SIDEBAR -->
+        <aside class="adm-sidebar" id="admSidebar">
+          <!-- Brand Header -->
+          <div class="adm-brand">
+            <div class="adm-brand-logo">
+              <img src="./assets/images/logo.png" alt="Jos Rural Cars Logo" class="adm-brand-img" onerror="this.style.display='none'; document.getElementById('admFallbackLogo').style.display='flex';" />
+              <div id="admFallbackLogo" class="adm-fallback-logo" style="display:none; font-size:1.2rem;">🚗</div>
             </div>
-
-            <!-- Admin Sub-navigation Tabs -->
-            <div class="admin-tabs-nav" id="adminTabsNav">
-              <button type="button" class="admin-tab-btn active" data-admin-tab="bookings" onclick="App.switchAdminTab('bookings', this)">
-                <span>📋 Live Bookings</span>
-                <span class="badge-status badge-confirmed" id="adminBadgeBookingsCount">0</span>
-              </button>
-              <button type="button" class="admin-tab-btn" data-admin-tab="users" onclick="App.switchAdminTab('users', this)">
-                <span>👥 Customers &amp; Users</span>
-                <span class="badge-status badge-confirmed" id="adminBadgeUsersCount">4</span>
-              </button>
-              <button type="button" class="admin-tab-btn" data-admin-tab="drivers" onclick="App.switchAdminTab('drivers', this)">
-                <span>👔 Chauffeurs</span>
-                <span class="badge-status badge-completed" id="adminBadgeDriversCount">4</span>
-              </button>
-              <button type="button" class="admin-tab-btn" data-admin-tab="cars" onclick="App.switchAdminTab('cars', this)">
-                <span>🚗 Cars &amp; Fleet</span>
-                <span class="badge-status badge-completed" id="adminBadgeCarsCount">4</span>
-              </button>
-              <button type="button" class="admin-tab-btn" data-admin-tab="system" onclick="App.switchAdminTab('system', this)">
-                <span>⚙️ System Rates &amp; Settings</span>
-              </button>
-              <button type="button" class="admin-tab-btn d-none" data-admin-tab="live-map" onclick="App.switchAdminTab('live-map', this)" style="display:none;">
-                <span>🚗 Ongoing Rides &amp; Dispatch</span>
-                <span class="badge-status badge-confirmed" id="adminActiveDriversCountBadge">0</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="container">
-          <!-- 5 KPI Stat Boxes -->
-          <div class="admin-stats-grid">
-            <div class="admin-stat-card">
-              <div class="admin-stat-icon blue">✈️</div>
-              <div>
-                <div class="admin-stat-val" id="adminKpiTotalBookings">0</div>
-                <div class="admin-stat-label">TOTAL BOOKINGS</div>
-                <div class="admin-stat-trend" id="adminKpiRevenue">£0.00 Revenue</div>
-              </div>
-            </div>
-
-            <div class="admin-stat-card">
-              <div class="admin-stat-icon gold">👥</div>
-              <div>
-                <div class="admin-stat-val" id="adminKpiTotalUsers">4</div>
-                <div class="admin-stat-label">CLIENT ACCOUNTS</div>
-                <div class="admin-stat-trend" id="adminKpiVipUsers">2 VIP Tiers Active</div>
-              </div>
-            </div>
-
-            <div class="admin-stat-card">
-              <div class="admin-stat-icon green">🚗</div>
-              <div>
-                <div class="admin-stat-val" id="adminKpiActiveCars">4</div>
-                <div class="admin-stat-label">FLEET VEHICLES</div>
-                <div class="admin-stat-trend">100% In Service</div>
-              </div>
-            </div>
-
-            <div class="admin-stat-card">
-              <div class="admin-stat-icon gold">👔</div>
-              <div>
-                <div class="admin-stat-val" id="adminKpiActiveDrivers">3 / 4</div>
-                <div class="admin-stat-label">CHAUFFEURS ON DUTY</div>
-                <div class="admin-stat-trend">Ready for Dispatch</div>
-              </div>
-            </div>
-
-            <div class="admin-stat-card">
-              <div class="admin-stat-icon purple">🛰️</div>
-              <div>
-                <div class="admin-stat-val" id="adminKpiPending">0</div>
-                <div class="admin-stat-label">PENDING TRIPS</div>
-                <div class="admin-stat-trend" id="adminKpiDbStatus">Operations Active</div>
-              </div>
-            </div>
-
-            <div class="admin-stat-card">
-              <div class="admin-stat-icon green">🏁</div>
-              <div>
-                <div class="admin-stat-val" id="adminKpiCompletedToday">0</div>
-                <div class="admin-stat-label">DAILY COMPLETED</div>
-                <div class="admin-stat-trend" id="adminKpiCompletedRev">£0.00 Completed</div>
-              </div>
+            <div class="adm-brand-text">
+              <span class="adm-brand-title">JOS RURAL CARS</span>
+              <span class="adm-brand-subtitle">DISPATCH COMMAND V2.6</span>
             </div>
           </div>
 
-          <!-- TAB PANE 1: LIVE BOOKINGS & DISPATCH -->
-          <div class="admin-tab-pane active" id="adminPaneBookings">
-            <div class="admin-card">
-              <div class="admin-card-header">
+          <!-- Navigation Menu -->
+          <nav class="adm-nav" id="admSidebarNav">
+            <!-- Group 1: COMMAND & DISPATCH -->
+            <div class="adm-nav-group">
+              <div class="adm-nav-group-label">COMMAND &amp; DISPATCH</div>
+              <button type="button" class="adm-nav-item active" data-admin-tab="overview" onclick="App.switchAdminTab('overview', this)">
+                <span class="adm-nav-icon">📊</span>
+                <span class="adm-nav-text">Overview</span>
+              </button>
+              <button type="button" class="adm-nav-item" data-admin-tab="bookings" onclick="App.switchAdminTab('bookings', this)">
+                <span class="adm-nav-icon">📋</span>
+                <span class="adm-nav-text">All Bookings</span>
+                <span class="adm-badge" id="admNavBookingsBadge">0</span>
+              </button>
+              <button type="button" class="adm-nav-item" data-admin-tab="payments" onclick="App.switchAdminTab('payments', this)">
+                <span class="adm-nav-icon">💳</span>
+                <span class="adm-nav-text">Payments &amp; Billing</span>
+                <span class="adm-badge" id="admNavPaymentsBadge">0</span>
+              </button>
+            </div>
+
+            <!-- Group 2: OPERATIONS & FLEET -->
+            <div class="adm-nav-group">
+              <div class="adm-nav-group-label">OPERATIONS &amp; FLEET</div>
+              <button type="button" class="adm-nav-item" data-admin-tab="users" onclick="App.switchAdminTab('users', this)">
+                <span class="adm-nav-icon">👥</span>
+                <span class="adm-nav-text">Client Directory</span>
+              </button>
+              <button type="button" class="adm-nav-item" data-admin-tab="fleet" onclick="App.switchAdminTab('fleet', this)">
+                <span class="adm-nav-icon">🚗</span>
+                <span class="adm-nav-text">Fleet &amp; Chauffeurs</span>
+              </button>
+              <button type="button" class="adm-nav-item" data-admin-tab="system" onclick="App.switchAdminTab('system', this)">
+                <span class="adm-nav-icon">⚙️</span>
+                <span class="adm-nav-text">System &amp; Radar</span>
+              </button>
+            </div>
+          </nav>
+
+          <!-- Bottom Profile Footer -->
+          <div class="adm-sidebar-footer">
+            <div class="adm-profile-info">
+              <div class="adm-avatar" id="admSidebarAvatar">MV</div>
+              <div class="adm-profile-text">
+                <span class="adm-profile-name" id="admSidebarName">Marcus Vance</span>
+                <span class="adm-profile-role" id="admSidebarRole">Super Dispatcher</span>
+              </div>
+            </div>
+            <div class="adm-footer-actions">
+              <button type="button" class="adm-logout-btn" id="btnAdminSidebarLogout" onclick="App.handleSignOut()" title="Log out of Admin Portal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span>Log Out</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- 2. MAIN WORKSPACE -->
+        <div class="adm-main-wrap">
+          <!-- Dark Top Bar -->
+          <header class="adm-topbar">
+            <div class="adm-topbar-left">
+              <button type="button" class="adm-mobile-toggle" onclick="App.toggleAdminSidebar()" aria-label="Toggle Navigation">
+                ☰
+              </button>
+              <span class="adm-status-pill">
+                <span class="adm-status-dot"></span>
+                UK FLIGHT RADAR SYNCHRONIZED &bull; 24/7 ACTIVE
+              </span>
+              <span class="adm-status-pill" id="admTopSupabaseStatus">
+                <span class="adm-status-dot"></span>
+                SUPABASE CLOUD ACTIVE
+              </span>
+            </div>
+
+            <div class="adm-topbar-center">
+              <div class="adm-search-box">
+                <span class="adm-search-icon">🔍</span>
+                <input type="text" id="admGlobalSearch" class="adm-search-input" placeholder="Search reference, client, driver, route, flight #..." oninput="App.searchAdminGlobally(this.value)" />
+              </div>
+            </div>
+
+            <div class="adm-topbar-right">
+              <button type="button" class="adm-btn-white" onclick="App.openManualBookingModal()">
+                + New Booking
+              </button>
+              <button type="button" class="adm-btn-circle" onclick="App.toggleRadarMode()" title="UK Radar Synchronizer" id="admRadarBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px; height:18px;"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 1 10 10"></path><line x1="12" y1="12" x2="19" y2="5"></line></svg>
+              </button>
+              <button type="button" class="adm-btn-link" onclick="App.navigateTo('home')">
+                View Site &nearr;
+              </button>
+            </div>
+          </header>
+
+          <!-- Light Canvas Area -->
+          <main class="adm-canvas" id="admCanvas">
+            <!-- PANE 1: EXECUTIVE COMMAND OVERVIEW (Exact match to screenshot) -->
+            <div class="adm-pane active" id="adminPaneOverview">
+              <div class="adm-header-row">
                 <div>
-                  <h3 class="admin-card-title">
-                    <span>📋 Real-time Bookings &amp; Chauffeur Dispatch</span>
-                  </h3>
-                  <p class="text-xs text-muted">Update journey statuses, assign executive cars &amp; drivers, or dispatch new transfers directly.</p>
+                  <h1 class="adm-page-title">EXECUTIVE COMMAND OVERVIEW</h1>
+                  <p class="adm-page-subtitle">Real-time telemetry, confirmed revenues, driver assignments, and active transfers.</p>
                 </div>
-
-                <div class="admin-search-wrap">
-                  <div class="booking-status-tabs" id="adminBookingFilterTabs">
-                    <button type="button" class="bstatus-tab active" data-status="all" onclick="App.filterAdminBookings('all', this)">All</button>
-                    <button type="button" class="bstatus-tab" data-status="confirmed" onclick="App.filterAdminBookings('confirmed', this)">Confirmed</button>
-                    <button type="button" class="bstatus-tab" data-status="en route" onclick="App.filterAdminBookings('en route', this)">En Route</button>
-                    <button type="button" class="bstatus-tab" data-status="completed" onclick="App.filterAdminBookings('completed', this)">Completed</button>
-                    <button type="button" class="bstatus-tab" data-status="cancelled" onclick="App.filterAdminBookings('cancelled', this)">Cancelled</button>
-                  </div>
-                  <input type="text" id="adminBookingSearch" class="form-control form-control-sm" placeholder="🔍 Search by Ref, passenger, route..." oninput="App.searchAdminBookings(this.value)" style="min-width: 240px;" />
-                </div>
-              </div>
-
-              <!-- Bookings Dispatch Table -->
-              <div class="admin-table-wrap">
-                <table class="admin-table" id="adminBookingsTable">
-                  <thead>
-                    <tr>
-                      <th>Ref #</th>
-                      <th>Passenger</th>
-                      <th>Pickup &bull; Drop-off</th>
-                      <th>Schedule</th>
-                      <th>Vehicle Class</th>
-                      <th>Assigned Chauffeur</th>
-                      <th>Fare</th>
-                      <th>Status Control</th>
-                      <th class="text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="adminBookingsTableBody">
-                    <!-- Populated dynamically via JS -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB PANE: REGISTERED CUSTOMERS & USERS -->
-          <div class="admin-tab-pane" id="adminPaneUsers">
-            <div class="admin-card">
-              <div class="admin-card-header">
-                <div>
-                  <h3 class="admin-card-title">
-                    <span>👥 Passenger Accounts &amp; Customer Relationship Desk</span>
-                  </h3>
-                  <p class="text-xs text-muted">Complete control over passenger accounts, VIP tiers, credit statuses, booking history, and direct dispatch.</p>
-                </div>
-
-                <div class="admin-search-wrap">
-                  <div class="booking-status-tabs" id="adminUserFilterTabs">
-                    <button type="button" class="bstatus-tab active" data-user-filter="all" onclick="App.filterAdminUsers('all', this)">All Customers</button>
-                    <button type="button" class="bstatus-tab" data-user-filter="Active" onclick="App.filterAdminUsers('Active', this)">Active</button>
-                    <button type="button" class="bstatus-tab" data-user-filter="Gold VIP" onclick="App.filterAdminUsers('Gold VIP', this)">Gold VIP</button>
-                    <button type="button" class="bstatus-tab" data-user-filter="Corporate" onclick="App.filterAdminUsers('Corporate', this)">Corporate</button>
-                    <button type="button" class="bstatus-tab" data-user-filter="Suspended" onclick="App.filterAdminUsers('Suspended', this)">Suspended</button>
-                  </div>
-                  <input type="text" id="adminUserSearch" class="form-control form-control-sm" placeholder="🔍 Search name, phone, email, tier..." oninput="App.searchAdminUsers(this.value)" style="min-width: 220px;" />
-                  <button type="button" class="btn btn-navy btn-sm" onclick="App.openAddUserModal()">+ Add Customer</button>
-                </div>
-              </div>
-
-              <!-- Users Table Wrap -->
-              <div class="admin-table-wrap">
-                <table class="admin-table" id="adminUsersTable">
-                  <thead>
-                    <tr>
-                      <th>Passenger / Client</th>
-                      <th>Contact Details</th>
-                      <th>Tier Level</th>
-                      <th>Account Status</th>
-                      <th>Total Rides</th>
-                      <th>Total Spend</th>
-                      <th>Service Notes / Preferences</th>
-                      <th class="text-right">Admin Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="adminUsersTableBody">
-                    <!-- Populated dynamically via JS -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB PANE 3: CARS & FLEET MANAGEMENT -->
-          <div class="admin-tab-pane" id="adminPaneCars">
-            <div class="admin-card">
-              <div class="admin-card-header">
-                <div>
-                  <h3 class="admin-card-title">
-                    <span>🚗 Fleet Vehicles Management</span>
-                  </h3>
-                  <p class="text-xs text-muted">Register, edit, and assign vehicles across executive saloons, estates, and MPVs.</p>
-                </div>
-
-                <div class="admin-search-wrap">
-                  <div class="booking-status-tabs" id="adminCarFilterTabs">
-                    <button type="button" class="bstatus-tab active" data-car-cat="all" onclick="App.filterAdminCars('all', this)">All Fleet</button>
-                    <button type="button" class="bstatus-tab" data-car-cat="Sedan" onclick="App.filterAdminCars('Sedan', this)">Sedans</button>
-                    <button type="button" class="bstatus-tab" data-car-cat="Executive" onclick="App.filterAdminCars('Executive', this)">Executive</button>
-                    <button type="button" class="bstatus-tab" data-car-cat="Estate" onclick="App.filterAdminCars('Estate', this)">Estates</button>
-                    <button type="button" class="bstatus-tab" data-car-cat="MPV" onclick="App.filterAdminCars('MPV', this)">MPVs</button>
-                  </div>
-                  <button type="button" class="btn btn-navy btn-sm" onclick="App.openAddVehicleModal()">+ Add New Car</button>
-                </div>
-              </div>
-
-              <!-- Cars Grid -->
-              <div class="admin-cars-grid" id="adminCarsGrid">
-                <!-- Populated dynamically via JS -->
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB PANE 3: CHAUFFEUR DRIVERS MANAGEMENT -->
-          <div class="admin-tab-pane" id="adminPaneDrivers">
-            <div class="admin-card">
-              <div class="admin-card-header">
-                <div>
-                  <h3 class="admin-card-title">
-                    <span>👔 Chauffeur Drivers &amp; Licensing</span>
-                  </h3>
-                  <p class="text-xs text-muted">Manage vetted executive chauffeurs, duty statuses, contact numbers, and vehicle pairings.</p>
-                </div>
-
-                <div class="admin-search-wrap">
-                  <div class="booking-status-tabs" id="adminDriverFilterTabs">
-                    <button type="button" class="bstatus-tab active" data-driver-status="all" onclick="App.filterAdminDrivers('all', this)">All Drivers</button>
-                    <button type="button" class="bstatus-tab" data-driver-status="On Duty" onclick="App.filterAdminDrivers('On Duty', this)">On Duty</button>
-                    <button type="button" class="bstatus-tab" data-driver-status="On Trip" onclick="App.filterAdminDrivers('On Trip', this)">On Trip</button>
-                    <button type="button" class="bstatus-tab" data-driver-status="Off Duty" onclick="App.filterAdminDrivers('Off Duty', this)">Off Duty</button>
-                  </div>
-                  <button type="button" class="btn btn-navy btn-sm" onclick="App.openAddDriverModal()">+ Add New Driver</button>
-                </div>
-              </div>
-
-              <!-- Drivers Grid -->
-              <div class="admin-drivers-grid" id="adminDriversGrid">
-                <!-- Populated dynamically via JS -->
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB PANE 4: SYSTEM RATES & DISPATCH CONTROLS -->
-          <div class="admin-tab-pane" id="adminPaneSystem">
-            <div class="admin-control-grid">
-              <!-- Airport Rates Card -->
-              <div class="admin-card">
-                <h3 class="admin-card-title" style="margin-bottom: 14px;">
-                  <span>💷 Fixed Airport Transfer Base Rates</span>
-                </h3>
-                <p class="text-xs text-muted" style="margin-bottom: 20px;">Adjust fixed pricing rates for all major UK terminals. Fares update instantly on customer quotes.</p>
-
-                <div class="rate-input-group">
-                  <div>
-                    <strong>London Heathrow (LHR) Terminals 2-5</strong>
-                    <span class="text-xs text-muted" style="display:block;">Includes drop-off &amp; flight tracking</span>
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 6px;">
-                    <span>&pound;</span>
-                    <input type="number" id="sysRateHeathrow" class="rate-input-control" value="45" min="20" step="5" title="London Heathrow Base Fare" placeholder="45" aria-label="London Heathrow Base Fare" />
-                  </div>
-                </div>
-
-                <div class="rate-input-group">
-                  <div>
-                    <strong>London Gatwick (LGW) North &amp; South</strong>
-                    <span class="text-xs text-muted" style="display:block;">Includes terminal fee &amp; 60m wait</span>
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 6px;">
-                    <span>&pound;</span>
-                    <input type="number" id="sysRateGatwick" class="rate-input-control" value="65" min="20" step="5" title="London Gatwick Base Fare" placeholder="65" aria-label="London Gatwick Base Fare" />
-                  </div>
-                </div>
-
-                <div class="rate-input-group">
-                  <div>
-                    <strong>London Luton (LTN) International</strong>
-                    <span class="text-xs text-muted" style="display:block;">Includes express drop-off charge</span>
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 6px;">
-                    <span>&pound;</span>
-                    <input type="number" id="sysRateLuton" class="rate-input-control" value="55" min="20" step="5" title="London Luton Base Fare" placeholder="55" aria-label="London Luton Base Fare" />
-                  </div>
-                </div>
-
-                <div class="rate-input-group">
-                  <div>
-                    <strong>London Stansted (STN) Terminals</strong>
-                    <span class="text-xs text-muted" style="display:block;">Includes terminal toll</span>
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 6px;">
-                    <span>&pound;</span>
-                    <input type="number" id="sysRateStansted" class="rate-input-control" value="60" min="20" step="5" title="London Stansted Base Fare" placeholder="60" aria-label="London Stansted Base Fare" />
-                  </div>
-                </div>
-
-                <div class="rate-input-group">
-                  <div>
-                    <strong>Birmingham (BHX) Terminals</strong>
-                    <span class="text-xs text-muted" style="display:block;">Midlands express connection</span>
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 6px;">
-                    <span>&pound;</span>
-                    <input type="number" id="sysRateBirmingham" class="rate-input-control" value="75" min="20" step="5" title="Birmingham Airport Base Fare" placeholder="75" aria-label="Birmingham Airport Base Fare" />
-                  </div>
-                </div>
-
-                <div style="margin-top: 20px;">
-                  <button type="button" class="btn btn-navy btn-block" onclick="App.saveSystemRates()">Save Updated Rates</button>
-                </div>
-              </div>
-
-              <!-- Operational Policies & Database Tools Card -->
-              <div class="admin-card">
-                <h3 class="admin-card-title" style="margin-bottom: 14px;">
-                  <span>⚙️ System Policies &amp; Cloud Database</span>
-                </h3>
-                <p class="text-xs text-muted" style="margin-bottom: 20px;">Global dispatch controls, live notifications, and database synchronisation.</p>
-
-                <div class="toggle-switch-row">
-                  <div>
-                    <strong>Inside-Terminal Meet &amp; Greet</strong>
-                    <span class="text-xs text-muted" style="display:block;">Chauffeur waits inside arrivals with name board</span>
-                  </div>
-                  <label class="custom-switch" for="sysToggleMeetGreet">
-                    <input type="checkbox" id="sysToggleMeetGreet" checked title="Toggle Meet and Greet" aria-label="Toggle Inside-Terminal Meet and Greet" onchange="App.toggleSystemSetting('meetGreet', this.checked)">
-                    <span class="switch-slider"></span>
-                  </label>
-                </div>
-
-                <div class="toggle-switch-row">
-                  <div>
-                    <strong>60 Mins Complimentary Wait</strong>
-                    <span class="text-xs text-muted" style="display:block;">Free waiting time after flight touchdown</span>
-                  </div>
-                  <label class="custom-switch" for="sysToggleFreeWait">
-                    <input type="checkbox" id="sysToggleFreeWait" checked title="Toggle 60 Mins Wait" aria-label="Toggle 60 Minutes Complimentary Wait" onchange="App.toggleSystemSetting('freeWait', this.checked)">
-                    <span class="switch-slider"></span>
-                  </label>
-                </div>
-
-                <div class="toggle-switch-row">
-                  <div>
-                    <strong>Emergency Dispatch Banner</strong>
-                    <span class="text-xs text-muted" style="display:block;">Display 24/7 emergency dispatch helpline</span>
-                  </div>
-                  <label class="custom-switch" for="sysToggleEmergency">
-                    <input type="checkbox" id="sysToggleEmergency" checked title="Toggle Emergency Banner" aria-label="Toggle Emergency Dispatch Banner" onchange="App.toggleSystemSetting('emergencyBanner', this.checked)">
-                    <span class="switch-slider"></span>
-                  </label>
-                </div>
-
-                <div style="background: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 14px; margin-top: 20px;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <strong style="font-size: 0.85rem; color: var(--color-navy);">Supabase Cloud Database</strong>
-                    <span class="badge-status badge-confirmed" id="adminDbStatusBadge">Connected</span>
-                  </div>
-                  <p class="text-xs text-muted" style="margin-bottom: 12px;">Endpoint: <code>https://thwamlzdialhwwsyqiyd.supabase.co</code></p>
-                  
-                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-outline btn-xs" onclick="App.exportBookingsCsv()">📥 Export Bookings CSV</button>
-                    <button type="button" class="btn btn-outline btn-xs" onclick="App.copySupabaseSql()">📋 Copy SQL Migrations</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB PANE: ACTIVE ONGOING RIDES & DISPATCH MONITOR -->
-          <div class="admin-tab-pane" id="adminPaneLiveMap" style="display:none;">
-            <div class="admin-card">
-              <div class="admin-card-header">
-                <div>
-                  <h3 class="admin-card-title">
-                    <span>🚗 Active Ongoing Journeys &amp; Dispatch Control</span>
-                  </h3>
-                  <p class="text-xs text-muted">Real-time status tracking for confirmed pickups en route, on board, and heading to drop-off.</p>
-                </div>
-
-                <div class="admin-search-wrap">
-                  <span class="badge-status badge-confirmed">
-                    <span class="status-pulse-dot green"></span> Live Recording Active
-                  </span>
-                  <button type="button" class="btn btn-gold btn-sm" onclick="App.refreshAdminFleetMap()">
-                    🔄 Refresh Active Rides
+                <div class="adm-header-actions">
+                  <button type="button" class="adm-btn-export" onclick="App.exportAdminDatabase()">
+                    <svg class="adm-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Export JSON Database</span>
+                  </button>
+                  <button type="button" class="adm-btn-primary" onclick="App.openManualBookingModal()">
+                    <span>+ Manual Booking</span>
                   </button>
                 </div>
               </div>
 
-              <!-- Active Ongoing Rides Dashboard Grid -->
-              <div class="admin-ongoing-rides-wrap">
+              <!-- 4 KPI Cards -->
+              <div class="adm-kpi-grid">
+                <!-- Card 1: CONFIRMED REVENUE -->
+                <div class="adm-kpi-card">
+                  <div class="adm-kpi-header">
+                    <span class="adm-kpi-label">CONFIRMED REVENUE</span>
+                    <span class="adm-kpi-icon adm-kpi-icon-green">💵</span>
+                  </div>
+                  <div class="adm-kpi-val" id="adminOverviewConfirmedRev">&pound;0.00</div>
+                  <div class="adm-kpi-footer text-green">
+                    <span>&check; 100% Settled</span>
+                    <span class="adm-kpi-sub">across active transfers</span>
+                  </div>
+                </div>
+
+                <!-- Card 2: TOTAL BOOKINGS -->
+                <div class="adm-kpi-card">
+                  <div class="adm-kpi-header">
+                    <span class="adm-kpi-label">TOTAL BOOKINGS</span>
+                    <span class="adm-kpi-icon adm-kpi-icon-blue">📋</span>
+                  </div>
+                  <div class="adm-kpi-val" id="adminOverviewTotalBookings">0</div>
+                  <div class="adm-kpi-footer">
+                    <span class="adm-pill-green" id="adminOverviewActiveTransitPill">0 Active</span>
+                    <span class="adm-kpi-sub">currently in transit</span>
+                  </div>
+                </div>
+
+                <!-- Card 3: PENDING ACTION -->
+                <div class="adm-kpi-card">
+                  <div class="adm-kpi-header">
+                    <span class="adm-kpi-label">PENDING ACTION</span>
+                    <span class="adm-kpi-icon adm-kpi-icon-orange">⏳</span>
+                  </div>
+                  <div class="adm-kpi-val adm-kpi-val-orange" id="adminOverviewPendingAction">0</div>
+                  <div class="adm-kpi-footer">
+                    <button type="button" class="adm-pill-amber" onclick="App.switchAdminTab('payments')">
+                      Verify Payments &rarr;
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Card 4: ACTIVE CHAUFFEURS -->
+                <div class="adm-kpi-card">
+                  <div class="adm-kpi-header">
+                    <span class="adm-kpi-label">ACTIVE CHAUFFEURS</span>
+                    <span class="adm-kpi-icon adm-kpi-icon-purple">🚗</span>
+                  </div>
+                  <div class="adm-kpi-val" id="adminOverviewActiveChauffeurs">4</div>
+                  <div class="adm-kpi-footer">
+                    <span class="adm-kpi-sub">Licensed private hire fleet ready</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Middle Card: Active Fleet Dispatches & Live Transfers -->
+              <div class="adm-card">
+                <div class="adm-card-header">
+                  <div class="adm-card-title-wrap">
+                    <span class="adm-card-icon adm-card-icon-blue">🚗</span>
+                    <h2 class="adm-card-title">Active Fleet Dispatches &amp; Live Transfers</h2>
+                  </div>
+                  <button type="button" class="adm-link-btn" onclick="App.switchAdminTab('bookings')">
+                    View All Bookings &rarr;
+                  </button>
+                </div>
+
+                <div class="adm-table-wrap">
+                  <table class="adm-table">
+                    <thead>
+                      <tr>
+                        <th>TRIP REF</th>
+                        <th>PASSENGER</th>
+                        <th>ROUTE</th>
+                        <th>STATUS</th>
+                        <th>CHAUFFEUR</th>
+                        <th>ACTION</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminOverviewDispatchesBody">
+                      <tr>
+                        <td colspan="6" class="adm-empty-cell">
+                          No active dispatches right now. All scheduled trips completed.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Bottom Row: Dual Breakdown Cards -->
+              <div class="adm-dual-grid">
+                <!-- Left Card: Fleet Revenue Breakdown -->
+                <div class="adm-card">
+                  <div class="adm-card-header">
+                    <div class="adm-card-title-wrap">
+                      <span class="adm-card-icon adm-card-icon-teal">📊</span>
+                      <h3 class="adm-card-title">Fleet Revenue Breakdown</h3>
+                    </div>
+                  </div>
+                  <div class="adm-breakdown-list">
+                    <div class="adm-breakdown-item">
+                      <span class="adm-breakdown-name">Executive Sedan</span>
+                      <strong class="adm-breakdown-val" id="adminRevExecutiveSedan">&pound;0.00</strong>
+                    </div>
+                    <div class="adm-breakdown-item">
+                      <span class="adm-breakdown-name">Executive Estate</span>
+                      <strong class="adm-breakdown-val" id="adminRevExecutiveEstate">&pound;0.00</strong>
+                    </div>
+                    <div class="adm-breakdown-item">
+                      <span class="adm-breakdown-name">Business Class</span>
+                      <strong class="adm-breakdown-val" id="adminRevBusinessClass">&pound;0.00</strong>
+                    </div>
+                    <div class="adm-breakdown-item">
+                      <span class="adm-breakdown-name">Luxury MPV</span>
+                      <strong class="adm-breakdown-val" id="adminRevLuxuryMPV">&pound;0.00</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right Card: Live Airport Telemetry & Popular Destinations -->
+                <div class="adm-card">
+                  <div class="adm-card-header">
+                    <div class="adm-card-title-wrap">
+                      <span class="adm-card-icon adm-card-icon-blue">✈️</span>
+                      <h3 class="adm-card-title">Live Airport Telemetry &amp; Popular Destinations</h3>
+                    </div>
+                  </div>
+                  <div class="adm-breakdown-list">
+                    <div class="adm-breakdown-item">
+                      <span class="adm-breakdown-name">London Heathrow (LHR)</span>
+                      <span class="adm-breakdown-badge" id="adminAirportHeathrow">0 Transfers</span>
+                    </div>
+                    <div class="adm-breakdown-item">
+                      <span class="adm-breakdown-name">London Gatwick (LGW)</span>
+                      <span class="adm-breakdown-badge" id="adminAirportGatwick">0 Transfers</span>
+                    </div>
+                    <div class="adm-breakdown-item">
+                      <span class="adm-breakdown-name">Birmingham Airport (BHX)</span>
+                      <span class="adm-breakdown-badge" id="adminAirportBirmingham">0 Transfers</span>
+                    </div>
+                    <div class="adm-breakdown-item">
+                      <span class="adm-breakdown-name">Bristol Airport (BRS)</span>
+                      <span class="adm-breakdown-badge" id="adminAirportBristol">0 Transfers</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PANE 2: ALL BOOKINGS -->
+            <div class="adm-pane" id="adminPaneBookings">
+              <div class="adm-card">
+                <div class="admin-card-header">
+                  <div>
+                    <h3 class="admin-card-title">
+                      <span>📋 Real-time Bookings &amp; Chauffeur Dispatch</span>
+                    </h3>
+                    <p class="text-xs text-muted">Update journey statuses, assign executive cars &amp; drivers, or dispatch new transfers directly.</p>
+                  </div>
+
+                  <div class="admin-search-wrap">
+                    <div class="booking-status-tabs" id="adminBookingFilterTabs">
+                      <button type="button" class="bstatus-tab active" data-status="all" onclick="App.filterAdminBookings('all', this)">All</button>
+                      <button type="button" class="bstatus-tab" data-status="confirmed" onclick="App.filterAdminBookings('confirmed', this)">Confirmed</button>
+                      <button type="button" class="bstatus-tab" data-status="en route" onclick="App.filterAdminBookings('en route', this)">En Route</button>
+                      <button type="button" class="bstatus-tab" data-status="completed" onclick="App.filterAdminBookings('completed', this)">Completed</button>
+                      <button type="button" class="bstatus-tab" data-status="cancelled" onclick="App.filterAdminBookings('cancelled', this)">Cancelled</button>
+                    </div>
+                    <input type="text" id="adminBookingSearch" class="form-control form-control-sm" placeholder="🔍 Search by Ref, passenger, route..." oninput="App.searchAdminBookings(this.value)" style="min-width: 240px;" />
+                    <button type="button" class="btn btn-navy btn-sm" onclick="App.openManualBookingModal()">+ New Dispatch</button>
+                  </div>
+                </div>
+
+                <div class="admin-table-wrap">
+                  <table class="admin-table" id="adminBookingsTable">
+                    <thead>
+                      <tr>
+                        <th>Ref #</th>
+                        <th>Passenger</th>
+                        <th>Pickup &bull; Drop-off</th>
+                        <th>Schedule</th>
+                        <th>Vehicle Class</th>
+                        <th>Assigned Chauffeur</th>
+                        <th>Fare</th>
+                        <th>Status Control</th>
+                        <th class="text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminBookingsTableBody">
+                      <!-- Populated dynamically via JS -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- PANE 3: PAYMENTS & BILLING -->
+            <div class="adm-pane" id="adminPanePayments">
+              <div class="adm-card">
+                <div class="admin-card-header">
+                  <div>
+                    <h3 class="admin-card-title">
+                      <span>💳 Billing, Settled Revenue &amp; Payment Telemetry</span>
+                    </h3>
+                    <p class="text-xs text-muted">Monitor passenger invoices, settlement statuses, payment gateways, and outstanding balances.</p>
+                  </div>
+                  <div class="admin-search-wrap">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="App.exportAdminDatabase()">📥 Export Ledger</button>
+                  </div>
+                </div>
+
+                <div class="adm-kpi-grid" style="margin-bottom: 24px;">
+                  <div class="adm-kpi-card">
+                    <div class="adm-kpi-header">
+                      <span class="adm-kpi-label">TOTAL REVENUE (ALL TIME)</span>
+                      <span class="adm-kpi-icon adm-kpi-icon-green">💷</span>
+                    </div>
+                    <div class="adm-kpi-val" id="adminPaymentsTotalRev">&pound;0.00</div>
+                    <div class="adm-kpi-footer text-green">100% Settled</div>
+                  </div>
+                  <div class="adm-kpi-card">
+                    <div class="adm-kpi-header">
+                      <span class="adm-kpi-label">SETTLED INVOICES</span>
+                      <span class="adm-kpi-icon adm-kpi-icon-blue">🧾</span>
+                    </div>
+                    <div class="adm-kpi-val" id="adminPaymentsSettledCount">0</div>
+                    <div class="adm-kpi-footer">Completed bookings</div>
+                  </div>
+                  <div class="adm-kpi-card">
+                    <div class="adm-kpi-header">
+                      <span class="adm-kpi-label">AVERAGE FARE</span>
+                      <span class="adm-kpi-icon adm-kpi-icon-purple">📊</span>
+                    </div>
+                    <div class="adm-kpi-val" id="adminPaymentsAvgFare">&pound;0.00</div>
+                    <div class="adm-kpi-footer">Across all routes</div>
+                  </div>
+                  <div class="adm-kpi-card">
+                    <div class="adm-kpi-header">
+                      <span class="adm-kpi-label">PENDING BALANCES</span>
+                      <span class="adm-kpi-icon adm-kpi-icon-orange">⏳</span>
+                    </div>
+                    <div class="adm-kpi-val adm-kpi-val-orange" id="adminPaymentsPendingBal">&pound;0.00</div>
+                    <div class="adm-kpi-footer">0 uncollected trips</div>
+                  </div>
+                </div>
+
                 <div class="admin-table-wrap">
                   <table class="admin-table">
                     <thead>
                       <tr>
-                        <th>Trip Ref</th>
-                        <th>Passenger</th>
-                        <th>Pickup &rarr; Drop-off</th>
-                        <th>Chauffeur &amp; Vehicle</th>
-                        <th>Ride Stage</th>
-                        <th>Duration</th>
-                        <th>Quick Actions</th>
+                        <th>Invoice Ref</th>
+                        <th>Customer / Passenger</th>
+                        <th>Trip Route</th>
+                        <th>Date &amp; Time</th>
+                        <th>Amount</th>
+                        <th>Payment Method</th>
+                        <th>Settlement Status</th>
                       </tr>
                     </thead>
-                    <tbody id="adminOngoingRidesTableBody">
-                      <!-- Rendered by JS -->
+                    <tbody id="adminPaymentsTableBody">
+                      <!-- Populated dynamically via JS -->
                     </tbody>
                   </table>
                 </div>
-
-                <!-- Hidden stubs for backwards compatibility -->
-                <div id="adminTrackingMap" class="d-none"></div>
-                <div id="adminFleetActiveCounter" class="d-none">0 Online</div>
-                <div id="adminLiveDriversList" class="d-none"></div>
               </div>
             </div>
-          </div>
 
+            <!-- PANE 4: CLIENT DIRECTORY -->
+            <div class="adm-pane" id="adminPaneUsers">
+              <div class="adm-card">
+                <div class="admin-card-header">
+                  <div>
+                    <h3 class="admin-card-title">
+                      <span>👥 Passenger Accounts &amp; Customer Relationship Desk</span>
+                    </h3>
+                    <p class="text-xs text-muted">Complete control over passenger accounts, client statuses, booking history, and direct dispatch.</p>
+                  </div>
+
+                  <div class="admin-search-wrap">
+                    <div class="booking-status-tabs" id="adminUserFilterTabs">
+                      <button type="button" class="bstatus-tab active" data-user-filter="all" onclick="App.filterAdminUsers('all', this)">All Customers</button>
+                      <button type="button" class="bstatus-tab" data-user-filter="Active" onclick="App.filterAdminUsers('Active', this)">Active</button>
+                                            <button type="button" class="bstatus-tab" data-user-filter="Corporate" onclick="App.filterAdminUsers('Corporate', this)">Corporate</button>
+                      <button type="button" class="bstatus-tab" data-user-filter="Suspended" onclick="App.filterAdminUsers('Suspended', this)">Suspended</button>
+                    </div>
+                    <input type="text" id="adminUserSearch" class="form-control form-control-sm" placeholder="🔍 Search name, phone, email, tier..." oninput="App.searchAdminUsers(this.value)" style="min-width: 220px;" />
+                    <button type="button" class="btn btn-navy btn-sm" onclick="App.openAddUserModal()">+ Add Customer</button>
+                  </div>
+                </div>
+
+                <div class="admin-table-wrap">
+                  <table class="admin-table" id="adminUsersTable">
+                    <thead>
+                      <tr>
+                        <th>Passenger / Client</th>
+                        <th>Contact Details</th>
+                        <th>Account Type</th>
+                        <th>Account Status</th>
+                        <th>Total Rides</th>
+                        <th>Total Spend</th>
+                        <th>Service Notes / Preferences</th>
+                        <th class="text-right">Admin Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminUsersTableBody">
+                      <!-- Populated dynamically via JS -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- PANE 5: FLEET & CHAUFFEURS -->
+            <div class="adm-pane" id="adminPaneFleet">
+              <div class="adm-subtabs-bar">
+                <button type="button" class="adm-subtab-btn active" id="btnSubtabCars" onclick="App.switchFleetSubTab('cars')">
+                  🚗 Fleet Vehicles (<span id="adminSubtabCarsCount">4</span>)
+                </button>
+                <button type="button" class="adm-subtab-btn" id="btnSubtabDrivers" onclick="App.switchFleetSubTab('drivers')">
+                  👔 Chauffeur Drivers (<span id="adminSubtabDriversCount">4</span>)
+                </button>
+              </div>
+
+              <!-- Sub-section: Cars -->
+              <div id="adminFleetCarsSection" class="adm-card">
+                <div class="admin-card-header">
+                  <div>
+                    <h3 class="admin-card-title">
+                      <span>🚗 Fleet Vehicles Management</span>
+                    </h3>
+                    <p class="text-xs text-muted">Register, edit, and assign vehicles across executive saloons, estates, and MPVs.</p>
+                  </div>
+
+                  <div class="admin-search-wrap">
+                    <div class="booking-status-tabs" id="adminCarFilterTabs">
+                      <button type="button" class="bstatus-tab active" data-car-cat="all" onclick="App.filterAdminCars('all', this)">All Fleet</button>
+                      <button type="button" class="bstatus-tab" data-car-cat="Sedan" onclick="App.filterAdminCars('Sedan', this)">Sedans</button>
+                      <button type="button" class="bstatus-tab" data-car-cat="Executive" onclick="App.filterAdminCars('Executive', this)">Executive</button>
+                      <button type="button" class="bstatus-tab" data-car-cat="Estate" onclick="App.filterAdminCars('Estate', this)">Estates</button>
+                      <button type="button" class="bstatus-tab" data-car-cat="MPV" onclick="App.filterAdminCars('MPV', this)">MPVs</button>
+                    </div>
+                    <button type="button" class="btn btn-navy btn-sm" onclick="App.openAddVehicleModal()">+ Add New Car</button>
+                  </div>
+                </div>
+
+                <div class="admin-cars-grid" id="adminCarsGrid">
+                  <!-- Populated dynamically via JS -->
+                </div>
+              </div>
+
+              <!-- Sub-section: Drivers -->
+              <div id="adminFleetDriversSection" class="adm-card" style="display:none;">
+                <div class="admin-card-header">
+                  <div>
+                    <h3 class="admin-card-title">
+                      <span>👔 Chauffeur Drivers &amp; Licensing</span>
+                    </h3>
+                    <p class="text-xs text-muted">Manage vetted executive chauffeurs, duty statuses, contact numbers, and vehicle pairings.</p>
+                  </div>
+
+                  <div class="admin-search-wrap">
+                    <div class="booking-status-tabs" id="adminDriverFilterTabs">
+                      <button type="button" class="bstatus-tab active" data-driver-status="all" onclick="App.filterAdminDrivers('all', this)">All Drivers</button>
+                      <button type="button" class="bstatus-tab" data-driver-status="On Duty" onclick="App.filterAdminDrivers('On Duty', this)">On Duty</button>
+                      <button type="button" class="bstatus-tab" data-driver-status="On Trip" onclick="App.filterAdminDrivers('On Trip', this)">On Trip</button>
+                      <button type="button" class="bstatus-tab" data-driver-status="Off Duty" onclick="App.filterAdminDrivers('Off Duty', this)">Off Duty</button>
+                    </div>
+                    <button type="button" class="btn btn-navy btn-sm" onclick="App.openAddDriverModal()">+ Add New Driver</button>
+                  </div>
+                </div>
+
+                <div class="admin-drivers-grid" id="adminDriversGrid">
+                  <!-- Populated dynamically via JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- PANE 6: SYSTEM & RADAR -->
+            <div class="adm-pane" id="adminPaneSystem">
+              <div class="admin-control-grid">
+                <div class="admin-card">
+                  <h3 class="admin-card-title" style="margin-bottom: 14px;">
+                    <span>💷 Fixed Airport Transfer Base Rates</span>
+                  </h3>
+                  <p class="text-xs text-muted" style="margin-bottom: 20px;">Adjust fixed pricing rates for all major UK terminals. Fares update instantly on customer quotes.</p>
+
+                  <div class="rate-input-group">
+                    <div>
+                      <strong>London Heathrow (LHR) Terminals 2-5</strong>
+                      <span class="text-xs text-muted" style="display:block;">Includes drop-off &amp; flight tracking</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span>&pound;</span>
+                      <input type="number" id="sysRateHeathrow" class="rate-input-control" value="45" min="20" step="5" title="London Heathrow Base Fare" placeholder="45" aria-label="London Heathrow Base Fare" />
+                    </div>
+                  </div>
+
+                  <div class="rate-input-group">
+                    <div>
+                      <strong>London Gatwick (LGW) North &amp; South</strong>
+                      <span class="text-xs text-muted" style="display:block;">Includes terminal fee &amp; 60m wait</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span>&pound;</span>
+                      <input type="number" id="sysRateGatwick" class="rate-input-control" value="65" min="20" step="5" title="London Gatwick Base Fare" placeholder="65" aria-label="London Gatwick Base Fare" />
+                    </div>
+                  </div>
+
+                  <div class="rate-input-group">
+                    <div>
+                      <strong>London Luton (LTN) International</strong>
+                      <span class="text-xs text-muted" style="display:block;">Includes express drop-off charge</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span>&pound;</span>
+                      <input type="number" id="sysRateLuton" class="rate-input-control" value="55" min="20" step="5" title="London Luton Base Fare" placeholder="55" aria-label="London Luton Base Fare" />
+                    </div>
+                  </div>
+
+                  <div class="rate-input-group">
+                    <div>
+                      <strong>London Stansted (STN) Terminals</strong>
+                      <span class="text-xs text-muted" style="display:block;">Includes terminal toll</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span>&pound;</span>
+                      <input type="number" id="sysRateStansted" class="rate-input-control" value="60" min="20" step="5" title="London Stansted Base Fare" placeholder="60" aria-label="London Stansted Base Fare" />
+                    </div>
+                  </div>
+
+                  <div class="rate-input-group">
+                    <div>
+                      <strong>Birmingham Airport (BHX) &amp; Midlands</strong>
+                      <span class="text-xs text-muted" style="display:block;">Standard executive transfer rate</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span>&pound;</span>
+                      <input type="number" id="sysRateBirmingham" class="rate-input-control" value="75" min="20" step="5" title="Birmingham Airport Base Fare" placeholder="75" aria-label="Birmingham Airport Base Fare" />
+                    </div>
+                  </div>
+
+                  <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+                    <button type="button" class="btn btn-navy" onclick="App.saveSystemRates()">
+                      💾 Save &amp; Apply Pricing Rates
+                    </button>
+                  </div>
+                </div>
+
+                <div class="admin-card">
+                  <h3 class="admin-card-title" style="margin-bottom: 14px;">
+                    <span>🛰️ Radar Flight Tracking &amp; Policies</span>
+                  </h3>
+                  <p class="text-xs text-muted" style="margin-bottom: 20px;">Toggle automated dispatch features, customer wait limits, and operations notification broadcasts.</p>
+
+                  <div class="policy-toggle-item">
+                    <div>
+                      <strong>Complimentary 60-Minute Airport Wait Time</strong>
+                      <span class="text-xs text-muted" style="display:block;">Drivers hold without fee for 60 mins after aircraft wheels-down</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="sysToggleFreeWait" checked onchange="App.toggleSystemSetting('freeWait', this.checked)" />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="policy-toggle-item">
+                    <div>
+                      <strong>Meet &amp; Greet with Name Board Service</strong>
+                      <span class="text-xs text-muted" style="display:block;">Always assign arrival hall board pickup for airport journeys</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="sysToggleMeetGreet" aria-label="Meet &amp; Greet with Name Board Service" checked onchange="App.toggleSystemSetting('meetGreet', this.checked)" />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="policy-toggle-item">
+                    <div>
+                      <strong>Emergency Weather / Winter Road Alert Banner</strong>
+                      <span class="text-xs text-muted" style="display:block;">Display notice banner across public quotation desk for road conditions</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="sysToggleEmergency" onchange="App.toggleSystemSetting('emergencyBanner', this.checked)" />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+
+                  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--color-border);">
+                    <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--color-navy); margin-bottom: 8px;">Database &amp; Telemetry Status</h4>
+                    <p class="text-xs text-muted" style="margin-bottom: 12px;">Active connection to Supabase cloud database &amp; live radar dispatch feed.</p>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                      <span class="badge-status badge-confirmed" id="adminDbStatusBadge">Supabase Connected</span>
+                      <button type="button" class="btn btn-outline btn-xs" onclick="App.syncAdminWithSupabase()">Force Sync Now</button>
+                      <button type="button" class="btn btn-outline btn-xs" onclick="App.exportAdminDatabase()">📥 Export Database JSON</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Legacy fallback elements so existing scripts never throw -->
+            <div id="adminPaneCars" class="d-none" style="display:none;"></div>
+            <div id="adminPaneDrivers" class="d-none" style="display:none;"></div>
+            <div id="adminPaneLiveMap" class="d-none" style="display:none;"></div>
+            <div id="adminKpiTotalBookings" class="d-none" style="display:none;"></div>
+            <div id="adminKpiRevenue" class="d-none" style="display:none;"></div>
+            <div id="adminKpiActiveCars" class="d-none" style="display:none;"></div>
+            <div id="adminKpiActiveDrivers" class="d-none" style="display:none;"></div>
+            <div id="adminKpiPending" class="d-none" style="display:none;"></div>
+            <div id="adminKpiTotalUsers" class="d-none" style="display:none;"></div>
+            <div id="adminKpiVipUsers" class="d-none" style="display:none;"></div>
+            <div id="adminKpiCompletedToday" class="d-none" style="display:none;"></div>
+            <div id="adminKpiCompletedRev" class="d-none" style="display:none;"></div>
+            <div id="adminBadgeBookingsCount" class="d-none" style="display:none;"></div>
+            <div id="adminBadgeUsersCount" class="d-none" style="display:none;"></div>
+            <div id="adminBadgeCarsCount" class="d-none" style="display:none;"></div>
+            <div id="adminBadgeDriversCount" class="d-none" style="display:none;"></div>
+            <div id="adminActiveDriversCountBadge" class="d-none" style="display:none;"></div>
+            <div id="adminTrackingMap" class="d-none" style="display:none;"></div>
+            <div id="adminFleetActiveCounter" class="d-none" style="display:none;"></div>
+            <div id="adminLiveDriversList" class="d-none" style="display:none;"></div>
+            <tbody id="adminOngoingRidesTableBody" class="d-none" style="display:none;"></tbody>
+          </main>
         </div>
       </div>
     </section>
@@ -3471,7 +4065,7 @@
           <button type="submit" class="btn btn-navy btn-sm btn-block" id="btnSaveTripAmendments">💾 Save Journey Amendments</button>
         </form>
 
-        <div style="background: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 14px;">
+        <div style="background: var(--color-bg-page); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 14px;">
           <h5 style="font-size: 0.82rem; font-weight: 800; color: var(--color-navy); margin-bottom: 8px; text-transform: uppercase;">24/7 Dispatch Control Contact</h5>
           <p style="font-size: 0.82rem; color: #475569; margin-bottom: 12px;">Immediate assistance or flight schedule changes:</p>
           <div style="display: flex; gap: 10px;">
@@ -3548,7 +4142,7 @@
             <div class="avatar-circle" id="profAvatarCircle" style="width: 54px; height: 54px; font-size: 1.3rem;">JD</div>
             <div>
               <h4 style="font-size: 1.15rem; font-weight: 800; color: var(--color-navy); margin-bottom: 2px;" id="profDisplayName">Client Profile</h4>
-              <span class="badge-status badge-confirmed" id="profBadgeTier" style="background: #fef3c7; color: #b45309; font-size: 0.72rem;">👑 Gold VIP Chauffeur Tier</span>
+              <span class="badge-status badge-confirmed" id="profBadgeTier" style="background: var(--color-primary-light); color: var(--color-gold-dark); font-size: 0.72rem; border: 1px solid var(--color-border);">Verified Passenger</span>
             </div>
           </div>
 
@@ -3632,13 +4226,13 @@
       <div class="modal-header-standard">
         <div>
           <h3 class="modal-title" id="authModalTitle">Passenger Portal</h3>
-          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Access your live bookings, receipts &amp; VIP perks</p>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Access your live bookings, transfers &amp; receipts</p>
         </div>
         <button type="button" class="modal-close-icon" onclick="App.closeAuthModal()" aria-label="Close modal">&times;</button>
       </div>
 
-      <div class="auth-tabs" style="display: flex; border-bottom: 1px solid var(--color-border); background: #f8fafc;">
-        <button type="button" class="auth-tab-btn active" id="tabBtnSignIn" onclick="App.switchAuthTab('signin')" style="flex: 1; padding: 12px; border: none; background: transparent; font-weight: 700; font-size: 0.88rem; cursor: pointer; color: var(--color-navy); border-bottom: 2px solid var(--color-navy);">Sign In</button>
+      <div class="auth-tabs" style="display: flex; border-bottom: 1px solid var(--color-border); background: var(--color-bg-page);">
+        <button type="button" class="auth-tab-btn active" id="tabBtnSignIn" onclick="App.switchAuthTab('signin')" style="flex: 1; padding: 12px; border: none; background: transparent; font-weight: 700; font-size: 0.88rem; cursor: pointer; color: var(--color-navy); border-bottom: 2px solid var(--color-gold);">Sign In</button>
         <button type="button" class="auth-tab-btn" id="tabBtnSignUp" onclick="App.switchAuthTab('signup')" style="flex: 1; padding: 12px; border: none; background: transparent; font-weight: 600; font-size: 0.88rem; cursor: pointer; color: #64748b;">Create Account</button>
       </div>
 
@@ -3727,7 +4321,7 @@
         </div>
       </form>
 
-      <div class="modal-footer" style="background: #f8fafc; font-size: 0.78rem; text-align: center; color: var(--color-text-muted);">
+      <div class="modal-footer" style="background: var(--color-bg-page); font-size: 0.78rem; text-align: center; color: var(--color-text-muted);">
         🔒 Verified 256-bit encrypted authentication by Supabase Security.
       </div>
     </div>
@@ -3777,13 +4371,13 @@
 
       <div class="google-account-list">
         <!-- Account 1: James Doe -->
-        <button type="button" class="google-account-item" onclick="App.selectGoogleAccount({ name: 'James Doe', email: 'james.doe@gmail.com', phone: '+44 7700 900000', tier: 'Gold VIP', avatarBg: '#1a73e8' })">
+        <button type="button" class="google-account-item" onclick="App.selectGoogleAccount({ name: 'James Doe', email: 'james.doe@gmail.com', phone: '+44 7700 900000', tier: 'Standard', avatarBg: '#1a73e8' })">
           <div class="google-avatar-circle" style="background: #1a73e8;">JD</div>
           <div class="google-account-info">
             <div class="google-account-name">James Doe</div>
             <div class="google-account-email">james.doe@gmail.com</div>
           </div>
-          <span class="google-account-badge">VIP Client</span>
+          <span class="google-account-badge">Client</span>
         </button>
 
         <!-- Account 2: Lady Clara -->
@@ -3982,7 +4576,7 @@
       <div class="modal-header-standard">
         <div>
           <h3 class="modal-title">Register Customer Account</h3>
-          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Add new private client, corporate account, or VIP passenger</p>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Add new private client or corporate passenger</p>
         </div>
         <button type="button" class="modal-close-icon" onclick="App.closeAddUserModal()" aria-label="Close modal">&times;</button>
       </div>
@@ -4006,10 +4600,9 @@
               <input type="email" id="usrFormEmail" class="form-control" placeholder="client@example.com" required />
             </div>
             <div class="form-group">
-              <label for="usrFormTier" class="form-label">MEMBERSHIP TIER</label>
+              <label for="usrFormTier" class="form-label">ACCOUNT TYPE</label>
               <select id="usrFormTier" class="form-control">
-                <option value="Standard">Standard Passenger</option>
-                <option value="Gold VIP">Gold VIP Chauffeur Tier</option>
+                <option value="Standard" selected>Standard Passenger</option>
                 <option value="Corporate">Corporate Invoiced Account</option>
               </select>
             </div>
@@ -4225,6 +4818,182 @@
       </div>
     </div>
   </footer>
+
+  <!-- ============================================== -->
+  <!-- MODAL: PASSENGER WAITING FOR DRIVER ACCEPTANCE -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalFleetDriverDispatch" style="display: none;">
+    <div class="modal-card modal-radar-card" style="max-width: 620px;">
+      
+      <!-- State A: Radar Searching / Waiting for Chauffeur Acceptance -->
+      <div id="fleetDispatchWaitingState">
+        <div class="radar-visual-container">
+          <div class="radar-sonar-circle">
+            <div class="radar-wave wave-1"></div>
+            <div class="radar-wave wave-2"></div>
+            <div class="radar-wave wave-3"></div>
+            <div class="radar-sweep-hand"></div>
+            <div class="radar-center-blip">
+              <span class="blip-car-icon">🚗</span>
+            </div>
+            <!-- Nearby Driver Blips -->
+            <div class="radar-driver-dot dot-1" title="Chauffeur Dave M. (2.4 miles away)"></div>
+            <div class="radar-driver-dot dot-2" title="Chauffeur Sarah J. (4.1 miles away)"></div>
+            <div class="radar-driver-dot dot-3" title="Chauffeur Marcus K. (6.8 miles away)"></div>
+          </div>
+        </div>
+
+        <div class="modal-body text-center pt-2">
+          <div class="dispatch-status-badge">
+            <span class="status-dot-pulse"></span>
+            <span id="dispatchStatusText">TRANSMITTING REQUEST TO FLEET CHAUFFEURS</span>
+          </div>
+
+          <h3 class="modal-title mt-2" style="font-size: 1.5rem; color:#ffffff;">Waiting for Driver Acceptance...</h3>
+          <p class="text-sm text-muted" style="max-width: 480px; margin: 6px auto 16px;">
+            Your journey notification has been dispatched to nearby verified executive drivers. The further booking process will move on once a driver accepts.
+          </p>
+
+          <!-- Route Preview Box -->
+          <div class="dispatch-route-pill-box">
+            <div class="dr-point">
+              <span class="dr-label">PICKUP:</span>
+              <strong id="modalDispatchPickup">Stroud, Cotswolds, GL5</strong>
+            </div>
+            <div class="dr-arrow">&rarr;</div>
+            <div class="dr-point">
+              <span class="dr-label">DROP-OFF:</span>
+              <strong id="modalDispatchDropoff">London Heathrow Terminal 5</strong>
+            </div>
+          </div>
+
+          <div class="dispatch-specs-row">
+            <span>🚗 <strong id="modalDispatchVehicle">Executive Mercedes</strong></span>
+            <span>💷 Fare: <strong id="modalDispatchFare">£75.00</strong> (Fixed)</span>
+            <span>📅 <span id="modalDispatchDate">Today</span></span>
+            <span>⏰ <span id="modalDispatchTime">04:30 AM</span></span>
+          </div>
+
+          <!-- Driver Simulation Bar for effortless testing -->
+          <div class="driver-sim-card">
+            <div class="dsim-left">
+              <span class="dsim-tag">👨‍✈️ DRIVER PERSPECTIVE SIMULATION</span>
+              <div class="dsim-text">Want to test the driver's response right now?</div>
+            </div>
+            <button type="button" class="btn btn-gold btn-sm dsim-accept-btn" onclick="App.acceptDriverDispatch('Dave M.')">
+              ⚡ Accept as Chauffeur Dave M.
+            </button>
+          </div>
+
+          <div class="dispatch-timer-bar">
+            <div class="timer-spinner"></div>
+            <span id="dispatchCountdownText">Chauffeurs typically accept within 10-30 seconds</span>
+          </div>
+        </div>
+
+        <div class="modal-footer text-center" style="border-top: 1px solid rgba(255,255,255,0.08); padding: 12px 24px; justify-content:center;">
+          <button type="button" class="btn btn-outline btn-sm text-muted" onclick="App.cancelFleetDriverDispatch()">
+            Cancel Request
+          </button>
+        </div>
+      </div>
+
+      <!-- State B: Chauffeur Accepted! Celebration & Move Further -->
+      <div id="fleetDispatchAcceptedState" style="display: none;">
+        <div class="modal-body text-center py-4">
+          <div class="accepted-success-icon-wrap">
+            <div class="success-checkmark-circle">
+              <svg viewBox="0 0 52 52" class="checkmark-svg" style="width:72px; height:72px;">
+                <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="badge-status badge-completed my-2" style="display: inline-block;">
+            ✓ RIDE REQUEST ACCEPTED
+          </div>
+
+          <h2 class="modal-title" style="font-size: 1.6rem; color: #10b981;">Chauffeur Allocated!</h2>
+          <p class="text-sm text-muted">
+            Chauffeur <strong id="acceptedDriverNameText" style="color: #ffffff;">Dave M.</strong> has accepted your journey.
+          </p>
+
+          <!-- Driver Profile Card -->
+          <div class="allocated-driver-profile-card">
+            <div class="driver-avatar-circle">
+              <span id="acceptedDriverInitials">DM</span>
+            </div>
+            <div class="driver-profile-details">
+              <div class="dp-name-row">
+                <h4 id="acceptedDriverFullName">Dave M.</h4>
+                <span class="dp-rating">★ 4.98 (520+ Transfers)</span>
+              </div>
+              <div class="dp-car-specs" id="acceptedDriverVehicleSpecs">
+                Executive Mercedes-Benz E-Class &bull; Reg: <strong>YS24 OKL</strong>
+              </div>
+              <div class="dp-compliance">
+                <span>🛡️ Private Hire Vetted</span>
+                <span>⏱️ Punctuality Guarantee</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="further-process-alert">
+            <div class="fpa-spinner"></div>
+            <span><strong>Moving to Passenger Details...</strong> Proceeding with your allocated chauffeur.</span>
+          </div>
+
+          <button type="button" class="btn btn-primary btn-xl btn-block font-bold mt-3" onclick="App.proceedAfterDriverAcceptance()">
+            Continue to Passenger Details &rarr;
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- GLOBAL FLOATING DRIVER NOTIFICATION POPUP ALERT -->
+  <!-- ============================================== -->
+  <div class="driver-floating-alert" id="driverDispatchNotificationAlert" style="display: none;">
+    <div class="dfa-card">
+      <div class="dfa-header">
+        <div class="dfa-title-badge">
+          <span class="dfa-bell-ring">🔔</span>
+          <strong>NEW CHAUFFEUR DISPATCH</strong>
+        </div>
+        <button type="button" class="dfa-close-btn" onclick="App.dismissDriverNotification()" aria-label="Dismiss notification">&times;</button>
+      </div>
+
+      <div class="dfa-body">
+        <div class="dfa-route-row">
+          <span class="route-point-marker pickup-marker"></span>
+          <span class="dfa-loc" id="dfaPickupLoc">Stroud, Cotswolds, GL5</span>
+        </div>
+        <div class="dfa-connector-line"></div>
+        <div class="dfa-route-row">
+          <span class="route-point-marker dropoff-marker"></span>
+          <span class="dfa-loc" id="dfaDropoffLoc">London Heathrow Terminal 5</span>
+        </div>
+
+        <div class="dfa-meta-strip">
+          <span class="dfa-pill" id="dfaVehiclePill">🚗 Executive Class</span>
+          <span class="dfa-pill fare-pill" id="dfaFarePill">💷 £75.00 Payout</span>
+          <span class="dfa-pill time-pill" id="dfaTimePill">⏰ 04:30 AM</span>
+        </div>
+      </div>
+
+      <div class="dfa-actions">
+        <button type="button" class="btn btn-gold btn-sm dfa-accept-btn" onclick="App.acceptDriverDispatch('Dave M.')">
+          ✓ Accept Ride (Assign to Me)
+        </button>
+        <button type="button" class="btn btn-outline btn-sm dfa-decline-btn" onclick="App.dismissDriverNotification()">
+          Decline
+        </button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="./main.js"></script>
 </body>

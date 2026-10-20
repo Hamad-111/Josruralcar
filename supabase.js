@@ -176,14 +176,19 @@ export async function fetchProfiles() {
 
 export async function fetchProfileByEmail(email) {
   try {
+    if (!email) return null;
+    const cleanEmail = String(email).trim();
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('email', email)
+      .ilike('email', cleanEmail)
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (error) return null;
+    if (error) {
+      console.warn('fetchProfileByEmail warning:', error.message);
+      return null;
+    }
     return data;
   } catch (err) {
     return null;
