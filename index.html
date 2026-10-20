@@ -26,7 +26,6 @@
       <nav class="main-nav" aria-label="Main Navigation">
         <a href="#home" class="nav-link active" data-page="home" id="navHome">Home</a>
         <a href="#airports" class="nav-link" data-page="airports" id="navAirports">Airports</a>
-        <a href="#select-vehicle" class="nav-link" data-page="select-vehicle" id="navFleet">Fleet</a>
         <a href="#dashboard" class="nav-link" data-page="dashboard" id="navDashboard">My Bookings</a>
         <a href="#contact" class="nav-link" data-page="contact" id="navContact">Contact</a>
       </nav>
@@ -63,7 +62,6 @@
     <div class="mobile-drawer" id="mobileDrawer">
       <a href="#home" class="mobile-link" data-page="home">Home</a>
       <a href="#airports" class="mobile-link" data-page="airports">Airports</a>
-      <a href="#select-vehicle" class="mobile-link" data-page="select-vehicle">Fleet &amp; Vehicles</a>
       <a href="#dashboard" class="mobile-link" data-page="dashboard">📅 My Bookings</a>
       <a href="#contact" class="mobile-link" data-page="contact">Contact Us</a>
       <button type="button" class="mobile-link text-left" id="mobileAuthLink" onclick="App.openSignInPage()">👤 Sign In / Register</button>
@@ -94,7 +92,7 @@
     <!-- ============================================== -->
     <section id="viewHome" class="app-view active">
       <!-- Hero Section -->
-      <section class="hero-section" style="background-image: linear-gradient(to right, rgba(10, 17, 34, 0.92) 0%, rgba(15, 23, 42, 0.78) 50%, rgba(15, 23, 42, 0.45) 100%), url('./assets/images/hero_car.jpg');">
+      <section class="hero-section" style="background-image: linear-gradient(to right, rgba(10, 25, 47, 0.94) 0%, rgba(16, 55, 120, 0.85) 55%, rgba(30, 64, 175, 0.50) 100%), url('./assets/images/hero_car.jpg');">
         <div class="hero-overlay"></div>
         <div class="container hero-container">
           <div class="hero-content">
@@ -128,7 +126,7 @@
 
             <div class="hero-actions">
               <button class="btn btn-primary btn-lg" id="btnHeroBookTransfer" onclick="App.focusBookingWidget()">Book Your Transfer</button>
-              <button class="btn btn-glass btn-lg" id="btnHeroExploreFleet" onclick="App.navigateTo('select-vehicle')">Explore Our Fleet</button>
+              <button class="btn btn-glass btn-lg" id="btnHeroExploreAirports" onclick="App.navigateTo('airports')">View Airport Guides</button>
             </div>
           </div>
 
@@ -320,119 +318,6 @@
             <p class="text-muted">Traveling to another UK terminal or private aviation FBO? We cover all UK airports 24/7.</p>
             <div class="mt-2">
               <button class="btn btn-outline btn-sm" onclick="App.navigateTo('airports')">View Full Airport &amp; Terminal Directory &rarr;</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Fleet Overview Section -->
-      <section class="section fleet-section bg-light" id="fleetSection">
-        <div class="container">
-          <div class="section-header-row">
-            <div>
-              <h2 class="section-title">Our Premium Fleet</h2>
-              <p class="section-sub">Carefully selected vehicles to match every travel need.</p>
-            </div>
-            <button class="btn btn-navy" onclick="App.navigateTo('select-vehicle')">View All Fleet</button>
-          </div>
-
-          <div class="fleet-cards-grid">
-            <!-- Sedan -->
-            <div class="fleet-card">
-              <div class="fleet-img-wrap">
-                <img src="./assets/images/car_sedan.jpg" alt="Executive Sedan" />
-              </div>
-              <div class="fleet-card-body">
-                <h3 class="fleet-name">Executive Sedan</h3>
-                <p class="fleet-desc">Elegant comfort for individuals and couples.</p>
-                <div class="fleet-specs-pills">
-                  <span>👤 3 Max</span>
-                  <span>🧳 2 Large</span>
-                  <span>❄️ AC</span>
-                  <span>⏱️ 15m Free Wait</span>
-                </div>
-                <div class="fleet-card-footer">
-                  <div>
-                    <span class="price-sub">Starting from</span>
-                    <span class="price-val">£45.00</span>
-                  </div>
-                  <button class="btn btn-navy" onclick="App.selectVehicleAndProceed('sedan')">Select</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Executive (Most Popular) -->
-            <div class="fleet-card featured-fleet">
-              <div class="popular-ribbon">MOST POPULAR</div>
-              <div class="fleet-img-wrap">
-                <img src="./assets/images/car_executive.jpg" alt="Executive Mercedes" />
-              </div>
-              <div class="fleet-card-body">
-                <h3 class="fleet-name">Business Class</h3>
-                <p class="fleet-desc">First-class travel experience with extra legroom.</p>
-                <div class="fleet-specs-pills">
-                  <span>👤 3 Max</span>
-                  <span>🧳 2 Large</span>
-                  <span>✈️ Flight Track</span>
-                  <span>👋 Meet & Greet</span>
-                  <span>📶 Free WiFi</span>
-                </div>
-                <div class="fleet-card-footer">
-                  <div>
-                    <span class="price-sub">Starting from</span>
-                    <span class="price-val">£85.00</span>
-                  </div>
-                  <button class="btn btn-primary" onclick="App.selectVehicleAndProceed('executive')">Select</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Estate -->
-            <div class="fleet-card">
-              <div class="fleet-img-wrap">
-                <img src="./assets/images/car_estate.jpg" alt="Executive Estate" />
-              </div>
-              <div class="fleet-card-body">
-                <h3 class="fleet-name">Executive Estate</h3>
-                <p class="fleet-desc">Perfect for families with extra luggage requirements.</p>
-                <div class="fleet-specs-pills">
-                  <span>👤 4 Max</span>
-                  <span>🧳 4 Large</span>
-                  <span>👶 Child Seat Avail</span>
-                  <span>❄️ Dual Climate</span>
-                </div>
-                <div class="fleet-card-footer">
-                  <div>
-                    <span class="price-sub">Starting from</span>
-                    <span class="price-val">£55.00</span>
-                  </div>
-                  <button class="btn btn-navy" onclick="App.selectVehicleAndProceed('estate')">Select</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Luxury MPV -->
-            <div class="fleet-card">
-              <div class="fleet-img-wrap">
-                <img src="./assets/images/car_mpv.jpg" alt="Luxury MPV" />
-              </div>
-              <div class="fleet-card-body">
-                <h3 class="fleet-name">Luxury MPV</h3>
-                <p class="fleet-desc">Spacious group travel without compromising on style.</p>
-                <div class="fleet-specs-pills">
-                  <span>👤 8 Max</span>
-                  <span>🧳 8 Large</span>
-                  <span>🛋️ Captain Chairs</span>
-                  <span>⚡ Device Chargers</span>
-                </div>
-                <div class="fleet-card-footer">
-                  <div>
-                    <span class="price-sub">Starting from</span>
-                    <span class="price-val">£95.00</span>
-                  </div>
-                  <button class="btn btn-navy" onclick="App.selectVehicleAndProceed('mpv')">Select</button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -1309,9 +1194,9 @@
             <div class="view-headline-row">
               <div>
                 <h1 class="view-title">Select Your Vehicle</h1>
-                <p class="view-subtitle">Choose from our premium fleet for your journey</p>
+                <p class="view-subtitle">Choose from our fleet for your journey</p>
               </div>
-              <span class="badge-count" id="vehicleCountBadge">4 Vehicles Available</span>
+              <span class="badge-count" id="vehicleCountBadge">3 Vehicles Available</span>
             </div>
 
             <!-- STEP 1: PASSENGER SETS PICKUP & DROP-OFF LOCATIONS -->
@@ -1464,8 +1349,9 @@
             </div>
 
             <div class="vehicle-select-list">
-              <!-- Vehicle 1: Sedan -->
-              <div class="vehicle-card-row" id="cardSedan" onclick="App.selectVehicle('sedan')">
+              <!-- Vehicle 1: Sedan (Default Selected) -->
+              <div class="vehicle-card-row popular-border selected-vcard" id="cardSedan" onclick="App.selectVehicle('sedan')">
+                <div class="popular-ribbon-tag">MOST POPULAR</div>
                 <div class="vcard-img-wrap">
                   <img src="./assets/images/car_sedan.jpg" alt="Executive Sedan" />
                 </div>
@@ -1474,7 +1360,7 @@
                     <h3 class="vcard-name">Sedan</h3>
                     <div class="vcard-price-block">
                       <span class="vcard-price-label">FROM</span>
-                      <span class="vcard-price-value">£45</span>
+                      <span class="vcard-price-value" id="cardSedanPrice">£45</span>
                     </div>
                   </div>
                   <p class="vcard-tagline">Elegant comfort for individuals and couples.</p>
@@ -1484,37 +1370,8 @@
                     <span>❄️ AC</span>
                     <span>⏱️ 15m Free Wait</span>
                   </div>
-                  <button type="button" class="btn btn-navy vcard-action-btn" onclick="App.requestFleetChauffeur('sedan', event)">
+                  <button type="button" class="btn btn-primary vcard-action-btn" onclick="App.requestFleetChauffeur('sedan', event)">
                     <span>Choose Sedan &amp; Notify Driver</span>
-                    <span class="btn-arrow">&rarr;</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Vehicle 2: Executive (Mercedes S-Class / E-Class) -->
-              <div class="vehicle-card-row popular-border selected-vcard" id="cardExecutive" onclick="App.selectVehicle('executive')">
-                <div class="popular-ribbon-tag">MOST POPULAR</div>
-                <div class="vcard-img-wrap">
-                  <img src="./assets/images/car_executive.jpg" alt="Executive Class" />
-                </div>
-                <div class="vcard-info">
-                  <div class="vcard-title-row">
-                    <h3 class="vcard-name">Executive</h3>
-                    <div class="vcard-price-block">
-                      <span class="vcard-price-label">FROM</span>
-                      <span class="vcard-price-value" id="cardExecutivePrice">£75</span>
-                    </div>
-                  </div>
-                  <p class="vcard-tagline">First-class travel experience with extra legroom &amp; onboard WiFi.</p>
-                  <div class="vcard-specs">
-                    <span>👤 3 Max</span>
-                    <span>🧳 2 Large</span>
-                    <span>✈️ Flight Monitoring</span>
-                    <span>👋 Meet &amp; Greet</span>
-                    <span>📶 Free WiFi</span>
-                  </div>
-                  <button type="button" class="btn btn-primary vcard-action-btn" onclick="App.requestFleetChauffeur('executive', event)">
-                    <span>Choose Executive &amp; Notify Driver</span>
                     <span class="btn-arrow">&rarr;</span>
                   </button>
                 </div>
@@ -4779,7 +4636,7 @@
         <h4 class="footer-col-title">QUICK LINKS</h4>
         <ul class="footer-links">
           <li><a href="#home" onclick="App.navigateTo('home')">About Us</a></li>
-          <li><a href="#select-vehicle" onclick="App.navigateTo('select-vehicle')">Our Fleet</a></li>
+          <li><a href="#airports" onclick="App.navigateTo('airports')">Airport Terminals</a></li>
           <li><a href="#dashboard" onclick="App.navigateTo('dashboard')">Customer Dashboard</a></li>
           <li><a href="#contact" onclick="App.navigateTo('contact')">FAQs & Support</a></li>
           <li><a href="#contact" onclick="App.navigateTo('contact')">Terms & Conditions</a></li>

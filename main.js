@@ -72,7 +72,7 @@ const App = (() => {
       date: '2026-10-24',
       time: '04:30',
       passengers: '2 Passengers',
-      vehicleKey: 'executive',
+      vehicleKey: 'sedan',
       nextStep: 'select-vehicle',
       passenger: {
         fullName: 'James Doe',
@@ -102,15 +102,6 @@ const App = (() => {
         tax: 5,
         total: 45,
         specs: '👤 3 Max • 🧳 2 Large • ❄️ AC • ⏱️ 15m Free Wait'
-      },
-      executive: {
-        name: 'Executive',
-        model: 'Mercedes-Benz S-Class or equivalent',
-        img: './assets/images/car_executive.jpg',
-        basePrice: 68,
-        tax: 7,
-        total: 75,
-        specs: '👤 3 Max • 🧳 2 Large • ✈️ Flight Monitoring • 👋 Meet & Greet • 📶 Free WiFi'
       },
       estate: {
         name: 'Estate',

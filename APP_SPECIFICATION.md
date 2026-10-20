@@ -44,52 +44,59 @@ VITE_GOOGLE_CLIENT_ID=881921601418-lkphfap75b3tihgq29mjqcqib7kq7ij2.apps.googleu
 
 ## 3. Brand Identity & Design System
 
-The visual language follows a **Bespoke Light Golden & Royal Navy Luxury Aesthetic** inspired by British automotive heritage (Rolls-Royce, Bentley, Maybach).
+The visual language follows a **Light Modern Golden & Royal Blue Luxury Aesthetic** inspired by British automotive prestige (Rolls-Royce, Bentley, Maybach).
 
 ### Color Palette Tokens
 
 ```css
 :root {
-  /* Signature Brand Gold (Sampled directly from vehicle crest) */
-  --color-gold: #deb13b;
-  --color-gold-hover: #e5b942;
-  --color-gold-dark: #966c0e;
-  --color-gold-light: #f6d87e;
-  --color-gold-glow: rgba(222, 177, 59, 0.35);
-  --color-gold-tint: rgba(222, 177, 59, 0.12);
+  /* Signature Imperial Gold */
+  --color-gold: #d4a017;
+  --color-gold-hover: #e6bb45;
+  --color-gold-dark: #996f0b;
+  --color-gold-light: #fad05b;
+  --color-gold-glow: rgba(212, 160, 23, 0.35);
+  --color-gold-tint: rgba(212, 160, 23, 0.12);
 
   /* Primary Brand Accents */
-  --color-primary: #c99622;
-  --color-primary-dark: #ab7d15;
-  --color-primary-light: #fcf7ec;
+  --color-primary: #d4a017;
+  --color-primary-dark: #a17416;
+  --color-primary-light: #eff6ff;
   
-  /* Midnight Navy Contrasts */
-  --color-navy: #0b132b;
-  --color-navy-dark: #070d1e;
-  --color-navy-light: #1c2541;
+  /* Royal British Blue Suite */
+  --color-navy: #0a192f;
+  --color-navy-dark: #060e1c;
+  --color-navy-light: #12284c;
+  --color-blue-royal: #103778;
+  --color-blue-vibrant: #1e40af;
+  --color-blue-electric: #2563eb;
+  --color-blue-subtle: #eff6ff;
+  --color-blue-light: #e0edfe;
   
   /* Status Colors */
   --color-emerald: #10b981;
   --color-danger: #ef4444;
 
   /* Typography Colors */
-  --color-text-main: #0f172a;
-  --color-text-muted: #64748b;
-  --color-text-light: #94a3b8;
+  --color-text-main: #0c1a30;
+  --color-text-muted: #53647d;
+  --color-text-light: #8fa0b8;
   
-  /* Light Golden Background Combination */
-  --color-bg-page: #fbf8f1;       /* Warm luminous champagne silk */
-  --color-bg-subtle: #f5ede0;     /* Light golden champagne section background */
-  --color-bg-card: #ffffff;       /* Crisp warm pearl ivory */
-  --color-bg-card-alt: #fdfbf6;
-  --color-border: #ebdcc3;        /* Warm golden hairline border */
-  --color-border-hover: #deb13b;
-  --color-border-gold: rgba(222, 177, 59, 0.32);
+  /* Light Modern Canvas & Card System */
+  --color-bg-page: #f8faff;       /* Crisp, luminous modern light porcelain */
+  --color-bg-subtle: #edf3fb;     /* Ethereal light blue-tinted container background */
+  --color-bg-card: #ffffff;       /* Pure crisp white cards */
+  --color-bg-card-alt: #f5f8fd;
+  --color-border: #dbe4f0;        /* Modern clean soft slate-blue border */
+  --color-border-hover: #1e40af;
+  --color-border-gold: rgba(212, 160, 23, 0.35);
 
   /* Gradients */
-  --gradient-gold: linear-gradient(135deg, #deb13b 0%, #f6d87e 50%, #c4962c 100%);
-  --gradient-gold-hover: linear-gradient(135deg, #e5b942 0%, #fae08f 50%, #d1a338 100%);
-  --gradient-gold-subtle: linear-gradient(135deg, #faf4e6 0%, #f5ecda 100%);
+  --gradient-gold: linear-gradient(135deg, #d4a017 0%, #fad05b 50%, #b8860b 100%);
+  --gradient-gold-hover: linear-gradient(135deg, #deb13b 0%, #fae082 50%, #c49216 100%);
+  --gradient-blue: linear-gradient(135deg, #0a192f 0%, #103778 60%, #1e40af 100%);
+  --gradient-blue-card: linear-gradient(135deg, #0a192f 0%, #122c54 100%);
+  --gradient-hero: linear-gradient(135deg, rgba(10, 25, 47, 0.94) 0%, rgba(16, 55, 120, 0.88) 55%, rgba(30, 64, 175, 0.72) 100%);
 
   /* Typography */
   --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -139,7 +146,6 @@ The visual language follows a **Bespoke Light Golden & Royal Navy Luxury Aesthet
 | Vehicle Model | Category | Capacity | Luggage | Base Fare | Key Highlights |
 | :--- | :--- | :---: | :---: | :---: | :--- |
 | **Mercedes-Benz E-Class Saloon** | Executive Sedan | 3 Pax | 2 Large | £40+ | Leather interior, climate control, silent cabin |
-| **Mercedes-Benz S-Class LWB** | Business Class | 3 Pax | 2 Large | £68+ | Extended legroom, onboard WiFi, bottled water, flagship luxury |
 | **Mercedes-Benz E-Class Estate** | Executive Estate | 4 Pax | 4 Large | £48+ | Extra boot capacity, ideal for family luggage & skis |
 | **Mercedes-Benz V-Class XLWB** | Luxury MPV | 8 Pax | 8 Large | £85+ | Conference seating, 8 suitcases, USB chargers |
 
@@ -278,7 +284,7 @@ You are an expert full-stack software architect building a mobile/web applicatio
 
 2. 4-Step Booking Engine:
    - Step 1: Pickup, drop-off, date, time, passengers, luggage.
-   - Step 2: Vehicle selection (Mercedes E-Class Saloon £40+, Mercedes S-Class LWB £68+, Mercedes E-Class Estate £48+, Mercedes V-Class MPV £85+).
+   - Step 2: Vehicle selection (Mercedes E-Class Saloon £40+, Mercedes E-Class Estate £48+, Mercedes V-Class MPV £85+).
    - Step 3: Passenger details, contact phone (+44), commercial flight number tracking, meet & greet toggle.
    - Step 4: Fare breakdown (£7 airport fee included), card checkout simulation, instant ref code (#JR-XXXX).
 
