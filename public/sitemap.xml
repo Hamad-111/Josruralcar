@@ -16,6 +16,12 @@
     <priority>0.80</priority>
   </url>
   <url>
+    <loc>https://www.josruralcars.com/#cotswolds-corridors</loc>
+    <lastmod>2026-11-09T14:50:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://www.josruralcars.com/#select-vehicle</loc>
     <lastmod>2026-11-09T14:50:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
