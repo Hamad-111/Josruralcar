@@ -5,3 +5,4 @@ Disallow: /scratch/
 
 Sitemap: https://www.josruralcars.com/sitemap.xml
 Sitemap: https://josruralcars.com/sitemap.xml
+
