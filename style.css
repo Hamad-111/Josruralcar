@@ -282,60 +282,73 @@ a {
 }
 
 .header-container {
-  max-width: 1240px;
+  max-width: 1440px;
+  width: 100%;
   margin: 0 auto;
-  padding: 12px 24px;
+  padding: 10px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  box-sizing: border-box;
 }
 
 .brand-logo {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
+  text-decoration: none;
 }
 
 .brand-img {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   object-fit: contain;
+  flex-shrink: 0;
 }
 
 .brand-text {
   display: flex;
   flex-direction: column;
+  white-space: nowrap;
 }
 
 .brand-title {
   font-family: var(--font-heading);
-  font-size: 1.25rem;
+  font-size: 1.18rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--color-navy);
   line-height: 1.1;
+  white-space: nowrap;
 }
 
 .brand-sub {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   letter-spacing: 0.12em;
   font-weight: 800;
   color: var(--color-gold);
+  white-space: nowrap;
 }
 
 .main-nav {
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: clamp(14px, 1.8vw, 28px);
+  flex-shrink: 0;
 }
 
 .nav-link {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 600;
   color: var(--color-text-muted);
   transition: color var(--transition-fast);
   padding: 6px 0;
   position: relative;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-decoration: none;
 }
 
 .nav-link:hover, .nav-link.active {
@@ -357,16 +370,45 @@ a {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: clamp(10px, 1.2vw, 16px);
+  flex-shrink: 0;
+}
+
+#btnHeaderAdminPortal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #d97706, #b45309);
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(180, 83, 9, 0.25);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+#btnHeaderAdminPortal:hover {
+  background: linear-gradient(135deg, #b45309, #92400e);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(180, 83, 9, 0.35);
 }
 
 .phone-link {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.92rem;
+  font-size: 0.90rem;
   font-weight: 700;
   color: var(--color-text-main);
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-decoration: none;
 }
 .phone-link:hover {
   color: var(--color-primary);
@@ -3405,6 +3447,105 @@ a {
 }
 
 /* ==========================================================================
+   DESKTOP & TABLET ADAPTIVE HEADER ADJUSTMENTS
+   ========================================================================== */
+
+@media (max-width: 1240px) {
+  .header-container {
+    padding: 8px 18px;
+    gap: 12px;
+  }
+  .main-nav {
+    gap: 14px;
+  }
+  .nav-link {
+    font-size: 0.88rem;
+  }
+  .header-actions {
+    gap: 10px;
+  }
+  .phone-link {
+    font-size: 0.85rem;
+  }
+  #btnHeaderAdminPortal {
+    padding: 5px 11px;
+    font-size: 0.79rem;
+  }
+  .header-user-badge {
+    padding: 2px 8px 2px 4px;
+  }
+  .user-name-text {
+    font-size: 0.80rem;
+  }
+  #btnBookNowHeader {
+    padding: 7px 14px;
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 1080px) {
+  .phone-link span {
+    display: none; /* Hide phone digits on compact screens to maintain perfect 1-line alignment */
+  }
+  .phone-link {
+    padding: 6px 8px;
+    background: rgba(11, 19, 43, 0.05);
+    border-radius: var(--radius-full);
+  }
+  .phone-link:hover {
+    background: rgba(11, 19, 43, 0.10);
+  }
+  .brand-title {
+    font-size: 1.10rem;
+  }
+  .main-nav {
+    gap: 10px;
+  }
+  .nav-link {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 960px) {
+  .header-container {
+    padding: 10px 16px;
+  }
+  .brand-logo {
+    gap: 10px;
+  }
+  .brand-img {
+    width: 36px;
+    height: 36px;
+  }
+  .brand-title {
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+  }
+  .brand-sub {
+    font-size: 0.60rem;
+  }
+  .main-nav, 
+  .header-actions .phone-link,
+  #headerUserBadge,
+  #btnHeaderAuth,
+  #btnHeaderAdminPortal {
+    display: none !important;
+  }
+  .header-actions {
+    gap: 8px;
+    align-items: center;
+  }
+  .supabase-status-pill {
+    padding: 4px 8px;
+    font-size: 0.70rem;
+    white-space: nowrap;
+  }
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+}
+
+/* ==========================================================================
    MOBILE RESPONSIVE SYSTEM (TABLET & MOBILE)
    ========================================================================== */
 
@@ -6300,9 +6441,11 @@ input:checked + .switch-slider:before {
   gap: 6px;
   background: rgba(11, 19, 43, 0.05);
   border: 1px solid rgba(11, 19, 43, 0.12);
-  padding: 4px 8px 4px 6px;
+  padding: 3px 10px 3px 5px;
   border-radius: var(--radius-full);
   transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .header-user-badge:hover {
@@ -6313,12 +6456,24 @@ input:checked + .switch-slider:before {
 .user-badge-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 2px 4px 2px 2px;
+  padding: 0;
   border-radius: var(--radius-full);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.user-name-text {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .avatar-xs {
@@ -9015,6 +9170,7 @@ input:checked + .switch-slider:before {
   margin-left: 6px;
   vertical-align: middle;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .quick-chip-admin {
