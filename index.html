@@ -1543,7 +1543,7 @@
                 <h1 class="view-title">Select Your Vehicle</h1>
                 <p class="view-subtitle">Choose from our fleet for your journey</p>
               </div>
-              <span class="badge-count" id="vehicleCountBadge">3 Vehicles Available</span>
+              <span class="badge-count" id="vehicleCountBadge">4 Vehicles Available</span>
             </div>
 
             <!-- STEP 1: PASSENGER SETS PICKUP & DROP-OFF LOCATIONS -->
@@ -1696,29 +1696,64 @@
             </div>
 
             <div class="vehicle-select-list">
-              <!-- Vehicle 1: Sedan (Default Selected) -->
+              <!-- Vehicle 1: Mercedes-Benz E-Class Saloon Polar White (LO70 JSV) -->
               <div class="vehicle-card-row popular-border selected-vcard" id="cardSedan" onclick="App.selectVehicle('sedan')">
                 <div class="popular-ribbon-tag">MOST POPULAR</div>
                 <div class="vcard-img-wrap">
-                  <img src="./assets/images/car_sedan.jpg" alt="Executive Sedan" />
+                  <img src="./assets/images/car_mercedes_eclass_white.jpg" alt="Mercedes-Benz E-Class Saloon AMG Line (Polar White) LO70 JSV" />
+                  <span class="vcard-plate-chip">LO70 JSV</span>
                 </div>
                 <div class="vcard-info">
                   <div class="vcard-title-row">
-                    <h3 class="vcard-name">Sedan</h3>
+                    <div>
+                      <h3 class="vcard-name">Mercedes-Benz E-Class (Polar White)</h3>
+                      <span class="vcard-sub-model">AMG Line Saloon &bull; Reg: LO70 JSV</span>
+                    </div>
                     <div class="vcard-price-block">
                       <span class="vcard-price-label">FROM</span>
                       <span class="vcard-price-value" id="cardSedanPrice">£45</span>
                     </div>
                   </div>
-                  <p class="vcard-tagline">Elegant comfort for individuals and couples.</p>
+                  <p class="vcard-tagline">Pristine Polar White AMG Line executive saloon with panoramic roof, diamond grille &amp; luxury leather interior.</p>
                   <div class="vcard-specs">
                     <span>👤 3 Max</span>
                     <span>🧳 2 Large</span>
-                    <span>❄️ AC</span>
-                    <span>⏱️ 15m Free Wait</span>
+                    <span>❄️ Dual Climate</span>
+                    <span>⏱️ 60m Free Wait</span>
                   </div>
                   <button type="button" class="btn btn-primary vcard-action-btn" onclick="App.requestFleetChauffeur('sedan', event)">
-                    <span>Choose Sedan &amp; Notify Driver</span>
+                    <span>Choose White E-Class &amp; Notify Driver</span>
+                    <span class="btn-arrow">&rarr;</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Vehicle 2: Mercedes-Benz E-Class Saloon Iridium Silver (J26 LMK) -->
+              <div class="vehicle-card-row" id="cardExecutive" onclick="App.selectVehicle('executive')">
+                <div class="vcard-img-wrap">
+                  <img src="./assets/images/car_mercedes_eclass_silver.jpg" alt="Mercedes-Benz E-Class Saloon AMG Line (Iridium Silver) J26 LMK" />
+                  <span class="vcard-plate-chip">J26 LMK</span>
+                </div>
+                <div class="vcard-info">
+                  <div class="vcard-title-row">
+                    <div>
+                      <h3 class="vcard-name">Mercedes-Benz E-Class (Iridium Silver)</h3>
+                      <span class="vcard-sub-model">AMG Line Saloon &bull; Reg: J26 LMK</span>
+                    </div>
+                    <div class="vcard-price-block">
+                      <span class="vcard-price-label">FROM</span>
+                      <span class="vcard-price-value" id="cardExecutivePrice">£45</span>
+                    </div>
+                  </div>
+                  <p class="vcard-tagline">Signature Iridium Silver executive saloon, whisper-quiet highway cruise, executive leather &amp; flight tracking.</p>
+                  <div class="vcard-specs">
+                    <span>👤 3 Max</span>
+                    <span>🧳 2 Large</span>
+                    <span>❄️ Dual Climate</span>
+                    <span>⏱️ 60m Free Wait</span>
+                  </div>
+                  <button type="button" class="btn btn-navy vcard-action-btn" onclick="App.requestFleetChauffeur('executive', event)">
+                    <span>Choose Silver E-Class &amp; Notify Driver</span>
                     <span class="btn-arrow">&rarr;</span>
                   </button>
                 </div>
@@ -4688,10 +4723,11 @@
           <div class="form-group">
             <label for="carFormImg" class="form-label">VEHICLE IMAGE</label>
             <select id="carFormImg" class="form-control">
-              <option value="./assets/images/car_sedan.jpg">Mercedes-Benz E-Class Sedan (Silver/Black)</option>
-              <option value="./assets/images/car_executive.jpg">Mercedes-Benz S-Class Chauffeur Edition</option>
-              <option value="./assets/images/car_estate.jpg">Mercedes-Benz E-Class Estate (Hybrid)</option>
-              <option value="./assets/images/car_mpv.jpg">Mercedes-Benz V-Class Luxury MPV</option>
+              <option value="./assets/images/car_mercedes_eclass_white.jpg">Mercedes-Benz E-Class AMG Line (Polar White - LO70 JSV)</option>
+              <option value="./assets/images/car_mercedes_eclass_silver.jpg">Mercedes-Benz E-Class AMG Line (Iridium Silver - J26 LMK)</option>
+              <option value="./assets/images/car_mercedes_white_side.jpg">Mercedes-Benz E-Class Saloon (Side Profile)</option>
+              <option value="./assets/images/car_estate.jpg">Mercedes-Benz E-Class Estate (GL25 EST)</option>
+              <option value="./assets/images/car_mpv.jpg">Mercedes-Benz V-Class Luxury MPV (GL74 LUX)</option>
             </select>
           </div>
         </div>

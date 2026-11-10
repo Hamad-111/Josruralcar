@@ -95,17 +95,30 @@ const App = (() => {
     },
     vehicles: {
       sedan: {
-        name: 'Sedan',
-        model: 'Mercedes-Benz E-Class Sedan',
-        img: './assets/images/car_sedan.jpg',
+        name: 'Mercedes E-Class (Polar White)',
+        model: 'Mercedes-Benz E-Class Saloon AMG Line (LO70 JSV)',
+        plate: 'LO70 JSV',
+        img: './assets/images/car_mercedes_eclass_white.jpg',
+        sideImg: './assets/images/car_mercedes_white_side.jpg',
         basePrice: 40,
         tax: 5,
         total: 45,
-        specs: '👤 3 Max • 🧳 2 Large • ❄️ AC • ⏱️ 15m Free Wait'
+        specs: '👤 3 Max • 🧳 2 Large • ❄️ Dual Climate • ⏱️ 60m Free Wait'
+      },
+      executive: {
+        name: 'Mercedes E-Class (Iridium Silver)',
+        model: 'Mercedes-Benz E-Class Saloon AMG Line (J26 LMK)',
+        plate: 'J26 LMK',
+        img: './assets/images/car_mercedes_eclass_silver.jpg',
+        basePrice: 40,
+        tax: 5,
+        total: 45,
+        specs: '👤 3 Max • 🧳 2 Large • ❄️ Dual Climate • ⏱️ 60m Free Wait'
       },
       estate: {
-        name: 'Estate',
+        name: 'Estate All-Terrain',
         model: 'Mercedes-Benz E-Class Estate',
+        plate: 'GL25 EST',
         img: './assets/images/car_estate.jpg',
         basePrice: 48,
         tax: 7,
@@ -115,6 +128,7 @@ const App = (() => {
       mpv: {
         name: 'Luxury MPV',
         model: 'Mercedes-Benz V-Class MPV',
+        plate: 'GL74 LUX',
         img: './assets/images/car_mpv.jpg',
         basePrice: 85,
         tax: 10,
@@ -291,34 +305,30 @@ const App = (() => {
         ];
       })(),
       cars: (() => {
-        try {
-          const saved = localStorage.getItem('jos_admin_cars');
-          if (saved) return JSON.parse(saved);
-        } catch (e) {}
-        return [
+        const defaultCars = [
           {
             id: 'car-1',
-            name: 'Mercedes-Benz E-Class Saloon',
-            plate: 'GL24 XKR',
+            name: 'Mercedes-Benz E-Class Saloon AMG Line (Polar White)',
+            plate: 'LO70 JSV',
             category: 'Sedan',
             passengers: 3,
             luggage: 2,
             basePrice: 40,
             driver: 'Sarah Jenkins',
             status: 'Available',
-            img: './assets/images/car_sedan.jpg'
+            img: './assets/images/car_mercedes_eclass_white.jpg'
           },
           {
             id: 'car-2',
-            name: 'Mercedes-Benz S-Class LWB Chauffeur Edition',
-            plate: 'GL73 SVO',
+            name: 'Mercedes-Benz E-Class Saloon AMG Line (Iridium Silver)',
+            plate: 'J26 LMK',
             category: 'Executive',
             passengers: 3,
             luggage: 2,
-            basePrice: 68,
+            basePrice: 40,
             driver: 'Arthur Pendelton',
             status: 'Available',
-            img: './assets/images/car_executive.jpg'
+            img: './assets/images/car_mercedes_eclass_silver.jpg'
           },
           {
             id: 'car-3',
@@ -345,6 +355,16 @@ const App = (() => {
             img: './assets/images/car_mpv.jpg'
           }
         ];
+        try {
+          const saved = localStorage.getItem('jos_admin_cars');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.some(c => c.plate === 'LO70 JSV')) {
+              return parsed;
+            }
+          }
+        } catch (e) {}
+        return defaultCars;
       })(),
       drivers: (() => {
         try {
