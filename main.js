@@ -314,7 +314,7 @@ const App = (() => {
             passengers: 3,
             luggage: 2,
             basePrice: 40,
-            driver: 'Sarah Jenkins',
+            driver: 'Zahor Ahmed',
             status: 'Available',
             img: './assets/images/car_mercedes_eclass_white.jpg'
           },
@@ -326,7 +326,7 @@ const App = (() => {
             passengers: 3,
             luggage: 2,
             basePrice: 40,
-            driver: 'Arthur Pendelton',
+            driver: 'Ibrar Ali',
             status: 'Available',
             img: './assets/images/car_mercedes_eclass_silver.jpg'
           },
@@ -360,18 +360,66 @@ const App = (() => {
           if (saved) {
             const parsed = JSON.parse(saved);
             if (Array.isArray(parsed) && parsed.some(c => c.plate === 'LO70 JSV')) {
-              return parsed;
+              return parsed.map(c => {
+                if (c.plate === 'LO70 JSV' && (!c.driver || c.driver === 'Sarah Jenkins')) return { ...c, driver: 'Zahor Ahmed' };
+                if (c.plate === 'J26 LMK' && (!c.driver || c.driver === 'Arthur Pendelton')) return { ...c, driver: 'Ibrar Ali' };
+                return c;
+              });
             }
           }
         } catch (e) {}
         return defaultCars;
       })(),
       drivers: (() => {
-        try {
-          const saved = localStorage.getItem('jos_admin_drivers');
-          if (saved) return JSON.parse(saved);
-        } catch (e) {}
-        return [
+        const defaultDrivers = [
+          {
+            id: 'drv-zahor',
+            name: 'Zahor Ahmed',
+            phone: '+44 7700 900521',
+            email: 'zahor.ahmed@josruralcars.co.uk',
+            badge: '2475',
+            badgeAuthority: 'Central Bedfordshire Council',
+            badgeExpiry: '31/10/2029',
+            licenceNo: 'AHMED701071Z99JD 09',
+            licenceExpiry: '22/10/2033',
+            address: '89 Eldon Road, Luton, LU4 0AY',
+            dob: '07.01.1971',
+            car: 'LO70 JSV (Polar White E-Class)',
+            status: 'On Duty',
+            rating: 4.99,
+            rides: 540,
+            photo: './assets/images/drivers/zahor_ahmed_badge.jpg',
+            photoPos: '25% 45%',
+            docs: {
+              badge: './assets/images/drivers/zahor_ahmed_badge.jpg',
+              licenceFront: './assets/images/drivers/zahor_ahmed_licence_front.jpg',
+              licenceBack: './assets/images/drivers/zahor_ahmed_licence_back.jpg'
+            }
+          },
+          {
+            id: 'drv-ibrar',
+            name: 'Ibrar Ali',
+            phone: '+44 7700 900632',
+            email: 'ibrar.ali@josruralcars.co.uk',
+            badge: '1404',
+            badgeAuthority: 'Central Bedfordshire Council',
+            badgeExpiry: '28/02/2027',
+            licenceNo: 'ALI99701124I99VB 68',
+            licenceExpiry: '18/03/2035',
+            address: '18 Maple Road East, Luton, LU4 8BG',
+            dob: '12.01.1974',
+            car: 'J26 LMK (Iridium Silver E-Class)',
+            status: 'On Duty',
+            rating: 4.98,
+            rides: 490,
+            photo: './assets/images/drivers/ibrar_ali_badge.jpg',
+            photoPos: '28% 55%',
+            docs: {
+              badge: './assets/images/drivers/ibrar_ali_badge.jpg',
+              licenceFront: './assets/images/drivers/ibrar_ali_licence_front.jpg',
+              licenceBack: './assets/images/drivers/ibrar_ali_licence_back.jpg'
+            }
+          },
           {
             id: 'drv-1',
             name: 'Arthur Pendelton',
@@ -393,30 +441,18 @@ const App = (() => {
             status: 'On Duty',
             rating: 4.95,
             rides: 348
-          },
-          {
-            id: 'drv-3',
-            name: 'Marcus Brody',
-            phone: '+44 7700 900822',
-            email: 'marcus@josruralcars.co.uk',
-            badge: 'PHD-GL-5104',
-            car: 'GL74 LUX (V-Class)',
-            status: 'On Duty',
-            rating: 4.99,
-            rides: 520
-          },
-          {
-            id: 'drv-4',
-            name: 'David Miller',
-            phone: '+44 7700 900331',
-            email: 'david@josruralcars.co.uk',
-            badge: 'PHD-GL-2910',
-            car: 'GL25 EST (Estate)',
-            status: 'Off Duty',
-            rating: 4.91,
-            rides: 198
           }
         ];
+        try {
+          const saved = localStorage.getItem('jos_admin_drivers');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.some(d => d.name === 'Zahor Ahmed' && d.docs && d.docs.badge)) {
+              return parsed;
+            }
+          }
+        } catch (e) {}
+        return defaultDrivers;
       })(),
       rates: (() => {
         try {
@@ -3694,9 +3730,11 @@ const App = (() => {
       renderAdminPayments();
     } else if (tabName === 'users') {
       renderAdminUsers();
-    } else if (tabName === 'fleet') {
+    } else if (tabName === 'fleet' || tabName === 'cars' || tabName === 'drivers') {
       renderAdminCars();
       renderAdminDrivers();
+      if (tabName === 'drivers') switchFleetSubTab('drivers');
+      else if (tabName === 'cars') switchFleetSubTab('cars');
     }
   }
 
@@ -4362,12 +4400,21 @@ const App = (() => {
       return `
         <div class="admin-driver-card">
           <div class="admin-driver-header">
-            <div class="admin-driver-avatar">${initials}</div>
-            <div>
+            ${drv.photo ? `
+              <div class="admin-driver-avatar has-photo" ${drv.docs ? `onclick="App.openDriverDocsModal('${drv.id}')" style="cursor: pointer;" title="Inspect Council & Licence Documents"` : ''}>
+                <img src="${drv.photo}" style="object-position: ${drv.photoPos || 'center'};" alt="${drv.name}" />
+              </div>
+            ` : `
+              <div class="admin-driver-avatar">${initials}</div>
+            `}
+            <div style="min-width: 0; flex: 1;">
               <strong class="admin-driver-name">${drv.name}</strong>
-              <span class="admin-driver-badge-id">Badge #${drv.badge}</span>
+              <span class="admin-driver-badge-id">
+                ${drv.badgeAuthority ? `<span class="driver-authority-tag">🏛️ ${drv.badgeAuthority}</span>` : ''}
+                Badge #${drv.badge}${drv.badgeExpiry ? ` <span class="text-muted">(Exp: ${drv.badgeExpiry})</span>` : ''}
+              </span>
             </div>
-            <span class="badge-status ${statusClass}" style="margin-left: auto;">${drv.status}</span>
+            <span class="badge-status ${statusClass}" style="margin-left: auto; flex-shrink: 0;">${drv.status}</span>
           </div>
 
           <div class="admin-driver-details">
@@ -4379,6 +4426,24 @@ const App = (() => {
               <div class="admin-driver-detail-item">
                 <span>Email Address:</span>
                 <a href="mailto:${drv.email}"><strong>${drv.email}</strong></a>
+              </div>
+            ` : ''}
+            ${drv.licenceNo ? `
+              <div class="admin-driver-detail-item">
+                <span>DVLA Licence No:</span>
+                <strong style="font-family: monospace; font-size: 0.74rem; letter-spacing: 0.4px;">${drv.licenceNo}</strong>
+              </div>
+            ` : ''}
+            ${drv.licenceExpiry ? `
+              <div class="admin-driver-detail-item">
+                <span>Licence Valid Until:</span>
+                <strong>${drv.licenceExpiry}</strong>
+              </div>
+            ` : ''}
+            ${drv.address ? `
+              <div class="admin-driver-detail-item">
+                <span>Registered Address:</span>
+                <strong style="font-size: 0.74rem; text-align: right; max-width: 195px;">${drv.address}</strong>
               </div>
             ` : ''}
             <div class="admin-driver-detail-item">
@@ -4402,6 +4467,32 @@ const App = (() => {
               <strong>★ ${drv.rating || '4.95'} (${drv.rides || 0} rides)</strong>
             </div>
           </div>
+
+          ${drv.docs ? `
+            <div class="admin-driver-docs-strip">
+              <div class="admin-driver-docs-strip-top">
+                <span class="docs-strip-label">🪪 Official Licensing &amp; ID Docs</span>
+                <span class="badge-status badge-confirmed" style="padding: 2px 6px; font-size: 0.62rem;">VERIFIED</span>
+              </div>
+              <div class="admin-driver-thumbs-row">
+                <button type="button" class="driver-doc-thumb" onclick="App.openDriverDocsModal('${drv.id}')" title="View Council Badge #${drv.badge}">
+                  <img src="${drv.docs.badge}" alt="Council Badge" loading="lazy" />
+                  <span>Council Badge</span>
+                </button>
+                <button type="button" class="driver-doc-thumb" onclick="App.openDriverDocsModal('${drv.id}')" title="View UK Driving Licence Front">
+                  <img src="${drv.docs.licenceFront}" alt="UK Licence Front" loading="lazy" />
+                  <span>Licence Front</span>
+                </button>
+                <button type="button" class="driver-doc-thumb" onclick="App.openDriverDocsModal('${drv.id}')" title="View UK Driving Licence Back">
+                  <img src="${drv.docs.licenceBack}" alt="UK Licence Back" loading="lazy" />
+                  <span>Licence Back</span>
+                </button>
+              </div>
+              <button type="button" class="btn btn-gold btn-xs" style="width: 100%; margin-top: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700;" onclick="App.openDriverDocsModal('${drv.id}')">
+                <span>📄 View Full Licences &amp; Badge Photos</span>
+              </button>
+            </div>
+          ` : ''}
 
           <div class="admin-driver-actions">
             <button type="button" class="btn btn-navy btn-xs" style="flex: 1;" title="Dispatch new trip for this driver" onclick="App.dispatchForDriver('${safeName}')">
@@ -4553,6 +4644,149 @@ const App = (() => {
     document.getElementById('formAddDriver')?.reset();
   }
 
+  function openDriverDocsModal(driverId) {
+    const drv = state.admin.drivers.find(d => d.id === driverId);
+    if (!drv) return;
+
+    const modal = document.getElementById('modalDriverDocs');
+    const titleEl = document.getElementById('driverDocsModalTitle');
+    const subtitleEl = document.getElementById('driverDocsModalSubtitle');
+    const bodyEl = document.getElementById('driverDocsModalBody');
+    if (!modal || !bodyEl) return;
+
+    if (titleEl) {
+      titleEl.textContent = `${drv.name} — Licensing & Credentials`;
+    }
+    if (subtitleEl) {
+      const authText = drv.badgeAuthority || 'UK Private Hire Licensing';
+      subtitleEl.textContent = `${authText} • Badge #${drv.badge}${drv.badgeExpiry ? ` (Exp: ${drv.badgeExpiry})` : ''}`;
+    }
+
+    const docs = drv.docs || {};
+    const docItems = [
+      docs.badge ? {
+        title: 'Hackney Carriage / Private Hire Badge',
+        badge: 'Council ID',
+        src: docs.badge,
+        caption: `${drv.badgeAuthority || 'Council'} Badge #${drv.badge}${drv.badgeExpiry ? ` • Expires ${drv.badgeExpiry}` : ''}`
+      } : null,
+      docs.licenceFront ? {
+        title: 'UK Driving Licence (Front)',
+        badge: 'DVLA Verified',
+        src: docs.licenceFront,
+        caption: `Licence No: ${drv.licenceNo || 'Verified'}${drv.licenceExpiry ? ` • Valid until ${drv.licenceExpiry}` : ''}`
+      } : null,
+      docs.licenceBack ? {
+        title: 'UK Driving Licence (Back — Entitlements)',
+        badge: 'Categories Verified',
+        src: docs.licenceBack,
+        caption: 'Full UK Driving Categories (AM, A, B1, B, C1, D1, BE, C1E, D1E)'
+      } : null
+    ].filter(Boolean);
+
+    bodyEl.innerHTML = `
+      <div class="driver-credentials-summary">
+        <div class="cred-summary-item">
+          <span class="cred-label">CHAUFFEUR FULL NAME</span>
+          <strong class="cred-val">${drv.name}</strong>
+        </div>
+        <div class="cred-summary-item">
+          <span class="cred-label">LICENSING AUTHORITY</span>
+          <strong class="cred-val">${drv.badgeAuthority || 'Local Council PHV'}</strong>
+        </div>
+        <div class="cred-summary-item">
+          <span class="cred-label">COUNCIL BADGE # / EXPIRY</span>
+          <strong class="cred-val">#${drv.badge}${drv.badgeExpiry ? ` (Exp: ${drv.badgeExpiry})` : ''}</strong>
+        </div>
+        <div class="cred-summary-item">
+          <span class="cred-label">DVLA LICENCE NO / EXPIRY</span>
+          <strong class="cred-val" style="font-family: monospace;">${drv.licenceNo || 'On File'}${drv.licenceExpiry ? ` (Exp: ${drv.licenceExpiry})` : ''}</strong>
+        </div>
+        ${drv.dob ? `
+          <div class="cred-summary-item">
+            <span class="cred-label">DATE OF BIRTH</span>
+            <strong class="cred-val">${drv.dob}</strong>
+          </div>
+        ` : ''}
+        ${drv.address ? `
+          <div class="cred-summary-item">
+            <span class="cred-label">REGISTERED ADDRESS</span>
+            <strong class="cred-val">${drv.address}</strong>
+          </div>
+        ` : ''}
+        <div class="cred-summary-item">
+          <span class="cred-label">ASSIGNED FLEET VEHICLE</span>
+          <strong class="cred-val">${drv.car || 'Unassigned'}</strong>
+        </div>
+        <div class="cred-summary-item">
+          <span class="cred-label">COMPLIANCE STATUS</span>
+          <strong class="cred-val" style="color: #15803d;">✅ Verified &amp; Active</strong>
+        </div>
+      </div>
+
+      ${docItems.length > 0 ? `
+        <div class="driver-docs-grid">
+          ${docItems.map(doc => `
+            <div class="doc-card">
+              <div class="doc-card-header">
+                <strong>${doc.title}</strong>
+                <span class="badge-status badge-confirmed" style="font-size: 0.65rem; padding: 2px 7px;">${doc.badge}</span>
+              </div>
+              <a href="${doc.src}" target="_blank" rel="noopener noreferrer" class="doc-img-wrap" title="Click to open full-resolution document in new tab">
+                <img src="${doc.src}" alt="${drv.name} - ${doc.title}" />
+                <span class="doc-zoom-hint">🔍 Open Full Size</span>
+              </a>
+              <p class="doc-card-caption">${doc.caption}</p>
+            </div>
+          `).join('')}
+        </div>
+      ` : `
+        <div style="text-align: center; padding: 28px; background: #f8fafc; border-radius: var(--radius-md); border: 1px dashed #cbd5e1;">
+          <p class="text-sm text-muted">No scanned document images attached for this chauffeur.</p>
+        </div>
+      `}
+
+      <div class="driver-verified-footer-box">
+        <div>
+          <strong>🏛️ Vetted &amp; Licensed Executive Chauffeur Compliance</strong>
+          <p class="text-xs text-muted" style="margin-top: 2px;">All Hackney Carriage / Private Hire badges and DVLA driving licences are verified by Dispatch Command prior to active fleet allocation.</p>
+        </div>
+        <span class="badge-status badge-confirmed">DBS &amp; LICENCE CLEARED</span>
+      </div>
+    `;
+
+    modal.classList.add('show');
+  }
+
+  function closeDriverDocsModal() {
+    const modal = document.getElementById('modalDriverDocs');
+    if (modal) modal.classList.remove('show');
+  }
+
+  function compressDriverDocImage(file) {
+    return new Promise((resolve) => {
+      if (!file) return resolve(null);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxW = 900;
+          const scale = img.width > maxW ? (maxW / img.width) : 1;
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.78));
+        };
+        img.onerror = () => resolve(ev.target.result);
+        img.src = ev.target.result;
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  }
+
   function openManualBookingModal() {
     populateAdminModalDropdowns();
     const modal = document.getElementById('modalAdminManualBooking');
@@ -4641,8 +4875,22 @@ const App = (() => {
     const phone = document.getElementById('drvFormPhone').value.trim();
     const email = document.getElementById('drvFormEmail').value.trim();
     const badge = document.getElementById('drvFormBadge').value.trim().toUpperCase();
+    const badgeAuthority = document.getElementById('drvFormAuthority')?.value.trim() || '';
+    const badgeExpiry = document.getElementById('drvFormBadgeExpiry')?.value.trim() || '';
+    const licenceNo = document.getElementById('drvFormLicenceNo')?.value.trim().toUpperCase() || '';
+    const licenceExpiry = document.getElementById('drvFormLicenceExpiry')?.value.trim() || '';
     const car = document.getElementById('drvFormCar').value;
     const status = document.getElementById('drvFormStatus').value;
+
+    const badgeFile = document.getElementById('drvFormBadgeImg')?.files?.[0] || null;
+    const licFrontFile = document.getElementById('drvFormLicenceFrontImg')?.files?.[0] || null;
+    const licBackFile = document.getElementById('drvFormLicenceBackImg')?.files?.[0] || null;
+
+    const [badgeImgData, licFrontImgData, licBackImgData] = await Promise.all([
+      compressDriverDocImage(badgeFile),
+      compressDriverDocImage(licFrontFile),
+      compressDriverDocImage(licBackFile)
+    ]);
 
     const newDriver = {
       id: 'drv-' + Date.now(),
@@ -4650,10 +4898,20 @@ const App = (() => {
       phone,
       email,
       badge,
+      badgeAuthority: badgeAuthority || undefined,
+      badgeExpiry: badgeExpiry || undefined,
+      licenceNo: licenceNo || undefined,
+      licenceExpiry: licenceExpiry || undefined,
       car,
       status,
       rating: 5.0,
-      rides: 0
+      rides: 0,
+      photo: badgeImgData || licFrontImgData || undefined,
+      docs: (badgeImgData || licFrontImgData || licBackImgData) ? {
+        badge: badgeImgData || undefined,
+        licenceFront: licFrontImgData || undefined,
+        licenceBack: licBackImgData || undefined
+      } : undefined
     };
 
     state.admin.drivers.push(newDriver);
@@ -5849,6 +6107,8 @@ CREATE POLICY "Public Insert Payments" ON public.payments FOR INSERT WITH CHECK 
     openAddDriverModal,
     closeAddDriverModal,
     handleAddDriverSubmit,
+    openDriverDocsModal,
+    closeDriverDocsModal,
     openManualBookingModal,
     closeManualBookingModal,
     handleManualBookingSubmit,

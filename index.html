@@ -4796,6 +4796,46 @@
               </select>
             </div>
           </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="drvFormAuthority" class="form-label">LICENSING COUNCIL AUTHORITY</label>
+              <input type="text" id="drvFormAuthority" class="form-control" placeholder="e.g. Central Bedfordshire Council" />
+            </div>
+            <div class="form-group">
+              <label for="drvFormBadgeExpiry" class="form-label">BADGE EXPIRY DATE</label>
+              <input type="text" id="drvFormBadgeExpiry" class="form-control" placeholder="DD/MM/YYYY" />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="drvFormLicenceNo" class="form-label">DVLA DRIVING LICENCE NO</label>
+              <input type="text" id="drvFormLicenceNo" class="form-control" placeholder="e.g. AHMED701071Z99JD 09" />
+            </div>
+            <div class="form-group">
+              <label for="drvFormLicenceExpiry" class="form-label">LICENCE VALID UNTIL</label>
+              <input type="text" id="drvFormLicenceExpiry" class="form-control" placeholder="DD/MM/YYYY" />
+            </div>
+          </div>
+
+          <div style="margin-top: 8px; padding: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: var(--radius-md);">
+            <div style="font-size: 0.72rem; font-weight: 700; color: var(--color-navy); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">📄 Upload Official Licence &amp; Badge Photos (Optional)</div>
+            <div class="form-row-2" style="gap: 10px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="drvFormBadgeImg" class="form-label" style="font-size: 0.68rem;">COUNCIL BADGE PHOTO</label>
+                <input type="file" id="drvFormBadgeImg" class="form-control" accept="image/*" style="padding: 5px; font-size: 0.76rem;" />
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="drvFormLicenceFrontImg" class="form-label" style="font-size: 0.68rem;">UK LICENCE (FRONT)</label>
+                <input type="file" id="drvFormLicenceFrontImg" class="form-control" accept="image/*" style="padding: 5px; font-size: 0.76rem;" />
+              </div>
+            </div>
+            <div class="form-group" style="margin-top: 8px; margin-bottom: 0;">
+              <label for="drvFormLicenceBackImg" class="form-label" style="font-size: 0.68rem;">UK LICENCE (BACK — ENTITLEMENTS)</label>
+              <input type="file" id="drvFormLicenceBackImg" class="form-control" accept="image/*" style="padding: 5px; font-size: 0.76rem;" />
+            </div>
+          </div>
         </div>
 
         <div class="modal-footer">
@@ -4805,6 +4845,31 @@
           </div>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: DRIVER LICENSING & CREDENTIALS VIEWER -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalDriverDocs">
+    <div class="modal-card" style="max-width: 860px; width: 95%;">
+      <div class="modal-header-standard">
+        <div>
+          <h3 class="modal-title" id="driverDocsModalTitle">Driver Licensing &amp; Credentials</h3>
+          <p class="text-xs" id="driverDocsModalSubtitle" style="color: #cbd5e1; margin-top: 2px;">Central Bedfordshire Council &amp; DVLA Verification Documents</p>
+        </div>
+        <button type="button" class="modal-close-icon" onclick="App.closeDriverDocsModal()" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="modal-body" id="driverDocsModalBody" style="max-height: 75vh; overflow-y: auto;">
+        <!-- Populated dynamically via JS -->
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-actions-row" style="justify-content: flex-end;">
+          <button type="button" class="btn btn-navy" onclick="App.closeDriverDocsModal()">Close Credentials Viewer</button>
+        </div>
+      </div>
     </div>
   </div>
 
