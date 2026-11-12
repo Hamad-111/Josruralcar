@@ -1475,12 +1475,9 @@
               <div class="signin-quick-demo-wrapper">
                 <div class="quick-demo-header">
                   <span class="quick-demo-icon">⚡</span>
-                  <span class="quick-demo-title">1-Click Fast Test Accounts:</span>
+                  <span class="quick-demo-title">1-Click Fast Passenger Demo Accounts:</span>
                 </div>
                 <div class="quick-login-chips">
-                  <button type="button" class="quick-chip-btn quick-chip-admin" onclick="App.quickSignInAs('admin@josruralcars.co.uk')">
-                    🛡️ Admin (Marcus)
-                  </button>
                   <button type="button" class="quick-chip-btn" onclick="App.quickSignInAs('james@example.com')">
                     👤 James Doe (Client)
                   </button>
@@ -3527,6 +3524,10 @@
               </div>
             </div>
             <div class="adm-footer-actions">
+              <button type="button" class="adm-logout-btn adm-lock-btn" id="btnAdminLockSession" onclick="App.lockAdminSession()" title="Lock Dispatch Control Center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <span>🔒 Lock</span>
+              </button>
               <button type="button" class="adm-logout-btn" id="btnAdminSidebarLogout" onclick="App.handleSignOut()" title="Log out of Admin Portal">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                 <span>Log Out</span>
@@ -4870,6 +4871,62 @@
           <button type="button" class="btn btn-navy" onclick="App.closeDriverDocsModal()">Close Credentials Viewer</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: ADMIN SECURITY PIN GATE -->
+  <!-- ============================================== -->
+  <div class="modal-backdrop" id="modalAdminPin" role="dialog" aria-modal="true" aria-labelledby="adminPinModalTitle">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header-standard">
+        <div>
+          <h3 class="modal-title" id="adminPinModalTitle">Dispatch Security Verification</h3>
+          <p class="text-xs" style="color: #cbd5e1; margin-top: 2px;">Restricted administrator access &bull; 6-digit PIN required</p>
+        </div>
+        <button type="button" class="modal-close-icon" onclick="App.closeAdminPinModal()" aria-label="Cancel admin verification">&times;</button>
+      </div>
+
+      <form id="formAdminPin" onsubmit="App.handleAdminPinSubmit(event)">
+        <div class="modal-body">
+          <div class="admin-pin-account-banner">
+            <span class="admin-pin-badge">AUTHORIZED DISPATCHER</span>
+            <strong id="adminPinEmailDisplay">admin@josruralcars.co.uk</strong>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="adminPinInput" class="form-label">6-DIGIT SECURITY PIN *</label>
+            <div class="input-with-icon">
+              <svg class="input-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <input
+                type="password"
+                id="adminPinInput"
+                class="form-input-premium admin-pin-input"
+                placeholder="••••••"
+                maxlength="6"
+                minlength="6"
+                inputmode="numeric"
+                pattern="[0-9]{6}"
+                autocomplete="one-time-code"
+                required
+              />
+              <button type="button" class="btn-toggle-password" onclick="App.togglePasswordVisibility('adminPinInput', this)" title="Show/hide Security PIN" aria-label="Toggle Security PIN visibility">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
+            <p class="text-xs text-muted" style="margin-top: 6px;">After 5 failed attempts, Dispatch access locks temporarily for 5 minutes.</p>
+          </div>
+
+          <div id="adminPinError" class="admin-pin-error" role="alert" style="display: none;"></div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="modal-actions-row" style="justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn btn-outline" onclick="App.closeAdminPinModal()">Cancel</button>
+            <button type="submit" class="btn btn-navy">Unlock Dispatch Center</button>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
 

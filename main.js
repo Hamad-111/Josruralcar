@@ -50,13 +50,198 @@ import {
 } from './tracking.js';
 
 const App = (() => {
+  // Restricted Admin Security Controls
+  const ADMIN_ALLOWED_EMAILS = ['admin@josruralcars.co.uk'];
+  const ADMIN_AUTH_SALT = 'jos-rural-cars-sec-v1:';
+  const ADMIN_PASSWORD_HASH = '1994e418c87ef6d78f0002069df797986900da2a48c158feb0792fa602e2b289';
+  const ADMIN_PIN_HASH = 'b0c93435d60a8e3dee835226753788547d63bd485f810b4f9e2b93298651382c';
+  const ADMIN_MAX_FAILED_ATTEMPTS = 5;
+  const ADMIN_LOCKOUT_MS = 5 * 60 * 1000; // 5 minutes
+  const ADMIN_PIN_SESSION_MS = 4 * 60 * 60 * 1000; // 4 hours
+
+  function sha256HexSync(input) {
+    const rightRotate = (value, amount) => (value >>> amount) | (value << (32 - amount));
+    const mathPow = Math.pow;
+    const maxWord = mathPow(2, 32);
+    let i, j;
+    let result = '';
+    const words = [];
+    let hash = [];
+    const k = [];
+    let primeCounter = 0;
+    const isComposite = {};
+    for (let candidate = 2; primeCounter < 64; candidate++) {
+      if (!isComposite[candidate]) {
+        for (i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+        hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+        k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+      }
+    }
+    const bytes = new TextEncoder().encode(String(input || ''));
+    const byteArr = Array.from(bytes);
+    byteArr.push(0x80);
+    while ((byteArr.length % 64) - 56) byteArr.push(0);
+    const bitLen = bytes.length * 8;
+    for (i = 0; i < byteArr.length; i++) {
+      j = byteArr[i];
+      if (j >> 8) return '';
+      words[i >> 2] |= j << (((3 - i) % 4) * 8);
+    }
+    words[words.length] = (bitLen / maxWord) | 0;
+    words[words.length] = bitLen;
+    for (j = 0; j < words.length; ) {
+      const w = words.slice(j, (j += 16));
+      const oldHash = hash;
+      hash = hash.slice(0, 8);
+      for (i = 0; i < 64; i++) {
+        const w15 = w[i - 15], w2 = w[i - 2];
+        const a = hash[0], e = hash[4];
+        const temp1 =
+          hash[7] +
+          (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) +
+          ((e & hash[5]) ^ (~e & hash[6])) +
+          k[i] +
+          (w[i] =
+            i < 16
+              ? w[i]
+              : (w[i - 16] +
+                  (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) +
+                  w[i - 7] +
+                  (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) |
+                0);
+        const temp2 =
+          (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) +
+          ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+        hash = [(temp1 + temp2) | 0].concat(hash);
+        hash[4] = (hash[4] + temp1) | 0;
+      }
+      for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+    }
+    for (i = 0; i < 8; i++) {
+      for (j = 3; j + 1; j--) {
+        const b = (hash[i] >> (j * 8)) & 255;
+        result += (b < 16 ? 0 : '') + b.toString(16);
+      }
+    }
+    return result;
+  }
+
+  function isAllowedAdminEmail(email) {
+    return ADMIN_ALLOWED_EMAILS.includes(String(email || '').trim().toLowerCase());
+  }
+
+  function getAdminLockoutState() {
+    try {
+      const raw = localStorage.getItem('jos_admin_lockout');
+      if (!raw) return { attempts: 0, lockedUntil: 0 };
+      const parsed = JSON.parse(raw);
+      if (parsed.lockedUntil && Number(parsed.lockedUntil) <= Date.now()) {
+        localStorage.removeItem('jos_admin_lockout');
+        return { attempts: 0, lockedUntil: 0 };
+      }
+      return { attempts: Number(parsed.attempts) || 0, lockedUntil: Number(parsed.lockedUntil) || 0 };
+    } catch (e) {
+      return { attempts: 0, lockedUntil: 0 };
+    }
+  }
+
+  function recordAdminFailedAttempt() {
+    const cur = getAdminLockoutState();
+    const nextAttempts = cur.attempts + 1;
+    const lockedUntil = nextAttempts >= ADMIN_MAX_FAILED_ATTEMPTS ? Date.now() + ADMIN_LOCKOUT_MS : 0;
+    try {
+      localStorage.setItem('jos_admin_lockout', JSON.stringify({ attempts: nextAttempts, lockedUntil }));
+    } catch (e) {}
+    return { attempts: nextAttempts, remaining: Math.max(0, ADMIN_MAX_FAILED_ATTEMPTS - nextAttempts), lockedUntil };
+  }
+
+  function clearAdminFailedAttempts() {
+    try {
+      localStorage.removeItem('jos_admin_lockout');
+    } catch (e) {}
+  }
+
+  async function verifyAdminPassword(email, password) {
+    if (!isAllowedAdminEmail(email) || !password) return false;
+    // Check live Supabase Auth if configured for this admin account
+    try {
+      if (supabase && supabase.auth && typeof supabase.auth.signInWithPassword === 'function') {
+        const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+        if (!error && data && data.user && isAllowedAdminEmail(data.user.email)) {
+          return true;
+        }
+      }
+    } catch (e) {}
+    return sha256HexSync(`${ADMIN_AUTH_SALT}pwd:${password}`) === ADMIN_PASSWORD_HASH;
+  }
+
+  function verifyAdminPinCode(pin) {
+    const cleanPin = String(pin || '').trim();
+    if (!cleanPin) return false;
+    return sha256HexSync(`${ADMIN_AUTH_SALT}pin:${cleanPin}`) === ADMIN_PIN_HASH;
+  }
+
+  function isAuthorizedAdminSession() {
+    const u = state.currentUser;
+    if (!u || u.isLoggedIn === false) return false;
+    return isAllowedAdminEmail(u.email) && (u.role === 'admin' || u.isAdmin === true);
+  }
+
+  function isAdminPanelUnlocked() {
+    if (!isAuthorizedAdminSession()) return false;
+    try {
+      const raw = sessionStorage.getItem('jos_admin_pin_unlock');
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      return Boolean(
+        parsed &&
+        parsed.email === String(state.currentUser.email || '').trim().toLowerCase() &&
+        Number(parsed.expiresAt) > Date.now()
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function setAdminPanelUnlocked(email) {
+    try {
+      sessionStorage.setItem(
+        'jos_admin_pin_unlock',
+        JSON.stringify({
+          email: String(email || '').trim().toLowerCase(),
+          unlockedAt: Date.now(),
+          expiresAt: Date.now() + ADMIN_PIN_SESSION_MS
+        })
+      );
+    } catch (e) {}
+  }
+
+  function clearAdminPanelUnlock() {
+    try {
+      sessionStorage.removeItem('jos_admin_pin_unlock');
+    } catch (e) {}
+  }
+
+  function requireAdminAccess() {
+    if (isAdminPanelUnlocked()) return true;
+    showToast('🔒 Restricted Action: Authorized Admin PIN verification required.');
+    return false;
+  }
+
   // Application Data & State
   const state = {
     currentView: 'home',
     currentUser: (() => {
       try {
         const saved = localStorage.getItem('jos_current_user');
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && !isAllowedAdminEmail(parsed.email)) {
+            parsed.isAdmin = false;
+            if (parsed.role === 'admin') parsed.role = 'customer';
+          }
+          return parsed;
+        }
       } catch (e) {}
       return null;
     })(),
@@ -223,7 +408,21 @@ const App = (() => {
       users: (() => {
         try {
           const saved = localStorage.getItem('jos_admin_users');
-          if (saved) return JSON.parse(saved);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) {
+              const sanitizedUsersList = parsed
+                .filter(u => String(u.email || '').toLowerCase() !== 'admin@example.com')
+                .map(u => {
+                  if (!isAllowedAdminEmail(u.email) && (u.role === 'admin' || u.isAdmin)) {
+                    return { ...u, role: 'customer', isAdmin: false };
+                  }
+                  return u;
+                });
+              try { localStorage.setItem('jos_admin_users', JSON.stringify(sanitizedUsersList)); } catch (e) {}
+              return sanitizedUsersList;
+            }
+          }
         } catch (e) {}
         return [
           {
@@ -237,20 +436,6 @@ const App = (() => {
             status: 'Active',
             location: "Jo's Rural Cars HQ, Stroud, GL5 1AA",
             notes: 'Head of Executive Dispatch.',
-            rides: 0,
-            spent: 0
-          },
-          {
-            id: 'e4d547b7-179f-4c05-bf53-0da6fe6d62d7',
-            name: 'Marcus Vance (Admin)',
-            email: 'admin@example.com',
-            phone: '+44 1234 567 890',
-            tier: 'Executive Super Admin',
-            role: 'admin',
-            isAdmin: true,
-            status: 'Active',
-            location: "Jo's Rural Cars HQ, Stroud, GL5 1AA",
-            notes: 'Super Admin and Head of Executive Operations',
             rides: 0,
             spent: 0
           },
@@ -521,6 +706,31 @@ const App = (() => {
     }
 
     const baseViewKey = viewId.split('/')[0].split('?')[0];
+
+    // Strict Access Control Guard for Admin & Dispatch Center (#admin)
+    if (baseViewKey === 'admin') {
+      document.body.classList.remove('in-admin-portal');
+      if (!isAuthorizedAdminSession()) {
+        clearAdminPanelUnlock();
+        const isLoggedInCustomer = state.currentUser && state.currentUser.isLoggedIn !== false;
+        if (isLoggedInCustomer) {
+          showToast('⛔ Access Denied: Dispatch Center is strictly limited to authorized administrators.');
+          return navigateTo('dashboard');
+        } else {
+          showToast('🔒 Restricted Area: Sign in with authorized administrator credentials.');
+          return navigateTo('signin');
+        }
+      }
+      if (!isAdminPanelUnlocked()) {
+        const hasVisibleView = Boolean(document.querySelector('.app-view.active'));
+        if (!hasVisibleView || state.currentView === 'admin') {
+          navigateTo('home');
+        }
+        openAdminPinModal('admin');
+        return;
+      }
+    }
+
     const targetElementId = targetMap[baseViewKey] || targetMap[viewId] || 'viewHome';
 
     // Hide all views
@@ -2136,6 +2346,198 @@ const App = (() => {
     }
   }
 
+  let pendingAdminPinTarget = 'admin';
+
+  function openAdminPinModal(targetView = 'admin') {
+    if (!isAuthorizedAdminSession()) {
+      showToast('🔒 Authorized administrator sign-in required.');
+      return navigateTo('signin');
+    }
+    pendingAdminPinTarget = targetView || 'admin';
+    const modal = document.getElementById('modalAdminPin');
+    const errEl = document.getElementById('adminPinError');
+    const pinInput = document.getElementById('adminPinInput');
+    const emailEl = document.getElementById('adminPinEmailDisplay');
+    if (errEl) {
+      errEl.style.display = 'none';
+      errEl.textContent = '';
+    }
+    if (pinInput) {
+      pinInput.value = '';
+    }
+    if (emailEl && state.currentUser) {
+      emailEl.textContent = state.currentUser.email;
+    }
+    if (modal) {
+      modal.classList.add('show');
+      setTimeout(() => pinInput?.focus(), 60);
+    }
+  }
+
+  function closeAdminPinModal() {
+    const modal = document.getElementById('modalAdminPin');
+    if (modal) modal.classList.remove('show');
+    const pinInput = document.getElementById('adminPinInput');
+    if (pinInput) pinInput.value = '';
+  }
+
+  function handleAdminPinSubmit(e) {
+    e.preventDefault();
+    if (!isAuthorizedAdminSession()) {
+      closeAdminPinModal();
+      showToast('🔒 Session expired. Please sign in again.');
+      return navigateTo('signin');
+    }
+
+    const lockout = getAdminLockoutState();
+    const errEl = document.getElementById('adminPinError');
+    if (lockout.lockedUntil && lockout.lockedUntil > Date.now()) {
+      const minsLeft = Math.ceil((lockout.lockedUntil - Date.now()) / 60000);
+      const msg = `⏳ Too many failed attempts. Security verification locked for ${minsLeft} minute(s).`;
+      if (errEl) {
+        errEl.textContent = msg;
+        errEl.style.display = 'block';
+      }
+      showToast(msg);
+      return;
+    }
+
+    const pinInput = document.getElementById('adminPinInput');
+    const enteredPin = pinInput ? pinInput.value.trim() : '';
+
+    if (!verifyAdminPinCode(enteredPin)) {
+      const fail = recordAdminFailedAttempt();
+      const msg = fail.lockedUntil
+        ? '⛔ Maximum attempts reached. Admin access locked for 5 minutes.'
+        : `❌ Invalid 6-digit Security PIN. (${fail.remaining} attempt${fail.remaining === 1 ? '' : 's'} remaining)`;
+      if (errEl) {
+        errEl.textContent = msg;
+        errEl.style.display = 'block';
+      }
+      if (pinInput) {
+        pinInput.value = '';
+        pinInput.focus();
+      }
+      showToast(msg);
+      return;
+    }
+
+    clearAdminFailedAttempts();
+    setAdminPanelUnlocked(state.currentUser.email);
+    closeAdminPinModal();
+    updateUserUI();
+    updateSignInPageView();
+    showToast(`🛡️ Security PIN verified. Entering Dispatch Control Center...`);
+    navigateTo(pendingAdminPinTarget || 'admin');
+  }
+
+  function lockAdminSession() {
+    clearAdminPanelUnlock();
+    document.body.classList.remove('in-admin-portal');
+    const admSidebar = document.getElementById('admSidebar');
+    if (admSidebar) admSidebar.classList.remove('open');
+    updateUserUI();
+    updateSignInPageView();
+    showToast('🔒 Dispatch Control Center locked. Security PIN required to re-enter.');
+    navigateTo('home');
+  }
+
+  async function authenticateUserLogin(email, password, remember = true) {
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    if (!cleanEmail) {
+      showToast('Please enter a valid email address.');
+      return { ok: false };
+    }
+
+    const isAllowlistedAdmin = isAllowedAdminEmail(cleanEmail);
+
+    // Block unverified/legacy admin emails & enforce strict password check for allowlisted admin
+    if (isAllowlistedAdmin) {
+      const lockout = getAdminLockoutState();
+      if (lockout.lockedUntil && lockout.lockedUntil > Date.now()) {
+        const minsLeft = Math.ceil((lockout.lockedUntil - Date.now()) / 60000);
+        showToast(`⏳ Admin login temporarily locked. Try again in ${minsLeft} minute(s).`);
+        return { ok: false, locked: true };
+      }
+
+      const validPwd = await verifyAdminPassword(cleanEmail, password);
+      if (!validPwd) {
+        const fail = recordAdminFailedAttempt();
+        showToast(
+          fail.lockedUntil
+            ? '⛔ Too many failed admin login attempts. Locked for 5 minutes.'
+            : `❌ Invalid administrator password. (${fail.remaining} attempt${fail.remaining === 1 ? '' : 's'} remaining)`
+        );
+        return { ok: false, invalidPassword: true };
+      }
+      clearAdminFailedAttempts();
+    }
+
+    let user = state.admin.users.find(u => (u.email || '').toLowerCase() === cleanEmail);
+    if (!user) {
+      const supProfile = await fetchProfileByEmail(cleanEmail);
+      if (supProfile) {
+        user = {
+          id: supProfile.id || 'usr-' + Date.now(),
+          name: supProfile.name || cleanEmail.split('@')[0],
+          email: supProfile.email || email,
+          phone: supProfile.phone || '+44 7700 900000',
+          tier: isAllowlistedAdmin ? (supProfile.tier || 'Executive Super Admin') : (supProfile.tier === 'Executive Super Admin' ? 'Standard' : (supProfile.tier || 'Standard')),
+          role: isAllowlistedAdmin ? 'admin' : 'customer',
+          isAdmin: isAllowlistedAdmin,
+          status: supProfile.status || 'Active',
+          location: supProfile.address || supProfile.location || 'Gloucestershire, UK',
+          notes: supProfile.notes || '',
+          rides: Number(supProfile.trips_count || supProfile.rides || 0),
+          spent: Number(supProfile.total_spent || supProfile.spent || 0)
+        };
+      } else {
+        const generatedName = isAllowlistedAdmin
+          ? 'Marcus Vance'
+          : email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        user = {
+          id: isAllowlistedAdmin ? 'bcc5fd7b-94ab-46b5-bb10-d8ef3b71bf10' : 'usr-' + Date.now(),
+          name: generatedName || 'Valued Passenger',
+          email: cleanEmail,
+          phone: isAllowlistedAdmin ? '+44 1234 567 890' : '+44 7700 900000',
+          tier: isAllowlistedAdmin ? 'Executive Super Admin' : 'Standard',
+          role: isAllowlistedAdmin ? 'admin' : 'customer',
+          isAdmin: isAllowlistedAdmin,
+          status: 'Active',
+          location: isAllowlistedAdmin ? "Jo's Rural Cars HQ, Stroud, GL5 1AA" : 'Gloucestershire, Cotswolds',
+          notes: isAllowlistedAdmin ? 'Head of Executive Dispatch.' : 'Verified via passenger portal',
+          rides: 0,
+          spent: 0
+        };
+        state.admin.users.push(user);
+        saveAdminUsers();
+      }
+    }
+
+    if (isAllowlistedAdmin) {
+      user.role = 'admin';
+      user.isAdmin = true;
+      user.tier = user.tier || 'Executive Super Admin';
+    } else {
+      user.role = 'customer';
+      user.isAdmin = false;
+      clearAdminPanelUnlock();
+    }
+
+    user.isLoggedIn = true;
+    state.currentUser = user;
+    if (remember !== false) {
+      localStorage.setItem('jos_current_user', JSON.stringify(user));
+    }
+
+    state.booking.passenger.fullName = user.name || '';
+    state.booking.passenger.email = user.email || '';
+    state.booking.passenger.phone = (user.phone || '').replace('+44 ', '').replace('+44', '');
+
+    updateUserUI();
+    return { ok: true, user, isAdmin: isAllowlistedAdmin };
+  }
+
   async function handleSignIn(e) {
     e.preventDefault();
     const btn = document.getElementById('btnSubmitSignIn');
@@ -2147,69 +2549,26 @@ const App = (() => {
 
     const email = document.getElementById('loginEmail')?.value.trim() || '';
     const password = document.getElementById('loginPassword')?.value || '';
+    const remember = document.getElementById('rememberMe')?.checked;
 
     try {
-      let user = state.admin.users.find(u => u.email.toLowerCase() === email.toLowerCase());
-      if (!user) {
-        const supProfile = await fetchProfileByEmail(email);
-        if (supProfile) {
-          user = {
-            id: supProfile.id || 'usr-' + Date.now(),
-            name: supProfile.name || email.split('@')[0],
-            email: supProfile.email || email,
-            phone: supProfile.phone || '+44 7700 900000',
-            tier: supProfile.tier || 'Standard',
-            role: supProfile.role || (email.toLowerCase().includes('admin') ? 'admin' : 'customer'),
-            status: supProfile.status || 'Active',
-            location: supProfile.address || supProfile.location || 'Gloucestershire, UK',
-            notes: supProfile.notes || '',
-            rides: Number(supProfile.trips_count || supProfile.rides || 0),
-            spent: Number(supProfile.total_spent || supProfile.spent || 0)
-          };
-        } else {
-          const isAdminEmail = email.toLowerCase() === 'admin@josruralcars.co.uk' || email.toLowerCase() === 'admin@example.com' || email.toLowerCase().includes('admin');
-          const generatedName = isAdminEmail ? 'Marcus Vance' : email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-          user = {
-            id: 'usr-' + Date.now(),
-            name: generatedName || 'Valued Passenger',
-            email,
-            phone: isAdminEmail ? '+44 1234 567 890' : '+44 7700 900000',
-            tier: isAdminEmail ? 'Executive Super Admin' : 'Standard',
-            role: isAdminEmail ? 'admin' : 'customer',
-            status: 'Active',
-            location: isAdminEmail ? "Jo's Rural Cars HQ, Stroud, GL5 1AA" : 'Gloucestershire, Cotswolds',
-            notes: isAdminEmail ? 'Head of Executive Dispatch.' : 'Verified via passenger portal',
-            rides: 0,
-            spent: 0
-          };
-          state.admin.users.push(user);
-          saveAdminUsers();
+      const authRes = await authenticateUserLogin(email, password, remember);
+      if (!authRes.ok) {
+        const pwdEl = document.getElementById('loginPassword');
+        if (pwdEl) {
+          pwdEl.value = '';
+          pwdEl.focus();
         }
+        return;
       }
 
-      const isAdmin = user.role === 'admin' || user.isAdmin === true || 
-                      user.email.toLowerCase() === 'admin@josruralcars.co.uk' || 
-                      user.email.toLowerCase() === 'admin@example.com';
-
-      if (isAdmin) {
-        user.role = 'admin';
-        user.isAdmin = true;
-        user.tier = user.tier || 'Executive Super Admin';
-      }
-
-      user.isLoggedIn = true;
-      state.currentUser = user;
-      localStorage.setItem('jos_current_user', JSON.stringify(user));
-
-      updateUserUI();
       closeAuthModal();
 
-      if (isAdmin) {
-        showToast(`🛡️ Welcome Administrator ${user.name}! Dispatch Control Center loaded.`);
-        navigateTo('admin');
-        loadAdminDashboard();
+      if (authRes.isAdmin) {
+        showToast(`🛡️ Password verified for ${authRes.user.name}. Enter Security PIN to unlock Dispatch Center.`);
+        openAdminPinModal('admin');
       } else {
-        showToast(`Welcome back, ${user.name}! You are now signed in.`);
+        showToast(`Welcome back, ${authRes.user.name}! You are now signed in.`);
         loadDashboardFromSupabase();
       }
     } catch (err) {
@@ -2233,8 +2592,17 @@ const App = (() => {
     }
 
     const fullName = document.getElementById('regFullName')?.value.trim();
-    const email = document.getElementById('regEmail')?.value.trim();
+    const email = document.getElementById('regEmail')?.value.trim() || '';
     const phone = document.getElementById('regPhone')?.value.trim();
+
+    if (isAllowedAdminEmail(email) || email.toLowerCase() === 'admin@example.com') {
+      showToast('⛔ This email address is reserved for Dispatch Administration.');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+      return;
+    }
 
     try {
       const newUser = {
@@ -2243,6 +2611,8 @@ const App = (() => {
         email,
         phone,
         tier: 'Standard',
+        role: 'customer',
+        isAdmin: false,
         status: 'Active',
         location: 'Cotswolds / London',
         notes: 'Registered online via passenger portal',
@@ -2266,6 +2636,7 @@ const App = (() => {
         });
       } catch (err) {}
 
+      clearAdminPanelUnlock();
       state.currentUser = newUser;
       localStorage.setItem('jos_current_user', JSON.stringify(newUser));
 
@@ -2286,12 +2657,18 @@ const App = (() => {
 
   function handleForgotPassword(e) {
     e.preventDefault();
-    const email = document.getElementById('forgotEmail')?.value.trim();
+    const email = document.getElementById('forgotEmail')?.value.trim() || '';
+    if (isAllowedAdminEmail(email)) {
+      showToast('🔒 Administrator credentials can only be reset directly via HQ Security Operations.');
+      switchAuthTab('signin');
+      return;
+    }
     showToast(`Password reset link dispatched to ${email || 'your email'}.`);
     switchAuthTab('signin');
   }
 
   function handleSignOut() {
+    clearAdminPanelUnlock();
     if (state.currentUser) {
       state.currentUser.isLoggedIn = false;
     }
@@ -2385,15 +2762,24 @@ const App = (() => {
   async function selectGoogleAccount(accountData) {
     if (!accountData || !accountData.email) return;
 
+    const cleanEmail = String(accountData.email).trim().toLowerCase();
+    // Prevent unverified custom Google chooser from logging into restricted admin accounts
+    if ((isAllowedAdminEmail(cleanEmail) || cleanEmail === 'admin@example.com') && !accountData.verifiedOAuth) {
+      showToast('🔒 Administrator access requires email, password, and Security PIN verification.');
+      return;
+    }
+
     try {
-      let user = state.admin.users.find(u => u.email.toLowerCase() === accountData.email.toLowerCase());
+      let user = state.admin.users.find(u => (u.email || '').toLowerCase() === cleanEmail);
       if (!user) {
         user = {
           id: 'usr-g-' + Date.now(),
           name: accountData.name || accountData.email.split('@')[0],
-          email: accountData.email,
+          email: cleanEmail,
           phone: accountData.phone || '+44 7700 900888',
           tier: accountData.tier || 'Standard',
+          role: 'customer',
+          isAdmin: false,
           status: 'Active',
           location: 'Cotswolds & London',
           notes: 'Google OAuth Verified Profile',
@@ -2408,6 +2794,11 @@ const App = (() => {
         if (accountData.name) user.name = accountData.name;
         if (accountData.phone) user.phone = accountData.phone;
       }
+
+      const isAdminOAuth = isAllowedAdminEmail(cleanEmail) && Boolean(accountData.verifiedOAuth);
+      user.role = isAdminOAuth ? 'admin' : 'customer';
+      user.isAdmin = isAdminOAuth;
+      if (!isAdminOAuth) clearAdminPanelUnlock();
 
       user.isLoggedIn = true;
       state.currentUser = user;
@@ -2473,9 +2864,8 @@ const App = (() => {
         .join('')
         .toUpperCase();
 
-      const isAdmin = u.role === 'admin' || u.isAdmin === true || 
-                      u.email?.toLowerCase() === 'admin@josruralcars.co.uk' || 
-                      u.email?.toLowerCase() === 'admin@example.com';
+      const isAdmin = isAuthorizedAdminSession();
+      const isPinUnlocked = isAdminPanelUnlocked();
 
       const btnHeaderAdmin = document.getElementById('btnHeaderAdminPortal');
       const mobileDrawer = document.getElementById('mobileDrawer');
@@ -2484,7 +2874,13 @@ const App = (() => {
       if (headerUserBadge) headerUserBadge.classList.remove('d-none');
 
       if (isAdmin) {
-        if (btnHeaderAdmin) btnHeaderAdmin.classList.remove('d-none');
+        if (btnHeaderAdmin) {
+          btnHeaderAdmin.classList.remove('d-none');
+          btnHeaderAdmin.innerHTML = isPinUnlocked ? '🛡️ Dispatch Center' : '🔒 Unlock Dispatch';
+          btnHeaderAdmin.title = isPinUnlocked
+            ? 'Access Dispatch Control Center'
+            : 'Enter Security PIN to unlock Dispatch Control Center';
+        }
         if (headerAvatar) headerAvatar.textContent = '🛡️';
         if (headerUserName) {
           headerUserName.innerHTML = `${firstName} <span class="badge-role-admin">ADMIN</span>`;
@@ -2655,9 +3051,8 @@ const App = (() => {
       if (curName) curName.textContent = u.name || 'Valued Client';
       if (curEmail) curEmail.textContent = `${u.email || ''} • ${u.tier || (u.role === 'admin' ? 'Executive Super Admin' : 'Standard')}`;
 
-      const isAdmin = u.role === 'admin' || u.isAdmin === true || 
-                      u.email?.toLowerCase() === 'admin@josruralcars.co.uk' || 
-                      u.email?.toLowerCase() === 'admin@example.com';
+      const isAdmin = isAuthorizedAdminSession();
+      const isPinUnlocked = isAdminPanelUnlocked();
 
       if (curAvatar) {
         curAvatar.textContent = isAdmin ? '🛡️' : (u.name || 'Client').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
@@ -2665,15 +3060,22 @@ const App = (() => {
 
       if (isAdmin) {
         if (curRoleBadge) {
-          curRoleBadge.textContent = 'Admin / Dispatch Control';
+          curRoleBadge.textContent = isPinUnlocked ? 'Admin / Dispatch Unlocked' : 'Admin / PIN Locked';
           curRoleBadge.className = 'badge-status badge-gold';
         }
         if (curDesc) {
-          curDesc.innerHTML = '<strong>Administrator session active.</strong> You have full privileges to manage bookings, assign chauffeurs, monitor live fleet movements, and configure system rates.';
+          curDesc.innerHTML = isPinUnlocked
+            ? '<strong>Administrator session active &amp; PIN verified.</strong> Dispatch Control Center is unlocked for this session.'
+            : '<strong>Administrator credentials verified.</strong> Security PIN verification is required before entering Dispatch Control Center.';
         }
-        if (btnSignInAdminDispatch) btnSignInAdminDispatch.classList.remove('d-none');
+        if (btnSignInAdminDispatch) {
+          btnSignInAdminDispatch.classList.remove('d-none');
+          btnSignInAdminDispatch.textContent = isPinUnlocked ? '🛡️ Open Dispatch Center' : '🔒 Unlock Dispatch Center';
+        }
         if (btnSignInProceed) {
-          btnSignInProceed.textContent = isBookingContext ? 'Book Transfer as Admin →' : '🛡️ Open Dispatch Control Center →';
+          btnSignInProceed.textContent = isBookingContext
+            ? 'Book Transfer as Admin →'
+            : (isPinUnlocked ? '🛡️ Open Dispatch Control Center →' : '🔒 Verify Security PIN & Enter Dispatch →');
           btnSignInProceed.className = isBookingContext ? 'btn btn-outline btn-session-action' : 'btn btn-gold btn-session-action';
           btnSignInProceed.onclick = isBookingContext ? () => proceedToNextBookingStep() : () => navigateTo('admin');
         }
@@ -2741,88 +3143,37 @@ const App = (() => {
     const orig = btn ? btn.innerHTML : '';
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '<span>⏳ Signing in & unlocking next step...</span>';
+      btn.innerHTML = '<span>⏳ Verifying credentials...</span>';
     }
 
-    const email = document.getElementById('pageSignInEmail')?.value.trim() || 'james@example.com';
+    const email = document.getElementById('pageSignInEmail')?.value.trim() || '';
+    const password = document.getElementById('pageSignInPassword')?.value || '';
     const remember = document.getElementById('pageSignInRemember')?.checked;
 
     try {
-      let user = state.admin.users.find(u => u.email.toLowerCase() === email.toLowerCase());
-      if (!user) {
-        const supProfile = await fetchProfileByEmail(email);
-        if (supProfile) {
-          user = {
-            id: supProfile.id || 'usr-' + Date.now(),
-            name: supProfile.name || email.split('@')[0],
-            email: supProfile.email || email,
-            phone: supProfile.phone || '+44 7700 900000',
-            tier: supProfile.tier || 'Standard',
-            role: supProfile.role || (email.toLowerCase().includes('admin') ? 'admin' : 'customer'),
-            status: supProfile.status || 'Active',
-            location: supProfile.address || supProfile.location || 'Gloucestershire, UK',
-            notes: supProfile.notes || '',
-            rides: Number(supProfile.trips_count || supProfile.rides || 0),
-            spent: Number(supProfile.total_spent || supProfile.spent || 0)
-          };
-        } else {
-          const isAdminEmail = email.toLowerCase() === 'admin@josruralcars.co.uk' || email.toLowerCase() === 'admin@example.com' || email.toLowerCase().includes('admin');
-          const generatedName = isAdminEmail ? 'Marcus Vance' : email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-          user = {
-            id: 'usr-' + Date.now(),
-            name: generatedName || 'Valued Passenger',
-            email,
-            phone: isAdminEmail ? '+44 1234 567 890' : '+44 7700 900000',
-            tier: isAdminEmail ? 'Executive Super Admin' : 'Standard',
-            role: isAdminEmail ? 'admin' : 'customer',
-            status: 'Active',
-            location: isAdminEmail ? "Jo's Rural Cars HQ, Stroud, GL5 1AA" : 'Gloucestershire, Cotswolds',
-            notes: isAdminEmail ? 'Head of Executive Dispatch.' : 'Verified via customer booking portal',
-            rides: 0,
-            spent: 0
-          };
-          state.admin.users.push(user);
-          saveAdminUsers();
+      const authRes = await authenticateUserLogin(email, password, remember);
+      if (!authRes.ok) {
+        const pwdEl = document.getElementById('pageSignInPassword');
+        if (pwdEl) {
+          pwdEl.value = '';
+          pwdEl.focus();
         }
+        return;
       }
 
-      const isAdmin = user.role === 'admin' || user.isAdmin === true || 
-                      user.email.toLowerCase() === 'admin@josruralcars.co.uk' || 
-                      user.email.toLowerCase() === 'admin@example.com';
-
-      if (isAdmin) {
-        user.role = 'admin';
-        user.isAdmin = true;
-        user.tier = user.tier || 'Executive Super Admin';
-      }
-
-      user.isLoggedIn = true;
-      state.currentUser = user;
-      if (remember !== false) {
-        localStorage.setItem('jos_current_user', JSON.stringify(user));
-      }
-
-      // Pre-fill passenger details with user info
-      state.booking.passenger.fullName = user.name || '';
-      state.booking.passenger.email = user.email || '';
-      state.booking.passenger.phone = (user.phone || '').replace('+44 ', '').replace('+44', '');
-
-      updateUserUI();
-
-      if (isAdmin) {
-        showToast(`🛡️ Welcome Administrator ${user.name}! Dispatch Control Center loaded.`);
-        navigateTo('admin');
-        loadAdminDashboard();
+      if (authRes.isAdmin) {
+        showToast(`🛡️ Password verified for ${authRes.user.name}. Enter Security PIN to open Dispatch Center.`);
+        openAdminPinModal('admin');
       } else {
         const isBookingContext = Boolean(state.booking.inBookingFlow) || 
           (Boolean(state.booking.nextStep) && ['passenger-details', 'payment'].includes(state.booking.nextStep));
 
         if (isBookingContext) {
-          showToast(`Welcome back, ${user.name}! Continuing your booking...`);
+          showToast(`Welcome back, ${authRes.user.name}! Continuing your booking...`);
           const nextStep = state.booking.nextStep || (state.booking.vehicleKey ? 'passenger-details' : 'select-vehicle');
           navigateTo(nextStep);
         } else {
-          showToast(`Welcome back, ${user.name}!`);
+          showToast(`Welcome back, ${authRes.user.name}!`);
           navigateTo('dashboard');
         }
       }
@@ -2848,8 +3199,17 @@ const App = (() => {
     }
 
     const name = document.getElementById('pageSignUpName')?.value.trim();
-    const email = document.getElementById('pageSignUpEmail')?.value.trim();
+    const email = document.getElementById('pageSignUpEmail')?.value.trim() || '';
     const phone = document.getElementById('pageSignUpPhone')?.value.trim();
+
+    if (isAllowedAdminEmail(email) || email.toLowerCase() === 'admin@example.com') {
+      showToast('⛔ This email address is reserved for Dispatch Administration.');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+      return;
+    }
 
     try {
       const newUser = {
@@ -2858,6 +3218,8 @@ const App = (() => {
         email,
         phone: phone.startsWith('+44') ? phone : `+44 ${phone}`,
         tier: 'Standard',
+        role: 'customer',
+        isAdmin: false,
         status: 'Active',
         location: 'Cotswolds / London',
         notes: 'Registered online via customer sign in portal',
@@ -2881,6 +3243,7 @@ const App = (() => {
         });
       } catch (err) {}
 
+      clearAdminPanelUnlock();
       state.currentUser = newUser;
       localStorage.setItem('jos_current_user', JSON.stringify(newUser));
 
@@ -2912,18 +3275,26 @@ const App = (() => {
     }
   }
 
-  // 1-Click Fast Sign In
+  // 1-Click Fast Sign In (Strictly limited to customer & guest accounts — admin quick-login disabled)
   function quickSignInAs(emailOrType) {
+    const cleanTarget = String(emailOrType || '').trim().toLowerCase();
+    if (cleanTarget === 'admin' || isAllowedAdminEmail(cleanTarget) || cleanTarget === 'admin@example.com' || cleanTarget.includes('admin')) {
+      showToast('🔒 Administrator quick sign-in is disabled. Sign in manually with authorized password & Security PIN.');
+      return;
+    }
+
     const isBookingContext = Boolean(state.booking.inBookingFlow) || 
       (Boolean(state.booking.nextStep) && ['passenger-details', 'payment'].includes(state.booking.nextStep));
 
-    if (emailOrType === 'guest') {
+    if (cleanTarget === 'guest') {
       const guestUser = {
         id: 'usr-guest-' + Date.now(),
         name: 'Verified Guest',
         email: 'guest.' + Math.floor(1000 + Math.random() * 9000) + '@josruralcars.co.uk',
         phone: '+44 7700 900555',
         tier: 'Standard',
+        role: 'customer',
+        isAdmin: false,
         status: 'Active',
         location: 'United Kingdom',
         notes: 'Verified express booking guest',
@@ -2931,6 +3302,7 @@ const App = (() => {
         spent: 0,
         isLoggedIn: true
       };
+      clearAdminPanelUnlock();
       state.currentUser = guestUser;
       localStorage.setItem('jos_current_user', JSON.stringify(guestUser));
       state.booking.passenger.fullName = guestUser.name;
@@ -2951,61 +3323,19 @@ const App = (() => {
     const emailInp = document.getElementById('pageSignInEmail');
     if (emailInp) emailInp.value = emailOrType;
 
-    // Check if signing in as Administrator
-    const isAdminTarget = emailOrType === 'admin' || 
-                          emailOrType.toLowerCase() === 'admin@josruralcars.co.uk' || 
-                          emailOrType.toLowerCase() === 'admin@example.com';
-
-    if (isAdminTarget) {
-      let adminUser = state.admin.users.find(u => 
-        u.email.toLowerCase() === emailOrType.toLowerCase() || 
-        u.role === 'admin' ||
-        u.email.toLowerCase() === 'admin@josruralcars.co.uk'
-      );
-
-      if (!adminUser) {
-        adminUser = {
-          id: 'bcc5fd7b-94ab-46b5-bb10-d8ef3b71bf10',
-          name: 'Marcus Vance',
-          email: 'admin@josruralcars.co.uk',
-          phone: '+44 1234 567 890',
-          tier: 'Executive Super Admin',
-          role: 'admin',
-          isAdmin: true,
-          status: 'Active',
-          location: "Jo's Rural Cars HQ, Stroud, GL5 1AA",
-          notes: 'Head of Executive Dispatch.'
-        };
-      } else {
-        adminUser.role = 'admin';
-        adminUser.isAdmin = true;
-        adminUser.tier = adminUser.tier || 'Executive Super Admin';
-      }
-
-      adminUser.isLoggedIn = true;
-      state.currentUser = adminUser;
-      localStorage.setItem('jos_current_user', JSON.stringify(adminUser));
-
-      state.booking.passenger.fullName = adminUser.name;
-      state.booking.passenger.email = adminUser.email;
-      state.booking.passenger.phone = '1234567890';
-
-      updateUserUI();
-      showToast(`🛡️ Signed in as Administrator ${adminUser.name}! Opening Dispatch Center...`);
-      navigateTo('admin');
-      loadAdminDashboard();
-      return;
-    }
-
-    const user = state.admin.users.find(u => u.email.toLowerCase() === emailOrType.toLowerCase()) || {
+    const existing = state.admin.users.find(u => (u.email || '').toLowerCase() === cleanTarget);
+    const user = existing ? { ...existing, role: 'customer', isAdmin: false } : {
       id: 'usr-demo',
       name: emailOrType.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
       email: emailOrType,
       phone: '+44 7700 900000',
       tier: 'Standard',
+      role: 'customer',
+      isAdmin: false,
       isLoggedIn: true
     };
 
+    clearAdminPanelUnlock();
     user.isLoggedIn = true;
     state.currentUser = user;
     localStorage.setItem('jos_current_user', JSON.stringify(user));
@@ -3198,7 +3528,8 @@ const App = (() => {
             name: userName,
             email: userEmail,
             phone: su.user_metadata?.phone || '+44 7700 900888',
-            tier: 'Standard'
+            tier: 'Standard',
+            verifiedOAuth: true
           });
         }
 
@@ -3211,7 +3542,8 @@ const App = (() => {
               name: userName,
               email: userEmail,
               phone: su.user_metadata?.phone || '+44 7700 900888',
-              tier: 'Standard'
+              tier: 'Standard',
+              verifiedOAuth: true
             });
           }
         });
@@ -3291,6 +3623,10 @@ const App = (() => {
 
   // Load Admin Dashboard Data & Render All Panes
   async function loadAdminDashboard() {
+    if (!isAdminPanelUnlocked()) {
+      document.body.classList.remove('in-admin-portal');
+      return;
+    }
     try {
       // 1. Fetch live bookings from Supabase
       const fetched = await fetchBookings();
@@ -3380,20 +3716,25 @@ const App = (() => {
       try {
         const fetchedProfiles = await fetchProfiles();
         if (fetchedProfiles && fetchedProfiles.length > 0) {
-          const mappedUsers = fetchedProfiles.map(p => ({
-            id: p.id || p.user_id || 'usr-' + Date.now(),
-            name: p.name || p.email.split('@')[0],
-            email: p.email,
-            phone: p.phone || '+44 7700 900000',
-            tier: (p.tier && p.tier.toLowerCase().includes('vip')) ? 'Standard' : (p.tier || (p.role === 'admin' ? 'Executive Super Admin' : 'Standard')),
-            role: p.role || (p.email.toLowerCase().includes('admin') ? 'admin' : 'customer'),
-            isAdmin: p.role === 'admin' || p.email.toLowerCase().includes('admin'),
-            status: p.status || 'Active',
-            location: p.address || 'Gloucestershire, UK',
-            notes: p.notes || '',
-            rides: Number(p.trips_count || 0),
-            spent: Number(p.total_spent || 0)
-          }));
+          const mappedUsers = fetchedProfiles
+            .filter(p => String(p.email || '').toLowerCase() !== 'admin@example.com')
+            .map(p => {
+              const isAllowAdmin = isAllowedAdminEmail(p.email);
+              return {
+                id: p.id || p.user_id || 'usr-' + Date.now(),
+                name: p.name || p.email.split('@')[0],
+                email: p.email,
+                phone: p.phone || '+44 7700 900000',
+                tier: (p.tier && p.tier.toLowerCase().includes('vip')) ? 'Standard' : (isAllowAdmin ? 'Executive Super Admin' : (p.tier === 'Executive Super Admin' ? 'Standard' : (p.tier || 'Standard'))),
+                role: isAllowAdmin ? 'admin' : 'customer',
+                isAdmin: isAllowAdmin,
+                status: p.status || 'Active',
+                location: p.address || 'Gloucestershire, UK',
+                notes: p.notes || '',
+                rides: Number(p.trips_count || 0),
+                spent: Number(p.total_spent || 0)
+              };
+            });
 
           const merged = [...mappedUsers];
           (state.admin.users || []).forEach(local => {
@@ -3762,6 +4103,7 @@ const App = (() => {
 
   // Export entire Admin Database as JSON
   function exportAdminDatabase() {
+    if (!requireAdminAccess()) return;
     const data = {
       app: "Jo's Rural Cars Dispatch Command",
       version: "2.6.0",
@@ -4040,6 +4382,7 @@ const App = (() => {
 
   // Cancel / Delete Booking from Admin
   async function deleteBookingFromAdmin(ref) {
+    if (!requireAdminAccess()) return;
     if (!confirm(`Are you sure you want to cancel and remove booking ${ref}?`)) return;
 
     state.admin.bookings = state.admin.bookings.filter(b => b.ref !== ref && `#${b.ref}` !== ref);
@@ -4207,6 +4550,7 @@ const App = (() => {
   }
 
   function deleteUser(userId) {
+    if (!requireAdminAccess()) return;
     const user = state.admin.users.find(u => u.id === userId);
     if (!confirm(`Are you sure you want to remove customer account for ${user?.name || 'this user'}?`)) return;
     state.admin.users = state.admin.users.filter(u => u.id !== userId);
@@ -4358,6 +4702,7 @@ const App = (() => {
 
   // Delete Car from Fleet
   function deleteCarFromFleet(carId) {
+    if (!requireAdminAccess()) return;
     const car = state.admin.cars.find(c => c.id === carId);
     if (!confirm(`Are you sure you want to remove ${car?.name || 'this car'} from Jo's Rural Cars fleet?`)) return;
     state.admin.cars = state.admin.cars.filter(c => c.id !== carId);
@@ -4609,6 +4954,7 @@ const App = (() => {
 
   // Delete Driver
   function deleteDriver(driverId) {
+    if (!requireAdminAccess()) return;
     const drv = state.admin.drivers.find(d => d.id === driverId);
     if (!confirm(`Are you sure you want to remove chauffeur ${drv?.name || 'this driver'}?`)) return;
     state.admin.drivers = state.admin.drivers.filter(d => d.id !== driverId);
@@ -4645,6 +4991,7 @@ const App = (() => {
   }
 
   function openDriverDocsModal(driverId) {
+    if (!requireAdminAccess()) return;
     const drv = state.admin.drivers.find(d => d.id === driverId);
     if (!drv) return;
 
@@ -5004,6 +5351,7 @@ const App = (() => {
 
   // Save System Rates
   function saveSystemRates() {
+    if (!requireAdminAccess()) return;
     const heathrow = Number(document.getElementById('sysRateHeathrow')?.value) || 45;
     const gatwick = Number(document.getElementById('sysRateGatwick')?.value) || 65;
     const luton = Number(document.getElementById('sysRateLuton')?.value) || 55;
@@ -5031,6 +5379,7 @@ const App = (() => {
 
   // Toggle System Setting
   function toggleSystemSetting(settingKey, isChecked) {
+    if (!requireAdminAccess()) return;
     if (!state.admin.policies) state.admin.policies = {};
     state.admin.policies[settingKey] = isChecked;
     saveAdminPoliciesStorage();
@@ -5039,6 +5388,7 @@ const App = (() => {
 
   // Manually Sync Admin with Supabase
   async function syncAdminWithSupabase() {
+    if (!requireAdminAccess()) return;
     showToast('Syncing with Supabase cloud database...');
     await loadAdminDashboard();
     showToast('Supabase database synchronized successfully.');
@@ -5046,6 +5396,7 @@ const App = (() => {
 
   // Export Bookings to CSV
   function exportBookingsCsv() {
+    if (!requireAdminAccess()) return;
     const bookings = state.admin.bookings || [];
     if (bookings.length === 0) {
       showToast('No booking records to export.');
@@ -5921,8 +6272,6 @@ CREATE POLICY "Public Insert Payments" ON public.payments FOR INSERT WITH CHECK 
         navigateTo(rawHash);
         if (baseHash === 'dashboard') {
           loadDashboardFromSupabase();
-        } else if (baseHash === 'admin') {
-          loadAdminDashboard();
         } else if (baseHash === 'signin') {
           updateSignInPageView();
         }
@@ -6116,7 +6465,13 @@ CREATE POLICY "Public Insert Payments" ON public.payments FOR INSERT WITH CHECK 
     toggleSystemSetting,
     syncAdminWithSupabase,
     exportBookingsCsv,
-    copySupabaseSql
+    copySupabaseSql,
+    openAdminPinModal,
+    closeAdminPinModal,
+    handleAdminPinSubmit,
+    lockAdminSession,
+    isAuthorizedAdminSession,
+    isAdminPanelUnlocked
   };
 })();
 
